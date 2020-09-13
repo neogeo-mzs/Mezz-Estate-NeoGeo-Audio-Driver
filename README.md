@@ -1,5 +1,6 @@
-# neogeo-project
-For now, I'm only implementing an audio driver.
+# THIS IS A WIP, DO NOT USE THIS IN YOUR PRODUCTION CODE BECAUSE SHIT WILL FUCK UP!
+
+# Mezz'Estate Neogeo Audio Driver
 
 ## TODO
 * Add support for FM sound synthesis
