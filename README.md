@@ -99,6 +99,9 @@ this command ends the playback for the current channel
 * B: Play a jingle using SSG 
 * C: Play a jingle using FM (doesn't work correctly)
 
+## NOTICE
+The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
+
 ## BUGS
 * FM note on timing is way longer then it should be
 
