@@ -3,10 +3,6 @@
 # Mezz'Estate Neogeo Audio Driver
 *ADPCM-B isn't supported as of right now.*
 
-## TODO
-* Add support for FM sound synthesis
-* Implement MLM (Music Language by Mezz'estate), to play actual music
-
 ## Deflemask to NeogeoDev Wiki FM parameters
 Deflemask | NeogeoDevWiki
 ----------|--------------
@@ -97,6 +93,11 @@ this command ends the playback for the current channel
 
 ###### Command 4: Wait ticks (word)
 **format: `$82 %TTTTTTTTTTTTTTTT (Timing)`**
+
+## CONTROLS
+* A: Play a jingle using ADPCM-A
+* B: Play a jingle using SSG 
+* C: Play a jingle using FM (doesn't work correctly)
 
 ## BUGS
 * FM note on timing is way longer then it should be
