@@ -8,6 +8,7 @@
 
 ## Deflemask to NeogeoDev Wiki FM parameters
 Deflemask | NeogeoDevWiki
+----------|--------------
 DT        | DT
 MUL       | MUL
 RS        | KS
@@ -18,12 +19,14 @@ D2        | SR
 R         | RR
 
 ## Z80 memory map
-$0000 ~ $7FFF | Static main code bank - code
-$8000 ~ $BFFF | Switchable bank 3     - songs
-$C000 ~ $DFFF | Switchable bank 2     - instruments
-$E000 ~ $EFFF | Switchable bank 1     - macros (other data?)
-$F000 ~ $F7FF | Switchable bank 0     - ADPCM-A addresses
-$F800 ~ $FFFF | Work RAM              - Work RAM
+Address space | Description           | Usage
+--------------|-----------------------|----------------------
+$0000 ~ $7FFF | Static main code bank | code
+$8000 ~ $BFFF | Switchable bank 3     | songs
+$C000 ~ $DFFF | Switchable bank 2     | instruments
+$E000 ~ $EFFF | Switchable bank 1     | macros (other data?)
+$F000 ~ $F7FF | Switchable bank 0     | ADPCM-A addresses
+$F800 ~ $FFFF | Work RAM              | Work RAM
 
 ## MLM format documentation
 
