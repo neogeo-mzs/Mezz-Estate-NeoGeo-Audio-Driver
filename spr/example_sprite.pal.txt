@@ -1,0 +1,15 @@
+color 1: 7999
+color 2: 7FFF
+color 3: 4B23
+color 4: BE68
+color 5: 7432
+color 6: 8A62
+color 7: 6E83
+color 8: 1FE6
+color 9: 7244
+color 10: B481
+color 11: AAC2
+color 12: C123
+color 13: 8058
+color 14: 83AF
+color 15: BBDE
