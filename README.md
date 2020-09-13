@@ -29,23 +29,23 @@ $F800 ~ $FFFF | Work RAM              - Work RAM
 
 ### BANK3
 BANK3 contains the song data. it must begin with this header:
-```
-offsets | description      | bytes
------------------------------------ 
-$0000   | song 0 offset    | 2
-...     | ...              | 
-...     | last song offset | 2
-```
+
+|offsets | description      | bytes 
+|--------|------------------|-------
+|$0000   | song 0 offset    | 2
+|...     | ...              | 
+|...     | last song offset | 2
+
 
 each song should start with this header
 
-```
+
 offsets | description       | bytes
------------------------------------ 
+--------|-------------------|------ 
 $0000   | channel 0 offset  | 2
 ...     | ...               |
 $001A   | channel 12 offset | 2
-```
+
 
 each channel is an array of events. The driver executes the event, and then waits the amount of time specifies in the event.
 Events can be split in two categories, depending on the most significant bit. 
