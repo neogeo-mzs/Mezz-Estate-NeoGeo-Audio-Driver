@@ -1,6 +1,7 @@
 # THIS IS A WIP, DO NOT USE THIS IN YOUR PRODUCTION CODE BECAUSE SHIT WILL FUCK UP!
 
 # Mezz'Estate Neogeo Audio Driver
+*ADPCM-B isn't supported as of right now.*
 
 ## TODO
 * Add support for FM sound synthesis
@@ -33,11 +34,11 @@ $F800 ~ $FFFF | Work RAM              | Work RAM
 ### BANK3
 BANK3 contains the song data. it must begin with this header:
 
-|offsets | description      | bytes 
-|--------|------------------|-------
-|$0000   | song 0 offset    | 2
-|...     | ...              | 
-|...     | last song offset | 2
+|offsets | description                             | bytes 
+|--------|-----------------------------------------|-------
+|$0000   | song 0 offset                           | 2
+|...     | ...                                     | 
+|...     | last song offset (maximum of 256 songs) | 2
 
 
 each song should start with this header
@@ -54,6 +55,11 @@ each channel is an array of events. The driver executes the event, and then wait
 Events can be split in two categories, depending on the most significant bit. 
 
 If the most significant bit is 1, then the event is a **note**, if the most significant bit is 0, then the event is a **command**. Both notes and events will be parsed and interpreted differently depending on the kind of channel (ADPCM-A, SSG, FM)
+
+#### Channels
+* Channels 0~5: ADPCM-A channels
+* Channels 6~9: FM channels
+* Channels 10~12: SSG channels
 
 #### Notes
 Notes are events that, like the name implies, play a note from the current instrument (defaults to 0).
