@@ -86,13 +86,13 @@ this command ends the playback for the current channel
 **format: `$81 %TTTTTTTT (Timing)`**
 
 ###### Command 2: Change instrument
-**format: `$84 %IIIIIIII (Instrument; Next event is executed immediately)`**
+**format: `$82 %IIIIIIII (Instrument; Next event is executed immediately)`**
 
 ###### Command 3: Wait ticks (byte)
-**format: `$82 %TTTTTTTT (Timing)`**
+**format: `$83 %TTTTTTTT (Timing)`**
 
 ###### Command 4: Wait ticks (word)
-**format: `$82 %TTTTTTTTTTTTTTTT (Timing)`**
+**format: `$84 %TTTTTTTTTTTTTTTT (Timing)`**
 
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
