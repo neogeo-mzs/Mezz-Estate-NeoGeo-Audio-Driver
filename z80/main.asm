@@ -295,7 +295,7 @@ MLM_update_loop:
 		xor a,a
 		add a,d
 		add a,e
-		
+
 MLM_update_do_execute_events:
 		call z,MLM_update_events
 		jr c,MLM_update_do_save_dec_t
@@ -510,10 +510,10 @@ MLM_ch2_data:
 
 MLM_ch8_data:
 	db &02, 1 ; Change instrument
-	db 16 | &80, 2 | (4<<4)  ; D5; timing | &80, note | (octave<<4)
-	db 8  | &80, 11 | (3<<4) ; B4
-	db 16 | &80, 9 | (3<<4)  ; A4
-	db 16 | &80, 9 | (3<<4)  ; A4
+	db 30 | &80, 2 | (3<<4)  ; D4; timing | &80, note | (octave<<4)
+	db 15  | &80, 11 | (2<<4) ; B3
+	db 45 | &80, 9 | (2<<4)  ; A3
+	db 30 | &80, 9 | (2<<4)  ; A3
 	db &00 ; end of list
 	db 30 | &80, 9 | (3<<4)  ; A4
 
