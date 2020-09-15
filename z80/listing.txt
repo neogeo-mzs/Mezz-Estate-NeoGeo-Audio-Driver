@@ -590,272 +590,274 @@ F00:0296       		add a,d
                S06:00000172:  82
 F00:0297       		add a,e
                S06:00000173:  83
-F00:0298       		call z,MLM_update_events
+F00:0298       		
+F00:0299       MLM_update_do_execute_events:
+F00:0300       		call z,MLM_update_events
                S06:00000174:  CC 5D 09
-F00:0299       		jr c,MLM_update_do_save_dec_t
+F00:0301       		jr c,MLM_update_do_save_dec_t
                S06:00000177:  38 02
-F00:0300       		jr z,MLM_update_skip_save_dec_t
+F00:0302       		jr z,MLM_update_skip_save_dec_t
                S06:00000179:  28 03
-F00:0301       
-F00:0302       MLM_update_do_save_dec_t:
-F00:0303       		ld (hl),d
+F00:0303       
+F00:0304       MLM_update_do_save_dec_t:
+F00:0305       		ld (hl),d
                S06:0000017B:  72
-F00:0304       		dec hl
+F00:0306       		dec hl
                S06:0000017C:  2B
-F00:0305       		ld (hl),e
+F00:0307       		ld (hl),e
                S06:0000017D:  73
-F00:0306       
-F00:0307       MLM_update_skip_save_dec_t:
-F00:0308       		; if MLM_playback_set_timings[ch] is 0
-F00:0309       		; (thus the timing was set to 0 during this loop)
-F00:0310       		; then execute the next event
-F00:0311       		ld h,0
+F00:0308       
+F00:0309       MLM_update_skip_save_dec_t:
+F00:0310       		; if MLM_playback_set_timings[ch] is 0
+F00:0311       		; (thus the timing was set to 0 during this loop)
+F00:0312       		; then execute the next event
+F00:0313       		ld h,0
                S06:0000017E:  26 00
-F00:0312       		ld l,c
+F00:0314       		ld l,c
                S06:00000180:  69
-F00:0313       		ld de,MLM_playback_set_timings
+F00:0315       		ld de,MLM_playback_set_timings
                S06:00000181:  11 7B F8
-F00:0314       		add hl,hl
+F00:0316       		add hl,hl
                S06:00000184:  29
-F00:0315       		add hl,de
+F00:0317       		add hl,de
                S06:00000185:  19
-F00:0316       		ld e,(hl)
+F00:0318       		ld e,(hl)
                S06:00000186:  5E
-F00:0317       		inc hl
+F00:0319       		inc hl
                S06:00000187:  23
-F00:0318       		ld d,(hl)
+F00:0320       		ld d,(hl)
                S06:00000188:  56
-F00:0319       		xor a,a ; clear a
+F00:0321       		xor a,a ; clear a
                S06:00000189:  AF
-F00:0320       		add a,e
+F00:0322       		add a,e
                S06:0000018A:  83
-F00:0321       		add a,d
+F00:0323       		add a,d
                S06:0000018B:  82
-F00:0322       		jr c,MLM_update_loop_next
+F00:0324       		jr c,MLM_update_loop_next
                S06:0000018C:  38 02
-F00:0323       		jr z,MLM_update_loop
-               S06:0000018E:  28 C7
-F00:0324       
-F00:0325       MLM_update_loop_next:
-F00:0326       		djnz MLM_update_loop
+F00:0325       		jr z,MLM_update_do_execute_events
+               S06:0000018E:  28 E4
+F00:0326       
+F00:0327       MLM_update_loop_next:
+F00:0328       		djnz MLM_update_loop
                S06:00000190:  10 C5
-F00:0327       
-F00:0328       .IRQ_end:
-F00:0329       		; clear Timer B counter and
-F00:0330       		; copy load timer value into
-F00:0331       		; the counter
-F00:0332       		ld d,REG_TIMER_CNT
+F00:0329       
+F00:0330       .IRQ_end:
+F00:0331       		; clear Timer B counter and
+F00:0332       		; copy load timer value into
+F00:0333       		; the counter
+F00:0334       		ld d,REG_TIMER_CNT
                S06:00000192:  16 27
-F00:0333       		ld e,%00101010
+F00:0335       		ld e,%00101010
                S06:00000194:  1E 2A
-F00:0334       		rst RST_YM_WRITEA
+F00:0336       		rst RST_YM_WRITEA
                S06:00000196:  D7
-F00:0335       
-F00:0336       	; restore register state
-F00:0337       	pop  iy
+F00:0337       
+F00:0338       	; restore register state
+F00:0339       	pop  iy
                S06:00000197:  FD E1
-F00:0338       	pop  ix
+F00:0340       	pop  ix
                S06:00000199:  DD E1
-F00:0339       	pop  hl
+F00:0341       	pop  hl
                S06:0000019B:  E1
-F00:0340       	pop  de
+F00:0342       	pop  de
                S06:0000019C:  D1
-F00:0341       	pop  bc
+F00:0343       	pop  bc
                S06:0000019D:  C1
-F00:0342       	pop  af
+F00:0344       	pop  af
                S06:0000019E:  F1
-F00:0343       
-F00:0344       	; enable interrupts and return
-F00:0345       	ei
+F00:0345       
+F00:0346       	; enable interrupts and return
+F00:0347       	ei
                S06:0000019F:  FB
-F00:0346       	ret
+F00:0348       	ret
                S06:000001A0:  C9
-F00:0347       
-F00:0348       ;==============================================================================;
-F00:0349       ; EntryPoint
-F00:0350       ; The entry point of the sound driver. Sets up the working conditions.
-F00:0351       ; wpset F800,1,w,wpdata==39
-F00:0352       EntryPoint:
-F00:0353       	ld   sp,0xFFFC  ; set the stack pointer to $FFFC ($FFFD-$FFFE is used elsewhere)
+F00:0349       
+F00:0350       ;==============================================================================;
+F00:0351       ; EntryPoint
+F00:0352       ; The entry point of the sound driver. Sets up the working conditions.
+F00:0353       ; wpset F800,1,w,wpdata==39
+F00:0354       EntryPoint:
+F00:0355       	ld   sp,0xFFFC  ; set the stack pointer to $FFFC ($FFFD-$FFFE is used elsewhere)
                S06:000001A1:  31 FC FF
-F00:0354       	im   1          ; set interrupt mode 1 (IRQ at $0038)
+F00:0356       	im   1          ; set interrupt mode 1 (IRQ at $0038)
                S06:000001A4:  ED 56
-F00:0355       	out (ENABLE_NMI),a
+F00:0357       	out (ENABLE_NMI),a
                S06:000001A6:  D3 08
-F00:0356       
-F00:0357       	; clear RAM at $F800-$FFFF
-F00:0358       	xor  a ; set A = 0
+F00:0358       
+F00:0359       	; clear RAM at $F800-$FFFF
+F00:0360       	xor  a ; set A = 0
                S06:000001A8:  AF
-F00:0359       	ld   (0xF800),a ; write 0 to $F800
+F00:0361       	ld   (0xF800),a ; write 0 to $F800
                S06:000001A9:  32 00 F8
-F00:0360       	ld   hl,0xF800  ; load $F800 (value to write) into hl
+F00:0362       	ld   hl,0xF800  ; load $F800 (value to write) into hl
                S06:000001AC:  21 00 F8
-F00:0361       	ld   de,0xF801  ; load $F801 (beginning address) into de
+F00:0363       	ld   de,0xF801  ; load $F801 (beginning address) into de
                S06:000001AF:  11 01 F8
-F00:0362       	ld   bc,0x7FF   ; load $07FF (loop length) into bc
+F00:0364       	ld   bc,0x7FF   ; load $07FF (loop length) into bc
                S06:000001B2:  01 FF 07
-F00:0363       	ldir            ; write value from hl to address in de, increment de, decrement bc
+F00:0365       	ldir            ; write value from hl to address in de, increment de, decrement bc
                S06:000001B5:  ED B0
-F00:0364       
-F00:0365       	; stop and/or silence audio channels
-F00:0366       	call ssg_Stop
+F00:0366       
+F00:0367       	; stop and/or silence audio channels
+F00:0368       	call ssg_Stop
                S06:000001B7:  CD E8 04
-F00:0367       	call fm_Stop
+F00:0369       	call fm_Stop
                S06:000001BA:  CD CB 04
-F00:0368       	call pcma_Stop
+F00:0370       	call pcma_Stop
                S06:000001BD:  CD FB 04
-F00:0369       	call pcmb_Stop
+F00:0371       	call pcmb_Stop
                S06:000001C0:  CD 03 05
-F00:0370       
-F00:0371       	call SetDefaultBanks
+F00:0372       
+F00:0373       	call SetDefaultBanks
                S06:000001C3:  CD BA 04
-F00:0372       	call set_defaults
+F00:0374       	call set_defaults
                S06:000001C6:  CD DB 01
-F00:0373       
-F00:0374       	; IRQ should be raised every 1/60th of a second
-F00:0375       	ld e,198                   
+F00:0375       
+F00:0376       	; IRQ should be raised every 1/60th of a second
+F00:0377       	ld e,198                   
                S06:000001C9:  1E C6
-F00:0376       	call TMB_set_counter_load
+F00:0378       	call TMB_set_counter_load
                S06:000001CB:  CD 99 04
-F00:0377       
-F00:0378       	; Write 1 to port $C0
-F00:0379       	; (Unsure of the purpose, but every working sound driver has this.)
-F00:0380       	ld   a,1
+F00:0379       
+F00:0380       	; Write 1 to port $C0
+F00:0381       	; (Unsure of the purpose, but every working sound driver has this.)
+F00:0382       	ld   a,1
                S06:000001CE:  3E 01
-F00:0381       	out  (0xC0),a
+F00:0383       	out  (0xC0),a
                S06:000001D0:  D3 C0
-F00:0382       
-F00:0383       	ei ; enable interrupts on the Z80 side
-               S06:000001D2:  FB
 F00:0384       
-F00:0385       	; Tell the 68k the driver is ready to get user
-F00:0386       	; commands
-F00:0387       	ld a,&39
+F00:0385       	ei ; enable interrupts on the Z80 side
+               S06:000001D2:  FB
+F00:0386       
+F00:0387       	; Tell the 68k the driver is ready to get user
+F00:0388       	; commands
+F00:0389       	ld a,&39
                S06:000001D3:  3E 39
-F00:0388       	out (WRITE_68K),a
+F00:0390       	out (WRITE_68K),a
                S06:000001D5:  D3 0C
-F00:0389       
-F00:0390       main_loop:
-F00:0391       	halt
+F00:0391       
+F00:0392       main_loop:
+F00:0393       	halt
                S06:000001D7:  76
-F00:0392       	jp main_loop
+F00:0394       	jp main_loop
                S06:000001D8:  C3 D7 01
-F00:0393       
-F00:0394       set_defaults:
-F00:0395       	push af
+F00:0395       
+F00:0396       set_defaults:
+F00:0397       	push af
                S06:000001DB:  F5
-F00:0396       	push de
+F00:0398       	push de
                S06:000001DC:  D5
-F00:0397       	push bc
+F00:0399       	push bc
                S06:000001DD:  C5
-F00:0398       	push hl
+F00:0400       	push hl
                S06:000001DE:  E5
-F00:0399       		; Enable SSG and disable noise
-F00:0400       		ld de,REG_SSG_MIX_ENABLE<<8 | %00111000       
+F00:0401       		; Enable SSG and disable noise
+F00:0402       		ld de,REG_SSG_MIX_ENABLE<<8 | %00111000       
                S06:000001DF:  11 38 07
-F00:0401       		rst RST_YM_WRITEA
+F00:0403       		rst RST_YM_WRITEA
                S06:000001E2:  D7
-F00:0402       
-F00:0403       		; ADPCM-A master volume: 32/63
-F00:0404       		ld de,REG_PA_MVOL<<8 | &3F
+F00:0404       
+F00:0405       		; ADPCM-A master volume: 32/63
+F00:0406       		ld de,REG_PA_MVOL<<8 | &3F
                S06:000001E3:  11 3F 01
-F00:0405       		rst RST_YM_WRITEB
+F00:0407       		rst RST_YM_WRITEB
                S06:000001E6:  DF
-F00:0406       
-F00:0407       		; ADPCM-A channel volumes: 31/31 LR
-F00:0408       		ld de,REG_PA_CVOL<<8 | (31 | %11000000)
+F00:0408       
+F00:0409       		; ADPCM-A channel volumes: 31/31 LR
+F00:0410       		ld de,REG_PA_CVOL<<8 | (31 | %11000000)
                S06:000001E7:  11 DF 08
-F00:0409       		rst RST_YM_WRITEB
-               S06:000001EA:  DF
-F00:0410       		inc d
-               S06:000001EB:  14
 F00:0411       		rst RST_YM_WRITEB
-               S06:000001EC:  DF
+               S06:000001EA:  DF
 F00:0412       		inc d
-               S06:000001ED:  14
+               S06:000001EB:  14
 F00:0413       		rst RST_YM_WRITEB
-               S06:000001EE:  DF
+               S06:000001EC:  DF
 F00:0414       		inc d
-               S06:000001EF:  14
+               S06:000001ED:  14
 F00:0415       		rst RST_YM_WRITEB
-               S06:000001F0:  DF
+               S06:000001EE:  DF
 F00:0416       		inc d
-               S06:000001F1:  14
+               S06:000001EF:  14
 F00:0417       		rst RST_YM_WRITEB
-               S06:000001F2:  DF
+               S06:000001F0:  DF
 F00:0418       		inc d
-               S06:000001F3:  14
+               S06:000001F1:  14
 F00:0419       		rst RST_YM_WRITEB
+               S06:000001F2:  DF
+F00:0420       		inc d
+               S06:000001F3:  14
+F00:0421       		rst RST_YM_WRITEB
                S06:000001F4:  DF
-F00:0420       
-F00:0421       		; Set ssg defaults
-F00:0422       		ld b,3
+F00:0422       
+F00:0423       		; Set ssg defaults
+F00:0424       		ld b,3
                S06:000001F5:  06 03
-F00:0423       ep_ssg_loop:
-F00:0424       		ld a,b
+F00:0425       ep_ssg_loop:
+F00:0426       		ld a,b
                S06:000001F7:  78
-F00:0425       		dec a
+F00:0427       		dec a
                S06:000001F8:  3D
-F00:0426       		ld c,15
+F00:0428       		ld c,15
                S06:000001F9:  0E 0F
-F00:0427       		call SSG_set_attenuator
+F00:0429       		call SSG_set_attenuator
                S06:000001FB:  CD 51 03
-F00:0428       		djnz ep_ssg_loop
+F00:0430       		djnz ep_ssg_loop
                S06:000001FE:  10 F7
-F00:0429       
-F00:0430       		; Set fm defaults
-F00:0431       		ld b,4
+F00:0431       
+F00:0432       		; Set fm defaults
+F00:0433       		ld b,4
                S06:00000200:  06 04
-F00:0432       ep_fm_loop:
-F00:0433       		ld h,0
+F00:0434       ep_fm_loop:
+F00:0435       		ld h,0
                S06:00000202:  26 00
-F00:0434       		ld l,b
+F00:0436       		ld l,b
                S06:00000204:  68
-F00:0435       		ld de,FM_channel_LUT
+F00:0437       		ld de,FM_channel_LUT
                S06:00000205:  11 D9 08
-F00:0436       		dec hl
+F00:0438       		dec hl
                S06:00000208:  2B
-F00:0437       		add hl,de
+F00:0439       		add hl,de
                S06:00000209:  19
-F00:0438       
-F00:0439       		; Set panning to CENTER (L on, R on)
-F00:0440       		ld a,(hl)
+F00:0440       
+F00:0441       		; Set panning to CENTER (L on, R on)
+F00:0442       		ld a,(hl)
                S06:0000020A:  7E
-F00:0441       		ld c,%11000000
+F00:0443       		ld c,%11000000
                S06:0000020B:  0E C0
-F00:0442       		call FM_set_panning
+F00:0444       		call FM_set_panning
                S06:0000020D:  CD A2 08
-F00:0443       
-F00:0444       		push bc
+F00:0445       
+F00:0446       		push bc
                S06:00000210:  C5
-F00:0445       			ld b,a
+F00:0447       			ld b,a
                S06:00000211:  47
-F00:0446       			ld c,0
+F00:0448       			ld c,0
                S06:00000212:  0E 00
-F00:0447       			call FM_load_instrument
+F00:0449       			call FM_load_instrument
                S06:00000214:  CD 75 07
-F00:0448       		pop bc
+F00:0450       		pop bc
                S06:00000217:  C1
-F00:0449       
-F00:0450       		ld c,127
+F00:0451       
+F00:0452       		ld c,127
                S06:00000218:  0E 7F
-F00:0451       		call FM_set_attenuator
+F00:0453       		call FM_set_attenuator
                S06:0000021A:  CD 4C 08
-F00:0452       
-F00:0453       		djnz ep_fm_loop
+F00:0454       
+F00:0455       		djnz ep_fm_loop
                S06:0000021D:  10 E3
-F00:0454       	pop hl
+F00:0456       	pop hl
                S06:0000021F:  E1
-F00:0455       	pop bc
+F00:0457       	pop bc
                S06:00000220:  C1
-F00:0456       	pop de
+F00:0458       	pop de
                S06:00000221:  D1
-F00:0457       	pop af
+F00:0459       	pop af
                S06:00000222:  F1
-F00:0458       	ret
+F00:0460       	ret
                S06:00000223:  C9
-F00:0459       
-F00:0460       	include "SSG.asm"
+F00:0461       
+F00:0462       	include "SSG.asm"
 F03:0001       ; a:  SSG channel
 F03:0002       ; bc: pitch (----CCCCFFFFFFFF; Coarse tune, Fine tune)
 F03:0003       SSG_set_pitch:
@@ -1490,7 +1492,7 @@ F03:0383       SSG_pitch_LUT:
 F03:0384       	binary "ssg_pitch_lut.bin"
                S06:000003F7:  77 07 0C 07 A7 06 47 06 ED 05 98 05 47 05 FC 04
                S06:00000407:  B4 04 70 04 31 04 F4 03 BC 03 86 03 53 03 24 03
-F00:0461       	include "timer.asm"
+F00:0463       	include "timer.asm"
 F04:0001       ; Timer A set counter load
 F04:0002       ; bc: counter
 F04:0003       TMA_set_counter_load:
@@ -1554,7 +1556,7 @@ F04:0040       	pop de
                S06:000004A2:  D1
 F04:0041       	ret
                S06:000004A3:  C9
-F00:0462       	include "utils.asm"
+F00:0464       	include "utils.asm"
 F05:0001       ;==============================================================================;
 F05:0002       ; write45
 F05:0003       ; Writes data from the de register to ports 4 and 5.
@@ -1771,7 +1773,7 @@ F05:0146       	pop af
                S06:00000516:  F1
 F05:0147       	ret
                S06:00000517:  C9
-F00:0463       	include "commands.asm"
+F00:0465       	include "commands.asm"
 F06:0001       command_nop:
 F06:0002       	jp NMI_execute_command_end
                S06:00000518:  C3 E6 00
@@ -2337,7 +2339,7 @@ F06:0348       	pop af
                S06:000006D1:  F1
 F06:0349       	jp NMI_execute_command_end
                S06:000006D2:  C3 E6 00
-F00:0464       	include "adpcma.asm"
+F00:0466       	include "adpcma.asm"
 F07:0001       ; a:  channel
 F07:0002       ; de: sample id (-------SSSSSSSSS; Sample)
 F07:0003       PA_set_sample_addr:
@@ -2459,7 +2461,7 @@ F07:0066       	db %00000001,%00000010,%00000100,%00001000,%00010000,%00100000
                S06:00000714:  08
                S06:00000715:  10
                S06:00000716:  20
-F00:0465       	include "math.asm"
+F00:0467       	include "math.asm"
 F08:0001       ;Inputs:
 F08:0002       ;     H,E
 F08:0003       ;Outputs:
@@ -2639,7 +2641,7 @@ F08:0113              inc e        ;--
                S06:00000771:  1C
 F08:0114              jp DivLoop+1
                S06:00000772:  C3 65 07
-F00:0466       	include "FM.asm"
+F00:0468       	include "FM.asm"
 F09:0001       ; b: channel
 F09:0002       ; c: instrument
 F09:0003       ; resets the volume of all operators.
@@ -3228,7 +3230,7 @@ F09:0348       	db FM_CH1, FM_CH2, FM_CH3, FM_CH4
                S06:000008DA:  02
                S06:000008DB:  05
                S06:000008DC:  06
-F00:0467       	include "MLM.asm"
+F00:0469       	include "MLM.asm"
 F10:0001       ; stop song
 F10:0002       MLM_stop:
 F10:0003       	push hl
@@ -3491,7 +3493,7 @@ F10:0157       		ld a,(hl)
 F10:0158       		bit 7,a
                S06:00000976:  CB 7F
 F10:0159       		call z,MLM_parse_command
-               S06:00000978:  CC 32 0A
+               S06:00000978:  CC 39 0A
 F10:0160       		call nz,MLM_parse_note
                S06:0000097B:  C4 88 09
 F10:0161       
@@ -3547,9 +3549,9 @@ F10:0192
 F10:0193       		cp a,10
                S06:00000994:  FE 0A
 F10:0194       		jp c,MLM_play_note_fm
-               S06:00000996:  DA CA 09
+               S06:00000996:  DA D1 09
 F10:0195       		jp MLM_play_note_ssg
-               S06:00000999:  C3 16 0A
+               S06:00000999:  C3 1D 0A
 F10:0196       
 F10:0197       
 F10:0198       MLM_parse_note_end:
@@ -3564,791 +3566,800 @@ F10:0203       ; [INPUT]
 F10:0204       ;   a:  channel
 F10:0205       ;   bc: source   (-TTTTTTS SSSSSSSS (Timing; Sample))
 F10:0206       MLM_play_sample_pa:
-F10:0207       	push de
-               S06:0000099F:  D5
-F10:0208       	push bc
-               S06:000009A0:  C5
-F10:0209       	push hl
-               S06:000009A1:  E5
-F10:0210       		; Get sample
-F10:0211       		push af
-               S06:000009A2:  F5
-F10:0212       			ld a,b
-               S06:000009A3:  78
-F10:0213       			and a,%00000001
-               S06:000009A4:  E6 01
-F10:0214       			ld d,a
-               S06:000009A6:  57
-F10:0215       			ld e,c
-               S06:000009A7:  59
-F10:0216       		pop af
-               S06:000009A8:  F1
-F10:0217       		call PA_set_sample_addr
-               S06:000009A9:  CD D5 06
-F10:0218       
-F10:0219       		; Get timing
-F10:0220       		push af
-               S06:000009AC:  F5
-F10:0221       			ld a,b
-               S06:000009AD:  78
-F10:0222       			srl a
-               S06:000009AE:  CB 3F
-F10:0223       			and a,%00111111
-               S06:000009B0:  E6 3F
-F10:0224       			ld c,a
-               S06:000009B2:  4F
-F10:0225       			ld b,0
-               S06:000009B3:  06 00
-F10:0226       		pop af
-               S06:000009B5:  F1
-F10:0227       		call MLM_set_timing
-               S06:000009B6:  CD 72 0A
-F10:0228       
-F10:0229       		; play sample
-F10:0230       		ld h,0
-               S06:000009B9:  26 00
-F10:0231       		ld l,a
-               S06:000009BB:  6F
-F10:0232       		ld de,PA_channel_on_masks
-               S06:000009BC:  11 11 07
-F10:0233       		add hl,de
-               S06:000009BF:  19
-F10:0234       		ld d,REG_PA_CTRL
-               S06:000009C0:  16 00
-F10:0235       		ld e,(hl) 
-               S06:000009C2:  5E
-F10:0236       		rst RST_YM_WRITEB
-               S06:000009C3:  DF
-F10:0237       	pop hl
-               S06:000009C4:  E1
-F10:0238       	pop bc
-               S06:000009C5:  C1
-F10:0239       	pop de
-               S06:000009C6:  D1
-F10:0240       	jp MLM_parse_note_end
-               S06:000009C7:  C3 9C 09
-F10:0241       
-F10:0242       ; [INPUT]
-F10:0243       ;   a:  channel+6
-F10:0244       ;   bc: source
-F10:0245       MLM_play_note_fm:
-F10:0246       	; Set Timing
-F10:0247       	push bc
-               S06:000009CA:  C5
-F10:0248       		; Mask timing
-F10:0249       		push af
-               S06:000009CB:  F5
-F10:0250       			ld a,b
-               S06:000009CC:  78
-F10:0251       			and a,%01111111
-               S06:000009CD:  E6 7F
-F10:0252       			ld c,a
-               S06:000009CF:  4F
-F10:0253       			ld b,0
-               S06:000009D0:  06 00
-F10:0254       		pop af
-               S06:000009D2:  F1
+F10:0207       	push af
+               S06:0000099F:  F5
+F10:0208       		ld a,&39
+               S06:000009A0:  3E 39
+F10:0209       		ld (breakpoint),a
+               S06:000009A2:  32 00 F8
+F10:0210       	pop af
+               S06:000009A5:  F1
+F10:0211       	
+F10:0212       	push de
+               S06:000009A6:  D5
+F10:0213       	push bc
+               S06:000009A7:  C5
+F10:0214       	push hl
+               S06:000009A8:  E5
+F10:0215       		; Get sample
+F10:0216       		push af
+               S06:000009A9:  F5
+F10:0217       			ld a,b
+               S06:000009AA:  78
+F10:0218       			and a,%00000001
+               S06:000009AB:  E6 01
+F10:0219       			ld d,a
+               S06:000009AD:  57
+F10:0220       			ld e,c
+               S06:000009AE:  59
+F10:0221       		pop af
+               S06:000009AF:  F1
+F10:0222       		call PA_set_sample_addr
+               S06:000009B0:  CD D5 06
+F10:0223       
+F10:0224       		; Get timing
+F10:0225       		push af
+               S06:000009B3:  F5
+F10:0226       			ld a,b
+               S06:000009B4:  78
+F10:0227       			srl a
+               S06:000009B5:  CB 3F
+F10:0228       			and a,%00111111
+               S06:000009B7:  E6 3F
+F10:0229       			ld c,a
+               S06:000009B9:  4F
+F10:0230       			ld b,0
+               S06:000009BA:  06 00
+F10:0231       		pop af
+               S06:000009BC:  F1
+F10:0232       		call MLM_set_timing
+               S06:000009BD:  CD 79 0A
+F10:0233       
+F10:0234       		; play sample
+F10:0235       		ld h,0
+               S06:000009C0:  26 00
+F10:0236       		ld l,a
+               S06:000009C2:  6F
+F10:0237       		ld de,PA_channel_on_masks
+               S06:000009C3:  11 11 07
+F10:0238       		add hl,de
+               S06:000009C6:  19
+F10:0239       		ld d,REG_PA_CTRL
+               S06:000009C7:  16 00
+F10:0240       		ld e,(hl) 
+               S06:000009C9:  5E
+F10:0241       		rst RST_YM_WRITEB
+               S06:000009CA:  DF
+F10:0242       	pop hl
+               S06:000009CB:  E1
+F10:0243       	pop bc
+               S06:000009CC:  C1
+F10:0244       	pop de
+               S06:000009CD:  D1
+F10:0245       	jp MLM_parse_note_end
+               S06:000009CE:  C3 9C 09
+F10:0246       
+F10:0247       ; [INPUT]
+F10:0248       ;   a:  channel+6
+F10:0249       ;   bc: source
+F10:0250       MLM_play_note_fm:
+F10:0251       	push af
+               S06:000009D1:  F5
+F10:0252       		ld a,&39
+               S06:000009D2:  3E 39
+F10:0253       		ld (breakpoint),a
+               S06:000009D4:  32 00 F8
+F10:0254       	pop af
+               S06:000009D7:  F1
 F10:0255       
-F10:0256       		call MLM_set_timing
-               S06:000009D3:  CD 72 0A
-F10:0257       	pop bc
-               S06:000009D6:  C1
-F10:0258       
-F10:0259       	push af
-               S06:000009D7:  F5
-F10:0260       		ld a,&39
-               S06:000009D8:  3E 39
-F10:0261       		ld (breakpoint),a
-               S06:000009DA:  32 00 F8
-F10:0262       	pop af
-               S06:000009DD:  F1
-F10:0263       
-F10:0264       	; Play note
-F10:0265       	push af
-               S06:000009DE:  F5
-F10:0266       	push hl
-               S06:000009DF:  E5
-F10:0267       	push de
-               S06:000009E0:  D5
-F10:0268       	push bc
-               S06:000009E1:  C5
-F10:0269       		; backup MLM channel number into b
-F10:0270       		ld b,a
-               S06:000009E2:  47
-F10:0271       
-F10:0272       		; Lookup correct FM channel number
-F10:0273       		sub a,6
-               S06:000009E3:  D6 06
-F10:0274       		ld h,0
-               S06:000009E5:  26 00
-F10:0275       		ld l,a
-               S06:000009E7:  6F
-F10:0276       		ld de,FM_channel_LUT
-               S06:000009E8:  11 D9 08
-F10:0277       		add hl,de
-               S06:000009EB:  19
-F10:0278       		ld a,(hl)
-               S06:000009EC:  7E
-F10:0279       
-F10:0280       		call FM_stop_channel
-               S06:000009ED:  CD B2 08
-F10:0281       
-F10:0282       		; Load instrument
-F10:0283       		push bc
-               S06:000009F0:  C5
-F10:0284       			ld h,0
-               S06:000009F1:  26 00
-F10:0285       			ld l,b
-               S06:000009F3:  68
-F10:0286       			ld de,MLM_channel_instruments
-               S06:000009F4:  11 B2 F8
-F10:0287       			add hl,de
-               S06:000009F7:  19
-F10:0288       			ld b,a
-               S06:000009F8:  47
-F10:0289       			ld c,(hl)
-               S06:000009F9:  4E
-F10:0290       			call FM_load_instrument
-               S06:000009FA:  CD 75 07
-F10:0291       		pop bc
-               S06:000009FD:  C1
-F10:0292       
-F10:0293       		; Find a better way to set attenuator
-F10:0294       		push bc
-               S06:000009FE:  C5
-F10:0295       			ld c,0
-               S06:000009FF:  0E 00
-F10:0296       			call FM_set_attenuator
-               S06:00000A01:  CD 4C 08
-F10:0297       		pop bc
+F10:0256       	; Set Timing
+F10:0257       	push bc
+               S06:000009D8:  C5
+F10:0258       		; Mask timing
+F10:0259       		push af
+               S06:000009D9:  F5
+F10:0260       			ld a,b
+               S06:000009DA:  78
+F10:0261       			and a,%01111111
+               S06:000009DB:  E6 7F
+F10:0262       			ld c,a
+               S06:000009DD:  4F
+F10:0263       			ld b,0
+               S06:000009DE:  06 00
+F10:0264       		pop af
+               S06:000009E0:  F1
+F10:0265       
+F10:0266       		call MLM_set_timing
+               S06:000009E1:  CD 79 0A
+F10:0267       	pop bc
+               S06:000009E4:  C1
+F10:0268       
+F10:0269       	; Play note
+F10:0270       	push af
+               S06:000009E5:  F5
+F10:0271       	push hl
+               S06:000009E6:  E5
+F10:0272       	push de
+               S06:000009E7:  D5
+F10:0273       	push bc
+               S06:000009E8:  C5
+F10:0274       		; backup MLM channel number into b
+F10:0275       		ld b,a
+               S06:000009E9:  47
+F10:0276       
+F10:0277       		; Lookup correct FM channel number
+F10:0278       		sub a,6
+               S06:000009EA:  D6 06
+F10:0279       		ld h,0
+               S06:000009EC:  26 00
+F10:0280       		ld l,a
+               S06:000009EE:  6F
+F10:0281       		ld de,FM_channel_LUT
+               S06:000009EF:  11 D9 08
+F10:0282       		add hl,de
+               S06:000009F2:  19
+F10:0283       		ld a,(hl)
+               S06:000009F3:  7E
+F10:0284       
+F10:0285       		call FM_stop_channel
+               S06:000009F4:  CD B2 08
+F10:0286       
+F10:0287       		; Load instrument
+F10:0288       		push bc
+               S06:000009F7:  C5
+F10:0289       			ld h,0
+               S06:000009F8:  26 00
+F10:0290       			ld l,b
+               S06:000009FA:  68
+F10:0291       			ld de,MLM_channel_instruments
+               S06:000009FB:  11 B2 F8
+F10:0292       			add hl,de
+               S06:000009FE:  19
+F10:0293       			ld b,a
+               S06:000009FF:  47
+F10:0294       			ld c,(hl)
+               S06:00000A00:  4E
+F10:0295       			call FM_load_instrument
+               S06:00000A01:  CD 75 07
+F10:0296       		pop bc
                S06:00000A04:  C1
-F10:0298       
-F10:0299       		ld b,a
-               S06:00000A05:  47
-F10:0300       		call FM_set_note
-               S06:00000A06:  CD 15 08
-F10:0301       
-F10:0302       		ld d,REG_FM_KEY_ON
-               S06:00000A09:  16 28
-F10:0303       		or a,%11110000
-               S06:00000A0B:  F6 F0
-F10:0304       		ld e,a
-               S06:00000A0D:  5F
-F10:0305       		rst RST_YM_WRITEA
-               S06:00000A0E:  D7
-F10:0306       	pop bc
-               S06:00000A0F:  C1
-F10:0307       	pop de
-               S06:00000A10:  D1
-F10:0308       	pop hl
-               S06:00000A11:  E1
-F10:0309       	pop af
-               S06:00000A12:  F1
-F10:0310       	jp MLM_parse_note_end
-               S06:00000A13:  C3 9C 09
-F10:0311       
-F10:0312       ; [INPUT]
-F10:0313       ;   a:  channel+10
-F10:0314       ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
-F10:0315       MLM_play_note_ssg:
-F10:0316       	push af
-               S06:00000A16:  F5
-F10:0317       		push bc
-               S06:00000A17:  C5
-F10:0318       			push af
-               S06:00000A18:  F5
-F10:0319       				ld a,b
-               S06:00000A19:  78
-F10:0320       				and a,%01111111
-               S06:00000A1A:  E6 7F
-F10:0321       				ld c,a
-               S06:00000A1C:  4F
-F10:0322       			pop af
-               S06:00000A1D:  F1
-F10:0323       
-F10:0324       			ld b,0
-               S06:00000A1E:  06 00
-F10:0325       			call MLM_set_timing
-               S06:00000A20:  CD 72 0A
-F10:0326       		pop bc
-               S06:00000A23:  C1
-F10:0327       
-F10:0328       		sub a,10
-               S06:00000A24:  D6 0A
-F10:0329       		call SSG_set_note
-               S06:00000A26:  CD C6 02
-F10:0330       
-F10:0331       		ld c,0 ; instrument TODO: way to change current instrument
-               S06:00000A29:  0E 00
-F10:0332       		call SSG_set_instrument
-               S06:00000A2B:  CD 6E 02
-F10:0333       	pop af
-               S06:00000A2E:  F1
-F10:0334       	jp MLM_parse_note_end
-               S06:00000A2F:  C3 9C 09
+F10:0297       
+F10:0298       		; Find a better way to set attenuator
+F10:0299       		push bc
+               S06:00000A05:  C5
+F10:0300       			ld c,0
+               S06:00000A06:  0E 00
+F10:0301       			call FM_set_attenuator
+               S06:00000A08:  CD 4C 08
+F10:0302       		pop bc
+               S06:00000A0B:  C1
+F10:0303       
+F10:0304       		ld b,a
+               S06:00000A0C:  47
+F10:0305       		call FM_set_note
+               S06:00000A0D:  CD 15 08
+F10:0306       
+F10:0307       		ld d,REG_FM_KEY_ON
+               S06:00000A10:  16 28
+F10:0308       		or a,%11110000
+               S06:00000A12:  F6 F0
+F10:0309       		ld e,a
+               S06:00000A14:  5F
+F10:0310       		rst RST_YM_WRITEA
+               S06:00000A15:  D7
+F10:0311       	pop bc
+               S06:00000A16:  C1
+F10:0312       	pop de
+               S06:00000A17:  D1
+F10:0313       	pop hl
+               S06:00000A18:  E1
+F10:0314       	pop af
+               S06:00000A19:  F1
+F10:0315       	jp MLM_parse_note_end
+               S06:00000A1A:  C3 9C 09
+F10:0316       
+F10:0317       ; [INPUT]
+F10:0318       ;   a:  channel+10
+F10:0319       ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
+F10:0320       MLM_play_note_ssg:
+F10:0321       	push af
+               S06:00000A1D:  F5
+F10:0322       		push bc
+               S06:00000A1E:  C5
+F10:0323       			push af
+               S06:00000A1F:  F5
+F10:0324       				ld a,b
+               S06:00000A20:  78
+F10:0325       				and a,%01111111
+               S06:00000A21:  E6 7F
+F10:0326       				ld c,a
+               S06:00000A23:  4F
+F10:0327       			pop af
+               S06:00000A24:  F1
+F10:0328       
+F10:0329       			ld b,0
+               S06:00000A25:  06 00
+F10:0330       			call MLM_set_timing
+               S06:00000A27:  CD 79 0A
+F10:0331       		pop bc
+               S06:00000A2A:  C1
+F10:0332       
+F10:0333       		sub a,10
+               S06:00000A2B:  D6 0A
+F10:0334       		call SSG_set_note
+               S06:00000A2D:  CD C6 02
 F10:0335       
-F10:0336       ; [INPUT]
-F10:0337       ;   c:  channel
-F10:0338       ;   hl: source
-F10:0339       ; [OUTPUT]
-F10:0340       ;   hl: source+command_argc
-F10:0341       MLM_parse_command:
-F10:0342       	push af
-               S06:00000A32:  F5
-F10:0343       	push de
-               S06:00000A33:  D5
-F10:0344       	push bc
-               S06:00000A34:  C5
-F10:0345       		; Lookup command argc and store it into a
-F10:0346       		push hl
-               S06:00000A35:  E5
-F10:0347       			ld l,(hl)
-               S06:00000A36:  6E
-F10:0348       			ld h,0
-               S06:00000A37:  26 00
-F10:0349       			ld de,MLM_command_argc
-               S06:00000A39:  11 6F 0A
-F10:0350       			add hl,de
-               S06:00000A3C:  19
-F10:0351       			ld a,(hl)
-               S06:00000A3D:  7E
-F10:0352       		pop hl
-               S06:00000A3E:  E1
-F10:0353       
-F10:0354       		; Lookup command vector and store it into de
-F10:0355       		push hl
-               S06:00000A3F:  E5
-F10:0356       			ld l,(hl)
-               S06:00000A40:  6E
-F10:0357       			ld h,0
-               S06:00000A41:  26 00
-F10:0358       			ld de,MLM_command_vectors
-               S06:00000A43:  11 69 0A
-F10:0359       			add hl,hl
-               S06:00000A46:  29
-F10:0360       			add hl,de
-               S06:00000A47:  19
-F10:0361       			ld e,(hl)
-               S06:00000A48:  5E
-F10:0362       			inc hl
-               S06:00000A49:  23
-F10:0363       			ld d,(hl)
-               S06:00000A4A:  56
-F10:0364       		pop hl
-               S06:00000A4B:  E1
-F10:0365       
-F10:0366       		inc hl
-               S06:00000A4C:  23
-F10:0367       
-F10:0368       		; If the command's argc is 0, 
-F10:0369       		; just execute the command
-F10:0370       		cp a,0
-               S06:00000A4D:  FE 00
-F10:0371       		jr z,MLM_parse_command_execute
-               S06:00000A4F:  28 0C
+F10:0336       		ld c,0 ; instrument TODO: way to change current instrument
+               S06:00000A30:  0E 00
+F10:0337       		call SSG_set_instrument
+               S06:00000A32:  CD 6E 02
+F10:0338       	pop af
+               S06:00000A35:  F1
+F10:0339       	jp MLM_parse_note_end
+               S06:00000A36:  C3 9C 09
+F10:0340       
+F10:0341       ; [INPUT]
+F10:0342       ;   c:  channel
+F10:0343       ;   hl: source
+F10:0344       ; [OUTPUT]
+F10:0345       ;   hl: source+command_argc
+F10:0346       MLM_parse_command:
+F10:0347       	push af
+               S06:00000A39:  F5
+F10:0348       	push de
+               S06:00000A3A:  D5
+F10:0349       	push bc
+               S06:00000A3B:  C5
+F10:0350       		; Lookup command argc and store it into a
+F10:0351       		push hl
+               S06:00000A3C:  E5
+F10:0352       			ld l,(hl)
+               S06:00000A3D:  6E
+F10:0353       			ld h,0
+               S06:00000A3E:  26 00
+F10:0354       			ld de,MLM_command_argc
+               S06:00000A40:  11 76 0A
+F10:0355       			add hl,de
+               S06:00000A43:  19
+F10:0356       			ld a,(hl)
+               S06:00000A44:  7E
+F10:0357       		pop hl
+               S06:00000A45:  E1
+F10:0358       
+F10:0359       		; Lookup command vector and store it into de
+F10:0360       		push hl
+               S06:00000A46:  E5
+F10:0361       			ld l,(hl)
+               S06:00000A47:  6E
+F10:0362       			ld h,0
+               S06:00000A48:  26 00
+F10:0363       			ld de,MLM_command_vectors
+               S06:00000A4A:  11 70 0A
+F10:0364       			add hl,hl
+               S06:00000A4D:  29
+F10:0365       			add hl,de
+               S06:00000A4E:  19
+F10:0366       			ld e,(hl)
+               S06:00000A4F:  5E
+F10:0367       			inc hl
+               S06:00000A50:  23
+F10:0368       			ld d,(hl)
+               S06:00000A51:  56
+F10:0369       		pop hl
+               S06:00000A52:  E1
+F10:0370       
+F10:0371       		inc hl
+               S06:00000A53:  23
 F10:0372       
-F10:0373       		; if it isn't, load arguments into
-F10:0374       		; MLM_event_arg_buffer beforehand
-F10:0375       		; and add argc to hl
-F10:0376       		push de
-               S06:00000A51:  D5
-F10:0377       		push bc
-               S06:00000A52:  C5
-F10:0378       			ld de,MLM_event_arg_buffer
-               S06:00000A53:  11 A2 F8
-F10:0379       			ld b,0
-               S06:00000A56:  06 00
-F10:0380       			ld c,a
-               S06:00000A58:  4F
-F10:0381       			ldir
-               S06:00000A59:  ED B0
-F10:0382       		pop bc
-               S06:00000A5B:  C1
-F10:0383       		pop de
-               S06:00000A5C:  D1
-F10:0384       
-F10:0385       MLM_parse_command_execute:
-F10:0386       		ex de,hl
-               S06:00000A5D:  EB
-F10:0387       		jp (hl)
-               S06:00000A5E:  E9
-F10:0388       
-F10:0389       MLM_parse_command_end:
-F10:0390       		; add argc to the source
+F10:0373       		; If the command's argc is 0, 
+F10:0374       		; just execute the command
+F10:0375       		cp a,0
+               S06:00000A54:  FE 00
+F10:0376       		jr z,MLM_parse_command_execute
+               S06:00000A56:  28 0C
+F10:0377       
+F10:0378       		; if it isn't, load arguments into
+F10:0379       		; MLM_event_arg_buffer beforehand
+F10:0380       		; and add argc to hl
+F10:0381       		push de
+               S06:00000A58:  D5
+F10:0382       		push bc
+               S06:00000A59:  C5
+F10:0383       			ld de,MLM_event_arg_buffer
+               S06:00000A5A:  11 A2 F8
+F10:0384       			ld b,0
+               S06:00000A5D:  06 00
+F10:0385       			ld c,a
+               S06:00000A5F:  4F
+F10:0386       			ldir
+               S06:00000A60:  ED B0
+F10:0387       		pop bc
+               S06:00000A62:  C1
+F10:0388       		pop de
+               S06:00000A63:  D1
+F10:0389       
+F10:0390       MLM_parse_command_execute:
 F10:0391       		ex de,hl
-               S06:00000A5F:  EB
-F10:0392       
-F10:0393       		dec a
-               S06:00000A60:  3D
-F10:0394       		ld d,0
-               S06:00000A61:  16 00
-F10:0395       		ld e,a
-               S06:00000A63:  5F
-F10:0396       		add hl,de
-               S06:00000A64:  19
-F10:0397       	pop bc
-               S06:00000A65:  C1
-F10:0398       	pop de
-               S06:00000A66:  D1
-F10:0399       	pop af
-               S06:00000A67:  F1
-F10:0400       	ret
-               S06:00000A68:  C9
-F10:0401       
-F10:0402       MLM_command_vectors:
-F10:0403       	dw MLMCOM_end_of_list, MLMCOM_note_off
-               S06:00000A69:  89 0A
-               S06:00000A6B:  99 0A
-F10:0404       	dw MLMCOM_set_instrument
-               S06:00000A6D:  CA 0A
-F10:0405       
-F10:0406       MLM_command_argc:
-F10:0407       	db &00, &01, &01
-               S06:00000A6F:  00
-               S06:00000A70:  01
-               S06:00000A71:  01
-F10:0408       
-F10:0409       ; a:  channel
-F10:0410       ; bc: timing
-F10:0411       MLM_set_timing:
-F10:0412       	push hl
-               S06:00000A72:  E5
-F10:0413       	push de
-               S06:00000A73:  D5
-F10:0414       		ld h,0
-               S06:00000A74:  26 00
-F10:0415       		ld l,a
-               S06:00000A76:  6F
-F10:0416       		ld de,MLM_playback_timings
-               S06:00000A77:  11 61 F8
-F10:0417       		add hl,hl
-               S06:00000A7A:  29
-F10:0418       		add hl,de
-               S06:00000A7B:  19
-F10:0419       		ld (hl),c
-               S06:00000A7C:  71
-F10:0420       		inc hl
-               S06:00000A7D:  23
-F10:0421       		ld (hl),b
-               S06:00000A7E:  70
-F10:0422       
-F10:0423       		ld de,MLM_playback_set_timings-MLM_playback_timings
-               S06:00000A7F:  11 1A 00
-F10:0424       		add hl,de
+               S06:00000A64:  EB
+F10:0392       		jp (hl)
+               S06:00000A65:  E9
+F10:0393       
+F10:0394       MLM_parse_command_end:
+F10:0395       		; add argc to the source
+F10:0396       		ex de,hl
+               S06:00000A66:  EB
+F10:0397       
+F10:0398       		dec a
+               S06:00000A67:  3D
+F10:0399       		ld d,0
+               S06:00000A68:  16 00
+F10:0400       		ld e,a
+               S06:00000A6A:  5F
+F10:0401       		add hl,de
+               S06:00000A6B:  19
+F10:0402       	pop bc
+               S06:00000A6C:  C1
+F10:0403       	pop de
+               S06:00000A6D:  D1
+F10:0404       	pop af
+               S06:00000A6E:  F1
+F10:0405       	ret
+               S06:00000A6F:  C9
+F10:0406       
+F10:0407       MLM_command_vectors:
+F10:0408       	dw MLMCOM_end_of_list, MLMCOM_note_off
+               S06:00000A70:  90 0A
+               S06:00000A72:  A0 0A
+F10:0409       	dw MLMCOM_set_instrument
+               S06:00000A74:  D1 0A
+F10:0410       
+F10:0411       MLM_command_argc:
+F10:0412       	db &00, &01, &01
+               S06:00000A76:  00
+               S06:00000A77:  01
+               S06:00000A78:  01
+F10:0413       
+F10:0414       ; a:  channel
+F10:0415       ; bc: timing
+F10:0416       MLM_set_timing:
+F10:0417       	push hl
+               S06:00000A79:  E5
+F10:0418       	push de
+               S06:00000A7A:  D5
+F10:0419       		ld h,0
+               S06:00000A7B:  26 00
+F10:0420       		ld l,a
+               S06:00000A7D:  6F
+F10:0421       		ld de,MLM_playback_timings
+               S06:00000A7E:  11 61 F8
+F10:0422       		add hl,hl
+               S06:00000A81:  29
+F10:0423       		add hl,de
                S06:00000A82:  19
-F10:0425       		ld (hl),b
-               S06:00000A83:  70
-F10:0426       		dec hl
-               S06:00000A84:  2B
-F10:0427       		ld (hl),c
-               S06:00000A85:  71
-F10:0428       	pop de
-               S06:00000A86:  D1
-F10:0429       	pop hl
-               S06:00000A87:  E1
-F10:0430       	ret
-               S06:00000A88:  C9
-F10:0431       
-F10:0432       ; c: channel
-F10:0433       ;   Sets MLM_playback_control[channel] to 0 (false)
-F10:0434       MLMCOM_end_of_list:
-F10:0435       	push hl
-               S06:00000A89:  E5
-F10:0436       	push de
-               S06:00000A8A:  D5
-F10:0437       		ld h,0
-               S06:00000A8B:  26 00
-F10:0438       		ld l,c
-               S06:00000A8D:  69
-F10:0439       		ld de,MLM_playback_control
-               S06:00000A8E:  11 95 F8
-F10:0440       		add hl,de
-               S06:00000A91:  19
-F10:0441       
-F10:0442       		ld (hl),0
-               S06:00000A92:  36 00
-F10:0443       	pop de
-               S06:00000A94:  D1
-F10:0444       	pop hl
-               S06:00000A95:  E1
-F10:0445       	jp MLM_parse_command_end
-               S06:00000A96:  C3 5F 0A
+F10:0424       		ld (hl),c
+               S06:00000A83:  71
+F10:0425       		inc hl
+               S06:00000A84:  23
+F10:0426       		ld (hl),b
+               S06:00000A85:  70
+F10:0427       
+F10:0428       		ld de,MLM_playback_set_timings-MLM_playback_timings
+               S06:00000A86:  11 1A 00
+F10:0429       		add hl,de
+               S06:00000A89:  19
+F10:0430       		ld (hl),b
+               S06:00000A8A:  70
+F10:0431       		dec hl
+               S06:00000A8B:  2B
+F10:0432       		ld (hl),c
+               S06:00000A8C:  71
+F10:0433       	pop de
+               S06:00000A8D:  D1
+F10:0434       	pop hl
+               S06:00000A8E:  E1
+F10:0435       	ret
+               S06:00000A8F:  C9
+F10:0436       
+F10:0437       ; c: channel
+F10:0438       ;   Sets MLM_playback_control[channel] to 0 (false)
+F10:0439       MLMCOM_end_of_list:
+F10:0440       	push hl
+               S06:00000A90:  E5
+F10:0441       	push de
+               S06:00000A91:  D5
+F10:0442       		ld h,0
+               S06:00000A92:  26 00
+F10:0443       		ld l,c
+               S06:00000A94:  69
+F10:0444       		ld de,MLM_playback_control
+               S06:00000A95:  11 95 F8
+F10:0445       		add hl,de
+               S06:00000A98:  19
 F10:0446       
-F10:0447       ; c: channel
-F10:0448       ; Arguments:
-F10:0449       ; 	1. timing
-F10:0450       MLMCOM_note_off:
-F10:0451       	push hl
-               S06:00000A99:  E5
-F10:0452       	push af
-               S06:00000A9A:  F5
-F10:0453       	push de
-               S06:00000A9B:  D5
-F10:0454       	push bc
-               S06:00000A9C:  C5
-F10:0455       		; switch (channel) {
-F10:0456       		; case is_adpcma:
-F10:0457       		;   PA_stop_sample(channel);
-F10:0458       		;   break;
-F10:0459       		;
-F10:0460       		; case is_ssg:
-F10:0461       		;   SSG_stop_channel(channel-10);
-F10:0462       		;   break;
-F10:0463       		;
-F10:0464       		; default: // is fm
-F10:0465       		;   FM_stop_channel(FM_channel_LUT[channel-6]);
-F10:0466       		;   break;
-F10:0467       		; }
-F10:0468       		ld a,c
-               S06:00000A9D:  79
-F10:0469       		cp a,6
-               S06:00000A9E:  FE 06
-F10:0470       		call c,PA_stop_sample
-               S06:00000AA0:  DC FC 06
-F10:0471       		jr c,MLMCOM_note_off_break
-               S06:00000AA3:  38 14
-F10:0472       
-F10:0473       		cp a,10
-               S06:00000AA5:  FE 0A
-F10:0474       		sub a,10
-               S06:00000AA7:  D6 0A
-F10:0475       		call nc,SSG_stop_note
-               S06:00000AA9:  D4 5E 03
-F10:0476       		jr nc,MLMCOM_note_off_break
-               S06:00000AAC:  30 0B
+F10:0447       		ld (hl),0
+               S06:00000A99:  36 00
+F10:0448       	pop de
+               S06:00000A9B:  D1
+F10:0449       	pop hl
+               S06:00000A9C:  E1
+F10:0450       	jp MLM_parse_command_end
+               S06:00000A9D:  C3 66 0A
+F10:0451       
+F10:0452       ; c: channel
+F10:0453       ; Arguments:
+F10:0454       ; 	1. timing
+F10:0455       MLMCOM_note_off:
+F10:0456       	push hl
+               S06:00000AA0:  E5
+F10:0457       	push af
+               S06:00000AA1:  F5
+F10:0458       	push de
+               S06:00000AA2:  D5
+F10:0459       	push bc
+               S06:00000AA3:  C5
+F10:0460       		; switch (channel) {
+F10:0461       		; case is_adpcma:
+F10:0462       		;   PA_stop_sample(channel);
+F10:0463       		;   break;
+F10:0464       		;
+F10:0465       		; case is_ssg:
+F10:0466       		;   SSG_stop_channel(channel-10);
+F10:0467       		;   break;
+F10:0468       		;
+F10:0469       		; default: // is fm
+F10:0470       		;   FM_stop_channel(FM_channel_LUT[channel-6]);
+F10:0471       		;   break;
+F10:0472       		; }
+F10:0473       		ld a,c
+               S06:00000AA4:  79
+F10:0474       		cp a,6
+               S06:00000AA5:  FE 06
+F10:0475       		call c,PA_stop_sample
+               S06:00000AA7:  DC FC 06
+F10:0476       		jr c,MLMCOM_note_off_break
+               S06:00000AAA:  38 14
 F10:0477       
-F10:0478       		ld a,c
-               S06:00000AAE:  79
-F10:0479       		sub a,6
-               S06:00000AAF:  D6 06
-F10:0480       		ld h,0
-               S06:00000AB1:  26 00
-F10:0481       		ld l,a 
-               S06:00000AB3:  6F
-F10:0482       		ld de,FM_channel_LUT
-               S06:00000AB4:  11 D9 08
-F10:0483       		add hl,de
-               S06:00000AB7:  19
-F10:0484       		ld a,(hl)
-               S06:00000AB8:  7E
-F10:0485       		; call FM_stop_note TODO; use a register for the channel
-F10:0486       
-F10:0487       MLMCOM_note_off_break:
-F10:0488       		ld hl,MLM_event_arg_buffer
-               S06:00000AB9:  21 A2 F8
-F10:0489       		ld a,c
-               S06:00000ABC:  79
-F10:0490       		ld b,0
-               S06:00000ABD:  06 00
-F10:0491       		ld c,(hl)
-               S06:00000ABF:  4E
-F10:0492       		call MLM_set_timing
-               S06:00000AC0:  CD 72 0A
-F10:0493       	pop bc
-               S06:00000AC3:  C1
-F10:0494       	pop de
-               S06:00000AC4:  D1
-F10:0495       	pop af
-               S06:00000AC5:  F1
-F10:0496       	pop hl
-               S06:00000AC6:  E1
-F10:0497       	jp MLM_parse_command_end
-               S06:00000AC7:  C3 5F 0A
-F10:0498       
-F10:0499       ; c: channel
-F10:0500       ; Arguments
-F10:0501       ;   1. instrument
-F10:0502       MLMCOM_set_instrument:
-F10:0503       	push af
-               S06:00000ACA:  F5
-F10:0504       	push hl
-               S06:00000ACB:  E5
-F10:0505       	push bc
-               S06:00000ACC:  C5
-F10:0506       		ld hl,MLM_event_arg_buffer
-               S06:00000ACD:  21 A2 F8
-F10:0507       		ld a,(hl)
-               S06:00000AD0:  7E
-F10:0508       		ld b,0
-               S06:00000AD1:  06 00
-F10:0509       		ld hl,MLM_channel_instruments
-               S06:00000AD3:  21 B2 F8
-F10:0510       		add hl,bc
-               S06:00000AD6:  09
-F10:0511       		ld (hl),a
-               S06:00000AD7:  77
-F10:0512       
-F10:0513       		ld a,c
-               S06:00000AD8:  79
-F10:0514       		ld bc,0
-               S06:00000AD9:  01 00 00
-F10:0515       		call MLM_set_timing
-               S06:00000ADC:  CD 72 0A
-F10:0516       	pop bc
-               S06:00000ADF:  C1
-F10:0517       	pop hl
-               S06:00000AE0:  E1
-F10:0518       	pop af
-               S06:00000AE1:  F1
-F10:0519       	jp MLM_parse_command_end
-               S06:00000AE2:  C3 5F 0A
-F10:0520       
-F10:0521       ; c: channel
-F10:0522       ; Arguments:
-F10:0523       ;   1. timing
-F10:0524       MLMCOM_wait_ticks_8:
-F10:0525       	push hl
-               S06:00000AE5:  E5
-F10:0526       	push bc
-               S06:00000AE6:  C5
-F10:0527       	push af
-               S06:00000AE7:  F5
-F10:0528       		ld hl,MLM_event_arg_buffer
-               S06:00000AE8:  21 A2 F8
-F10:0529       		ld a,c
-               S06:00000AEB:  79
-F10:0530       		ld b,0
-               S06:00000AEC:  06 00
-F10:0531       		ld c,(hl)
-               S06:00000AEE:  4E
-F10:0532       		call MLM_set_timing
-               S06:00000AEF:  CD 72 0A
-F10:0533       	pop af
-               S06:00000AF2:  F1
-F10:0534       	pop bc
-               S06:00000AF3:  C1
-F10:0535       	pop hl
-               S06:00000AF4:  E1
-F10:0536       	jp MLM_parse_command_end
-               S06:00000AF5:  C3 5F 0A
-F00:0468       
-F00:0469       	org BANK3
-F00:0470       	
-F00:0471       MLM_header:
-F00:0472       	dw MLM_song0-MLM_header ; song 0 offset
+F10:0478       		cp a,10
+               S06:00000AAC:  FE 0A
+F10:0479       		sub a,10
+               S06:00000AAE:  D6 0A
+F10:0480       		call nc,SSG_stop_note
+               S06:00000AB0:  D4 5E 03
+F10:0481       		jr nc,MLMCOM_note_off_break
+               S06:00000AB3:  30 0B
+F10:0482       
+F10:0483       		ld a,c
+               S06:00000AB5:  79
+F10:0484       		sub a,6
+               S06:00000AB6:  D6 06
+F10:0485       		ld h,0
+               S06:00000AB8:  26 00
+F10:0486       		ld l,a 
+               S06:00000ABA:  6F
+F10:0487       		ld de,FM_channel_LUT
+               S06:00000ABB:  11 D9 08
+F10:0488       		add hl,de
+               S06:00000ABE:  19
+F10:0489       		ld a,(hl)
+               S06:00000ABF:  7E
+F10:0490       		; call FM_stop_note TODO; use a register for the channel
+F10:0491       
+F10:0492       MLMCOM_note_off_break:
+F10:0493       		ld hl,MLM_event_arg_buffer
+               S06:00000AC0:  21 A2 F8
+F10:0494       		ld a,c
+               S06:00000AC3:  79
+F10:0495       		ld b,0
+               S06:00000AC4:  06 00
+F10:0496       		ld c,(hl)
+               S06:00000AC6:  4E
+F10:0497       		call MLM_set_timing
+               S06:00000AC7:  CD 79 0A
+F10:0498       	pop bc
+               S06:00000ACA:  C1
+F10:0499       	pop de
+               S06:00000ACB:  D1
+F10:0500       	pop af
+               S06:00000ACC:  F1
+F10:0501       	pop hl
+               S06:00000ACD:  E1
+F10:0502       	jp MLM_parse_command_end
+               S06:00000ACE:  C3 66 0A
+F10:0503       
+F10:0504       ; c: channel
+F10:0505       ; Arguments
+F10:0506       ;   1. instrument
+F10:0507       MLMCOM_set_instrument:
+F10:0508       	push af
+               S06:00000AD1:  F5
+F10:0509       	push hl
+               S06:00000AD2:  E5
+F10:0510       	push bc
+               S06:00000AD3:  C5
+F10:0511       		ld hl,MLM_event_arg_buffer
+               S06:00000AD4:  21 A2 F8
+F10:0512       		ld a,(hl)
+               S06:00000AD7:  7E
+F10:0513       		ld b,0
+               S06:00000AD8:  06 00
+F10:0514       		ld hl,MLM_channel_instruments
+               S06:00000ADA:  21 B2 F8
+F10:0515       		add hl,bc
+               S06:00000ADD:  09
+F10:0516       		ld (hl),a
+               S06:00000ADE:  77
+F10:0517       
+F10:0518       		ld a,c
+               S06:00000ADF:  79
+F10:0519       		ld bc,0
+               S06:00000AE0:  01 00 00
+F10:0520       		call MLM_set_timing
+               S06:00000AE3:  CD 79 0A
+F10:0521       	pop bc
+               S06:00000AE6:  C1
+F10:0522       	pop hl
+               S06:00000AE7:  E1
+F10:0523       	pop af
+               S06:00000AE8:  F1
+F10:0524       	jp MLM_parse_command_end
+               S06:00000AE9:  C3 66 0A
+F10:0525       
+F10:0526       ; c: channel
+F10:0527       ; Arguments:
+F10:0528       ;   1. timing
+F10:0529       MLMCOM_wait_ticks_8:
+F10:0530       	push hl
+               S06:00000AEC:  E5
+F10:0531       	push bc
+               S06:00000AED:  C5
+F10:0532       	push af
+               S06:00000AEE:  F5
+F10:0533       		ld hl,MLM_event_arg_buffer
+               S06:00000AEF:  21 A2 F8
+F10:0534       		ld a,c
+               S06:00000AF2:  79
+F10:0535       		ld b,0
+               S06:00000AF3:  06 00
+F10:0536       		ld c,(hl)
+               S06:00000AF5:  4E
+F10:0537       		call MLM_set_timing
+               S06:00000AF6:  CD 79 0A
+F10:0538       	pop af
+               S06:00000AF9:  F1
+F10:0539       	pop bc
+               S06:00000AFA:  C1
+F10:0540       	pop hl
+               S06:00000AFB:  E1
+F10:0541       	jp MLM_parse_command_end
+               S06:00000AFC:  C3 66 0A
+F00:0470       
+F00:0471       	org BANK3
+F00:0472       	
+F00:0473       MLM_header:
+F00:0474       	dw MLM_song0-MLM_header ; song 0 offset
                S07:00008000:  06 00
-F00:0473       	dw MLM_song1-MLM_header ; song 1 offset
+F00:0475       	dw MLM_song1-MLM_header ; song 1 offset
                S07:00008002:  20 00
-F00:0474       	dw MLM_song2-MLM_header ; song 2 offset
+F00:0476       	dw MLM_song2-MLM_header ; song 2 offset
                S07:00008004:  3A 00
-F00:0475       
-F00:0476       MLM_song0:
-F00:0477       	; ADPCM-A channel offsets
-F00:0478       	dw 0, 0, MLM_ch2_data-MLM_header, 0, 0, 0
+F00:0477       
+F00:0478       MLM_song0:
+F00:0479       	; ADPCM-A channel offsets
+F00:0480       	dw 0, 0, MLM_ch2_data-MLM_header, 0, 0, 0
                S07:00008006:  00 00
                S07:00008008:  00 00
                S07:0000800A:  54 00
                S07:0000800C:  00 00
                S07:0000800E:  00 00
                S07:00008010:  00 00
-F00:0479       	; FM channel offsets
-F00:0480       	dw 0, 0, 0, 0
+F00:0481       	; FM channel offsets
+F00:0482       	dw 0, 0, 0, 0
                S07:00008012:  00 00
                S07:00008014:  00 00
                S07:00008016:  00 00
                S07:00008018:  00 00
-F00:0481       	; SSG channel offsets
-F00:0482       	dw 0, 0, 0
+F00:0483       	; SSG channel offsets
+F00:0484       	dw 0, 0, 0
                S07:0000801A:  00 00
                S07:0000801C:  00 00
                S07:0000801E:  00 00
-F00:0483       
-F00:0484       MLM_song1:
-F00:0485       	; ADPCM-A channel offsets
-F00:0486       	dw 0, 0, 0, 0, 0, 0
+F00:0485       
+F00:0486       MLM_song1:
+F00:0487       	; ADPCM-A channel offsets
+F00:0488       	dw 0, 0, 0, 0, 0, 0
                S07:00008020:  00 00
                S07:00008022:  00 00
                S07:00008024:  00 00
                S07:00008026:  00 00
                S07:00008028:  00 00
                S07:0000802A:  00 00
-F00:0487       	; FM channel offsets
-F00:0488       	dw 0, 0, 0, 0
+F00:0489       	; FM channel offsets
+F00:0490       	dw 0, 0, 0, 0
                S07:0000802C:  00 00
                S07:0000802E:  00 00
                S07:00008030:  00 00
                S07:00008032:  00 00
-F00:0489       	; SSG channel offsets
-F00:0490       	dw 0, 0, MLM_ch12_data-MLM_header
+F00:0491       	; SSG channel offsets
+F00:0492       	dw 0, 0, MLM_ch12_data-MLM_header
                S07:00008034:  00 00
                S07:00008036:  00 00
                S07:00008038:  6C 00
-F00:0491       
-F00:0492       MLM_song2:
-F00:0493       	; ADPCM-A channel offsets
-F00:0494       	dw 0, 0, 0, 0, 0, 0
+F00:0493       
+F00:0494       MLM_song2:
+F00:0495       	; ADPCM-A channel offsets
+F00:0496       	dw 0, 0, 0, 0, 0, 0
                S07:0000803A:  00 00
                S07:0000803C:  00 00
                S07:0000803E:  00 00
                S07:00008040:  00 00
                S07:00008042:  00 00
                S07:00008044:  00 00
-F00:0495       	; FM channel offsets
-F00:0496       	dw 0, 0, MLM_ch8_data-MLM_header, 0
+F00:0497       	; FM channel offsets
+F00:0498       	dw 0, 0, MLM_ch8_data-MLM_header, 0
                S07:00008046:  00 00
                S07:00008048:  00 00
                S07:0000804A:  5F 00
                S07:0000804C:  00 00
-F00:0497       	; SSG channel offsets
-F00:0498       	dw 0, 0, 0
+F00:0499       	; SSG channel offsets
+F00:0500       	dw 0, 0, 0
                S07:0000804E:  00 00
                S07:00008050:  00 00
                S07:00008052:  00 00
-F00:0499       
-F00:0500       MLM_ch2_data:
-F00:0501       	; play note
-F00:0502       	db 0 | (30<<1) | &80, 0 ; C; Sample MSB | (Timing<<1) | &80, Sample LSB
+F00:0501       
+F00:0502       MLM_ch2_data:
+F00:0503       	; play note
+F00:0504       	db 0 | (30<<1) | &80, 0 ; C; Sample MSB | (Timing<<1) | &80, Sample LSB
                S07:00008054:  BC
                S07:00008055:  00
-F00:0503       	db 0 | (15<<1) | &80, 4 ; E
+F00:0505       	db 0 | (15<<1) | &80, 4 ; E
                S07:00008056:  9E
                S07:00008057:  04
-F00:0504       	db 0 | (15<<1) | &80, 2 ; D
+F00:0506       	db 0 | (15<<1) | &80, 2 ; D
                S07:00008058:  9E
                S07:00008059:  02
-F00:0505       	db &01, 30        ; Note off, timing
+F00:0507       	db &01, 30        ; Note off, timing
                S07:0000805A:  01
                S07:0000805B:  1E
-F00:0506       	db &00            ; end of channel event list
+F00:0508       	db &00            ; end of channel event list
                S07:0000805C:  00
-F00:0507       	db 0 | (30<<1) | &80, 0 ; C; shouldn't be played
+F00:0509       	db 0 | (30<<1) | &80, 0 ; C; shouldn't be played
                S07:0000805D:  BC
                S07:0000805E:  00
-F00:0508       
-F00:0509       MLM_ch8_data:
-F00:0510       	db &02, 1 ; Change instrument
+F00:0510       
+F00:0511       MLM_ch8_data:
+F00:0512       	db &02, 1 ; Change instrument
                S07:0000805F:  02
                S07:00008060:  01
-F00:0511       	db 16 | &80, 2 | (4<<4)  ; D5; timing | &80, note | (octave<<4)
+F00:0513       	db 16 | &80, 2 | (4<<4)  ; D5; timing | &80, note | (octave<<4)
                S07:00008061:  90
                S07:00008062:  42
-F00:0512       	db 8  | &80, 11 | (3<<4) ; B4
+F00:0514       	db 8  | &80, 11 | (3<<4) ; B4
                S07:00008063:  88
                S07:00008064:  3B
-F00:0513       	db 16 | &80, 9 | (3<<4)  ; A4
+F00:0515       	db 16 | &80, 9 | (3<<4)  ; A4
                S07:00008065:  90
                S07:00008066:  39
-F00:0514       	db 16 | &80, 9 | (3<<4)  ; A4
+F00:0516       	db 16 | &80, 9 | (3<<4)  ; A4
                S07:00008067:  90
                S07:00008068:  39
-F00:0515       	db &00 ; end of list
+F00:0517       	db &00 ; end of list
                S07:00008069:  00
-F00:0516       	db 30 | &80, 9 | (3<<4)  ; A4
+F00:0518       	db 30 | &80, 9 | (3<<4)  ; A4
                S07:0000806A:  9E
                S07:0000806B:  39
-F00:0517       
-F00:0518       MLM_ch12_data:
-F00:0519       	db 15 | &80, 14 ; D3; timing | &80, note
+F00:0519       
+F00:0520       MLM_ch12_data:
+F00:0521       	db 15 | &80, 14 ; D3; timing | &80, note
                S07:0000806C:  8F
                S07:0000806D:  0E
-F00:0520       	db 15 | &80, 14 ; D3
+F00:0522       	db 15 | &80, 14 ; D3
                S07:0000806E:  8F
                S07:0000806F:  0E
-F00:0521       	db 30 | &80, 26 ; D4
+F00:0523       	db 30 | &80, 26 ; D4
                S07:00008070:  9E
                S07:00008071:  1A
-F00:0522       	db 4 | &80, 21 ; A3
+F00:0524       	db 4 | &80, 21 ; A3
                S07:00008072:  84
                S07:00008073:  15
-F00:0523       	db &01, 26
+F00:0525       	db &01, 26
                S07:00008074:  01
                S07:00008075:  1A
-F00:0524       	db &00
+F00:0526       	db &00
                S07:00008076:  00
-F00:0525       
-F00:0526       	org BANK2
-F00:0527       instruments:
-F00:0528       	;============= Instrument 0 ============== ;
-F00:0529       	; SSG
-F00:0530       	;;;;       Volume Macro Metadata        ;;;;
-F00:0531       	db &20       ; Macro size (in nibbles)
+F00:0527       
+F00:0528       	org BANK2
+F00:0529       instruments:
+F00:0530       	;============= Instrument 0 ============== ;
+F00:0531       	; SSG
+F00:0532       	;;;;       Volume Macro Metadata        ;;;;
+F00:0533       	db &20       ; Macro size (in nibbles)
                S08:0000C000:  20
-F00:0532       	db &FF       ; Loop point (&FF = no loop)
+F00:0534       	db &FF       ; Loop point (&FF = no loop)
                S08:0000C001:  FF
-F00:0533       	dw vol_macro ; Pointer to macro
+F00:0535       	dw vol_macro ; Pointer to macro
                S08:0000C002:  00 E0
-F00:0534       	;;;;       Arpeggio Macro Metadata      ;;;;
-F00:0535       ;	db &20       ; macro size (in bytes)
-F00:0536       ;	db &00       ; Loop point (&FF = no loop)
-F00:0537       ;	dw arp_macro ; pointer to macro
-F00:0538       ;	ds 24        ; Padding
-F00:0539       	ds 28        ; padding
-F00:0540       
-F00:0541       	;============= Instrument 1 ============== ;
-F00:0542       	; FM
-F00:0543       	; Channel regs
-F00:0544       	db 4 | (4<<3)             ; ALGO | (FB<<3)
+F00:0536       	;;;;       Arpeggio Macro Metadata      ;;;;
+F00:0537       ;	db &20       ; macro size (in bytes)
+F00:0538       ;	db &00       ; Loop point (&FF = no loop)
+F00:0539       ;	dw arp_macro ; pointer to macro
+F00:0540       ;	ds 24        ; Padding
+F00:0541       	ds 28        ; padding
+F00:0542       
+F00:0543       	;============= Instrument 1 ============== ;
+F00:0544       	; FM
+F00:0545       	; Channel regs
+F00:0546       	db 4 | (4<<3)             ; ALGO | (FB<<3)
                S08:0000C020:  24
-F00:0545       	db 0 | (0<<4) & %00110111 ; PMS | (AMS<<4) & %00110111
+F00:0547       	db 0 | (0<<4) & %00110111 ; PMS | (AMS<<4) & %00110111
                S08:0000C021:  00
-F00:0546       	; Operator 1 regs
-F00:0547       	db 1 | (0<<4)             ; MUL | (DT<<4)
+F00:0548       	; Operator 1 regs
+F00:0549       	db 1 | (0<<4)             ; MUL | (DT<<4)
                S08:0000C022:  01
-F00:0548       	db 7                      ; Total Level
+F00:0550       	db 7                      ; Total Level
                S08:0000C023:  07
-F00:0549       	db 31 | (0<<6)            ; AR | (KS<<6)
+F00:0551       	db 31 | (0<<6)            ; AR | (KS<<6)
                S08:0000C024:  1F
-F00:0550       	db 9 | (0<<7)             ; DR | (AM<<7)
+F00:0552       	db 9 | (0<<7)             ; DR | (AM<<7)
                S08:0000C025:  09
-F00:0551       	db 15                     ; Sustain Rate [RS]
+F00:0553       	db 15                     ; Sustain Rate [RS]
                S08:0000C026:  0F
-F00:0552       	db 15 | (15<<4)           ; RR | (SL<<4)
+F00:0554       	db 15 | (15<<4)           ; RR | (SL<<4)
                S08:0000C027:  FF
-F00:0553       	db 0                      ; SSG-EG
+F00:0555       	db 0                      ; SSG-EG
                S08:0000C028:  00
-F00:0554       	; Operator 2 regs
-F00:0555       	db 1 | (0<<4)             ; MUL | (DT<<4)
+F00:0556       	; Operator 2 regs
+F00:0557       	db 1 | (0<<4)             ; MUL | (DT<<4)
                S08:0000C029:  01
-F00:0556       	db 8                      ; Total Level
+F00:0558       	db 8                      ; Total Level
                S08:0000C02A:  08
-F00:0557       	db 31 | (0<<6)            ; AR | (KS<<6)
+F00:0559       	db 31 | (0<<6)            ; AR | (KS<<6)
                S08:0000C02B:  1F
-F00:0558       	db 9  | (0<<7)            ; DR | (AM<<7)
+F00:0560       	db 9  | (0<<7)            ; DR | (AM<<7)
                S08:0000C02C:  09
-F00:0559       	db 15                     ; Sustain Rate [RS]
+F00:0561       	db 15                     ; Sustain Rate [RS]
                S08:0000C02D:  0F
-F00:0560       	db 15 | (15<<4)           ; RR | (SL<<4)
+F00:0562       	db 15 | (15<<4)           ; RR | (SL<<4)
                S08:0000C02E:  FF
-F00:0561       	db 0                      ; SSG-EG
+F00:0563       	db 0                      ; SSG-EG
                S08:0000C02F:  00
-F00:0562       	; Operator 3 regs
-F00:0563       	db 0 | (0<<4)             ; MUL | (DT<<4)
+F00:0564       	; Operator 3 regs
+F00:0565       	db 0 | (0<<4)             ; MUL | (DT<<4)
                S08:0000C030:  00
-F00:0564       	db 36                     ; Total Level
+F00:0566       	db 36                     ; Total Level
                S08:0000C031:  24
-F00:0565       	db 31 | (0<<6)            ; AR | (KS<<6)
+F00:0567       	db 31 | (0<<6)            ; AR | (KS<<6)
                S08:0000C032:  1F
-F00:0566       	db 10 | (0<<7)            ; DR | (AM<<7)
+F00:0568       	db 10 | (0<<7)            ; DR | (AM<<7)
                S08:0000C033:  0A
-F00:0567       	db 15                     ; Sustain Rate [RS]
+F00:0569       	db 15                     ; Sustain Rate [RS]
                S08:0000C034:  0F
-F00:0568       	db 15 | (15<<4)            ; RR | (SL<<4)
+F00:0570       	db 15 | (15<<4)            ; RR | (SL<<4)
                S08:0000C035:  FF
-F00:0569       	db 0                      ; SSG-EG
+F00:0571       	db 0                      ; SSG-EG
                S08:0000C036:  00
-F00:0570       	; Operator 4 regs
-F00:0571       	db 1 | (0<<4)             ; MUL | (DT<<4)
+F00:0572       	; Operator 4 regs
+F00:0573       	db 1 | (0<<4)             ; MUL | (DT<<4)
                S08:0000C037:  01
-F00:0572       	db 17                     ; Total Level
+F00:0574       	db 17                     ; Total Level
                S08:0000C038:  11
-F00:0573       	db 31 | (0<<6)            ; AR | (KS<<6)
+F00:0575       	db 31 | (0<<6)            ; AR | (KS<<6)
                S08:0000C039:  1F
-F00:0574       	db 9 | (0<<7)             ; DR | (AM<<7)
+F00:0576       	db 9 | (0<<7)             ; DR | (AM<<7)
                S08:0000C03A:  09
-F00:0575       	db 15                     ; Sustain Rate [RS]
+F00:0577       	db 15                     ; Sustain Rate [RS]
                S08:0000C03B:  0F
-F00:0576       	db 15 | (15<<4)           ; RR | (SL<<4)
+F00:0578       	db 15 | (15<<4)           ; RR | (SL<<4)
                S08:0000C03C:  FF
-F00:0577       	db 0                      ; SSG-EG
+F00:0579       	db 0                      ; SSG-EG
                S08:0000C03D:  00
-F00:0578       	; padding
-F00:0579       	ds 2
-F00:0580       	
-F00:0581       	org BANK1
-F00:0582       vol_macro:
-F00:0583       	; Since it's a volume macro, each
-F00:0584       	; nibble is one value.
-F00:0585       	db &FF,&EE,&DD,&CC,&BB,&AA,&99,&88
+F00:0580       	; padding
+F00:0581       	ds 2
+F00:0582       	
+F00:0583       	org BANK1
+F00:0584       vol_macro:
+F00:0585       	; Since it's a volume macro, each
+F00:0586       	; nibble is one value.
+F00:0587       	db &FF,&EE,&DD,&CC,&BB,&AA,&99,&88
                S09:0000E000:  FF
                S09:0000E001:  EE
                S09:0000E002:  DD
@@ -4357,7 +4368,7 @@ F00:0585       	db &FF,&EE,&DD,&CC,&BB,&AA,&99,&88
                S09:0000E005:  AA
                S09:0000E006:  99
                S09:0000E007:  88
-F00:0586       	db &77,&66,&55,&44,&33,&22,&11,&00
+F00:0588       	db &77,&66,&55,&44,&33,&22,&11,&00
                S09:0000E008:  77
                S09:0000E009:  66
                S09:0000E00A:  55
@@ -4366,19 +4377,19 @@ F00:0586       	db &77,&66,&55,&44,&33,&22,&11,&00
                S09:0000E00D:  22
                S09:0000E00E:  11
                S09:0000E00F:  00
-F00:0587       
-F00:0588       ;arp_macro:
-F00:0589       ;	; Each value is a single signed byte
-F00:0590       ;	db 0,0,0,0, 1,1,1,1,     2,2,2,2,     1,1,1,1
-F00:0591       ;	db 0,0,0,0, -1,-1,-1,-1, -2,-2,-2,-2, -1,-1-1,-1
-F00:0592       
-F00:0593       	org BANK0
-F00:0594       PA_sample_LUT:
-F00:0595       	binary "adpcma_sample_lut.bin"
+F00:0589       
+F00:0590       ;arp_macro:
+F00:0591       ;	; Each value is a single signed byte
+F00:0592       ;	db 0,0,0,0, 1,1,1,1,     2,2,2,2,     1,1,1,1
+F00:0593       ;	db 0,0,0,0, -1,-1,-1,-1, -2,-2,-2,-2, -1,-1-1,-1
+F00:0594       
+F00:0595       	org BANK0
+F00:0596       PA_sample_LUT:
+F00:0597       	binary "adpcma_sample_lut.bin"
                S10:0000F000:  00 00 40 00 41 00 81 00 82 00 C2 00 C3 00 04 01
                S10:0000F010:  05 01 46 01 47 01 88 01 89 01 C9 01 CA 01 0A 02
-F00:0596       
-F00:0597       	include "z80ram.asm"
+F00:0598       
+F00:0599       	include "z80ram.asm"
 F11:0001       ; RAM defines for Dummy Z80 sound driver
 F11:0002       
 F11:0003       	org $F800
@@ -4432,7 +4443,7 @@ F11:0050       MLM_playback_control:         ds 13   ; bool[13]
 F11:0051       MLM_event_arg_buffer:         ds 16   ; u8[16]
 F11:0052       MLM_channel_instruments:      ds 13   ; u8[13]
 F11:0053       MLM_wram_end:
-F00:0598       
+F00:0600       
 
 
 Sections:
@@ -4472,25 +4483,25 @@ MLM_ch2_data EXPR(32852=0x8054) ABS
 MLM_song2 EXPR(32826=0x803a) ABS 
 MLM_song1 EXPR(32800=0x8020) ABS 
 MLM_song0 EXPR(32774=0x8006) ABS 
-MLMCOM_wait_ticks_8 EXPR(2789=0xae5) UNUSED ABS 
-MLMCOM_note_off_break EXPR(2745=0xab9) ABS 
-MLMCOM_set_instrument EXPR(2762=0xaca) ABS 
-MLMCOM_note_off EXPR(2713=0xa99) ABS 
-MLMCOM_end_of_list EXPR(2697=0xa89) ABS 
-MLM_parse_command_end EXPR(2655=0xa5f) ABS 
+MLMCOM_wait_ticks_8 EXPR(2796=0xaec) UNUSED ABS 
+MLMCOM_note_off_break EXPR(2752=0xac0) ABS 
+MLMCOM_set_instrument EXPR(2769=0xad1) ABS 
+MLMCOM_note_off EXPR(2720=0xaa0) ABS 
+MLMCOM_end_of_list EXPR(2704=0xa90) ABS 
+MLM_parse_command_end EXPR(2662=0xa66) ABS 
 MLM_event_arg_buffer EXPR(63650=0xf8a2) ABS 
-MLM_parse_command_execute EXPR(2653=0xa5d) ABS 
-MLM_command_vectors EXPR(2665=0xa69) ABS 
-MLM_command_argc EXPR(2671=0xa6f) ABS 
+MLM_parse_command_execute EXPR(2660=0xa64) ABS 
+MLM_command_vectors EXPR(2672=0xa70) ABS 
+MLM_command_argc EXPR(2678=0xa76) ABS 
 MLM_channel_instruments EXPR(63666=0xf8b2) ABS 
+MLM_set_timing EXPR(2681=0xa79) ABS 
 breakpoint EXPR(63488=0xf800) ABS 
-MLM_set_timing EXPR(2674=0xa72) ABS 
 MLM_parse_note_end EXPR(2460=0x99c) ABS 
-MLM_play_note_ssg EXPR(2582=0xa16) ABS 
-MLM_play_note_fm EXPR(2506=0x9ca) ABS 
+MLM_play_note_ssg EXPR(2589=0xa1d) ABS 
+MLM_play_note_fm EXPR(2513=0x9d1) ABS 
 MLM_play_sample_pa EXPR(2463=0x99f) ABS 
 MLM_parse_note EXPR(2440=0x988) ABS 
-MLM_parse_command EXPR(2610=0xa32) ABS 
+MLM_parse_command EXPR(2617=0xa39) ABS 
 MLM_update_events_skip EXPR(2434=0x982) ABS 
 MLM_update_events_do_update EXPR(2420=0x974) ABS 
 MLM_play_song_loop_skip EXPR(2378=0x94a) ABS 
@@ -4568,6 +4579,7 @@ MLM_playback_set_timings EXPR(63611=0xf87b) ABS
 MLM_update_skip_save_dec_t EXPR(382=0x17e) ABS 
 MLM_update_do_save_dec_t EXPR(379=0x17b) ABS 
 MLM_update_events EXPR(2397=0x95d) ABS 
+MLM_update_do_execute_events EXPR(372=0x174) ABS 
 MLM_playback_timings EXPR(63585=0xf861) ABS 
 MLM_update_loop_next EXPR(400=0x190) ABS 
 MLM_playback_control EXPR(63637=0xf895) ABS 

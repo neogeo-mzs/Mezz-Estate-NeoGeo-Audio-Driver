@@ -103,7 +103,6 @@ this command ends the playback for the current channel
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
 
 ## BUGS
-* FM note on timing is way longer then it should be
 
 ## TODO
 * Implement FM note on and note off events

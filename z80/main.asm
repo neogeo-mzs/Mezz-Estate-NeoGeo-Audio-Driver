@@ -295,6 +295,8 @@ MLM_update_loop:
 		xor a,a
 		add a,d
 		add a,e
+		
+MLM_update_do_execute_events:
 		call z,MLM_update_events
 		jr c,MLM_update_do_save_dec_t
 		jr z,MLM_update_skip_save_dec_t
@@ -320,7 +322,7 @@ MLM_update_skip_save_dec_t:
 		add a,e
 		add a,d
 		jr c,MLM_update_loop_next
-		jr z,MLM_update_loop
+		jr z,MLM_update_do_execute_events
 
 MLM_update_loop_next:
 		djnz MLM_update_loop
