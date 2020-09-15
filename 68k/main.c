@@ -21,7 +21,7 @@ void rom_callback_VBlank() {
     // too long, skip the frame
     if (render_status.logic_done)
     {
-        // render here...
+        // render code here...
     }
 
     render_status.vblank_done = 1;
