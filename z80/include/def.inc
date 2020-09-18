@@ -124,3 +124,16 @@ REG_P_FLAGS		equ &1C
 RST_YM_WRITEA equ &10
 RST_YM_WRITEB equ &18
 RST_YM_WAIT   equ &08
+
+NOTE_C  equ &0
+NOTE_CS equ &1
+NOTE_D  equ &2
+NOTE_DS equ &3
+NOTE_E  equ &4
+NOTE_F  equ &5
+NOTE_FS equ &6
+NOTE_G  equ &7
+NOTE_GS equ &8
+NOTE_A  equ &9
+NOTE_AS equ &A
+NOTE_B  equ &B

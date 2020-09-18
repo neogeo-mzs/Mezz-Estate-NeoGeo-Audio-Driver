@@ -501,28 +501,56 @@ MLM_song2:
 
 MLM_ch2_data:
 	; play note
-	db 0 | (30<<1) | &80, 0 ; C; Sample MSB | (Timing<<1) | &80, Sample LSB
-	db 0 | (15<<1) | &80, 4 ; E
-	db 0 | (15<<1) | &80, 2 ; D
-	db &01, 30        ; Note off, timing
+	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
+	db 0 | (15<<1) | &80, NOTE_CS
+	db 0 | (15<<1) | &80, NOTE_D
+	db 0 | (15<<1) | &80, NOTE_DS
+	db 0 | (15<<1) | &80, NOTE_E
+	db 0 | (15<<1) | &80, NOTE_F
+	db 0 | (15<<1) | &80, NOTE_FS
+	db 0 | (15<<1) | &80, NOTE_G
+	db 0 | (15<<1) | &80, NOTE_GS
+	db 0 | (15<<1) | &80, NOTE_A
+	db 0 | (15<<1) | &80, NOTE_AS
+	db 0 | (15<<1) | &80, NOTE_B
+
+	;db &01, 30        ; Note off, timing
 	db &00            ; end of channel event list
-	db 0 | (30<<1) | &80, 0 ; C; shouldn't be played
+	db 0 | (30<<1) | &80, NOTE_C ; C; shouldn't be played
 
 MLM_ch8_data:
 	db &02, 1 ; Change instrument
-	db 30 | &80, 2 | (3<<4)  ; D4; timing | &80, note | (octave<<4)
-	db 15  | &80, 11 | (2<<4) ; B3
-	db 45 | &80, 9 | (2<<4)  ; A3
-	db 30 | &80, 9 | (2<<4)  ; A3
+	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
+	db 15 | &80, NOTE_CS | (3<<4)
+	db 15 | &80, NOTE_D  | (3<<4)
+	db 15 | &80, NOTE_DS | (3<<4)
+	db 15 | &80, NOTE_E  | (3<<4)
+	db 15 | &80, NOTE_F  | (3<<4)
+	db 15 | &80, NOTE_FS | (3<<4)
+	db 15 | &80, NOTE_G  | (3<<4)
+	db 15 | &80, NOTE_GS | (3<<4)
+	db 15 | &80, NOTE_A  | (3<<4)
+	db 15 | &80, NOTE_AS | (3<<4)
+	db 15 | &80, NOTE_B  | (3<<4)
+
 	db &00 ; end of list
 	db 30 | &80, 9 | (3<<4)  ; A4
 
 MLM_ch12_data:
-	db 15 | &80, 14 ; D3; timing | &80, note
-	db 15 | &80, 14 ; D3
-	db 30 | &80, 26 ; D4
-	db 4 | &80, 21 ; A3
-	db &01, 26
+	db 15 | &80, (1*12) + NOTE_C ; timing | &80, (octave-2)*12 + note
+	db 15 | &80, (1*12) + NOTE_CS
+	db 15 | &80, (1*12) + NOTE_D
+	db 15 | &80, (1*12) + NOTE_DS
+	db 15 | &80, (1*12) + NOTE_E 
+	db 15 | &80, (1*12) + NOTE_F 
+	db 15 | &80, (1*12) + NOTE_FS
+	db 15 | &80, (1*12) + NOTE_G 
+	db 15 | &80, (1*12) + NOTE_GS 
+	db 15 | &80, (1*12) + NOTE_A 
+	db 15 | &80, (1*12) + NOTE_AS 
+	db 15 | &80, (1*12) + NOTE_B
+
+	db &01, 26 ; Note off, timing
 	db &00
 
 	org BANK2
