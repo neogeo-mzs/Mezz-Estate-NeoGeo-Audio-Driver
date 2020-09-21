@@ -105,6 +105,5 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## BUGS
 
 ## TODO
-* Implement FM note on and note off events
 * Implement "Wait ticks (byte)" (command 3)
 * Implement "Wait ticks (word)" (command 4)
