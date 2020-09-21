@@ -204,11 +204,6 @@ MLM_parse_note_end:
 ;   a:  channel
 ;   bc: source   (-TTTTTTS SSSSSSSS (Timing; Sample))
 MLM_play_sample_pa:
-	push af
-		ld a,&39
-		ld (breakpoint),a
-	pop af
-
 	push de
 	push bc
 	push hl
@@ -248,11 +243,6 @@ MLM_play_sample_pa:
 ;   a:  channel+6
 ;   bc: source
 MLM_play_note_fm:
-	push af
-		ld a,&39
-		ld (breakpoint),a
-	pop af
-
 	; Set Timing
 	push bc
 		; Mask timing
