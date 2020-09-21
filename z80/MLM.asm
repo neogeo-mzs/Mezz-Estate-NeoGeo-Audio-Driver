@@ -477,7 +477,7 @@ MLMCOM_note_off:
 		ld de,FM_channel_LUT
 		add hl,de
 		ld a,(hl)
-		; call FM_stop_note TODO; use a register for the channel
+		call FM_stop_channel
 
 MLMCOM_note_off_break:
 		ld hl,MLM_event_arg_buffer

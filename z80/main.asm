@@ -533,6 +533,8 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
 
+	db &01, 30 ; Note off, timing
+
 	db &00 ; end of list
 	db 30 | &80, 9 | (3<<4)  ; A4
 
@@ -550,7 +552,7 @@ MLM_ch12_data:
 	db 15 | &80, (1*12) + NOTE_AS 
 	db 15 | &80, (1*12) + NOTE_B
 
-	db &01, 26 ; Note off, timing
+	;db &01, 26 ; Note off, timing
 	db &00
 
 	org BANK2
