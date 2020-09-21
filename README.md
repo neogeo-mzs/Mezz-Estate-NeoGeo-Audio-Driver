@@ -80,6 +80,7 @@ command do pretty much anything else a song needs. Commands are formatted differ
 
 ###### Command 0: End of event list
 **format: `$80`**
+
 this command ends the playback for the current channel
 
 ###### Command 1: Note off
