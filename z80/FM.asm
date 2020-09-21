@@ -171,6 +171,9 @@ FM_set_note:
 	push hl
 	push de
 	push af
+		ld a,&39
+		ld (breakpoint),a
+
 		; Lookup F-Number from FM_pitch_LUT
 		; and store it into a
 		ld a,c
@@ -185,6 +188,7 @@ FM_set_note:
 		; Set block and MSBs of F-Num
 		ld a,c
 		srl a   ; -OOO---- -> --OOO---
+		and a,%00111000
 		or a,e
 		ld e,a
 
@@ -337,12 +341,12 @@ FM_op_base_address_LUT:
 	db &31,&39,&35,&3D
 
 ; to set the octave you just need to set "block".
-; octave 0 = block 0, etc...
+; octave 0 = block 1, etc...
 FM_pitch_LUT:
-	;  C     C#    D     D#    E     F     F#    G
-	dw &026A,&028E,&02B5,&02DE,&030A,&0338,&0368,&039D
-	;  G#    A     A#    B
-	dw &03D4,&040E,&044C,&048D
+	;  C    C#   D    D#   E    F    F#   G
+	dw 309, 327, 346, 367, 389, 412, 436, 462
+	;  G#   A    A#   B
+ 	dw 490, 519, 550, 583
 
 FM_channel_LUT:
 	db FM_CH1, FM_CH2, FM_CH3, FM_CH4

@@ -523,12 +523,12 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
 	db 15 | &80, NOTE_D  | (3<<4)
-	db 15 | &80, NOTE_DS | (3<<4)
+	db 15 | &80, NOTE_DS | (3<<4) ;---
 	db 15 | &80, NOTE_E  | (3<<4)
 	db 15 | &80, NOTE_F  | (3<<4)
 	db 15 | &80, NOTE_FS | (3<<4)
-	db 15 | &80, NOTE_G  | (3<<4)
-	db 15 | &80, NOTE_GS | (3<<4)
+	db 15 | &80, NOTE_G  | (3<<4) 
+	db 15 | &80, NOTE_GS | (3<<4) ;---
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
