@@ -106,3 +106,7 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## BUGS
 
 ## TODO
+* Start writing a wiki, to document each article
+* Implement channel volume event command
+* Implement panning event command
+* Implement master volume event command (ADPCM-A only)
