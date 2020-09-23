@@ -171,9 +171,6 @@ FM_set_note:
 	push hl
 	push de
 	push af
-		ld a,&39
-		ld (breakpoint),a
-
 		; Lookup F-Number from FM_pitch_LUT
 		; and store it into a
 		ld a,c

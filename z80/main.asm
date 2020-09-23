@@ -506,12 +506,14 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_D
 	db 0 | (15<<1) | &80, NOTE_DS
 	db 0 | (15<<1) | &80, NOTE_E
-	db 0 | (15<<1) | &80, NOTE_F
+	db 0 | (0<<1) | &80, NOTE_F
+	db &03, 15
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
 	db 0 | (15<<1) | &80, NOTE_A
-	db 0 | (15<<1) | &80, NOTE_AS
+	db 0 | (5<<1) | &80, NOTE_AS
+	db &04, 10, 0
 	db 0 | (15<<1) | &80, NOTE_B
 
 	;db &01, 30        ; Note off, timing

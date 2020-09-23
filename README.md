@@ -79,21 +79,21 @@ command do pretty much anything else a song needs. Commands are formatted differ
 ##### Command list
 
 ###### Command 0: End of event list
-**format: `$80`**
+**format: `$00`**
 
 this command ends the playback for the current channel
 
 ###### Command 1: Note off
-**format: `$81 %TTTTTTTT (Timing)`**
+**format: `$01 %TTTTTTTT (Timing)`**
 
 ###### Command 2: Change instrument
-**format: `$82 %IIIIIIII (Instrument; Next event is executed immediately)`**
+**format: `$02 %IIIIIIII (Instrument; Next event is executed immediately)`**
 
 ###### Command 3: Wait ticks (byte)
-**format: `$83 %TTTTTTTT (Timing)`**
+**format: `$03 %TTTTTTTT (Timing)`**
 
 ###### Command 4: Wait ticks (word)
-**format: `$84 %TTTTTTTTTTTTTTTT (Timing)`**
+**format: `$04 %TTTTTTTT %TTTTTTTT (Timing; LSB first MSB after, this will always be the case)`**
 
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
@@ -106,5 +106,3 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## BUGS
 
 ## TODO
-* Implement "Wait ticks (byte)" (command 3)
-* Implement "Wait ticks (word)" (command 4)
