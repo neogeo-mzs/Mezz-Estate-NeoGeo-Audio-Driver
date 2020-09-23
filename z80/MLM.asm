@@ -337,6 +337,9 @@ MLM_parse_command:
 	push af
 	push de
 	push bc
+		ld a,&39
+		ld (breakpoint),a
+
 		; Lookup command argc and store it into a
 		push hl
 			ld l,(hl)
@@ -382,24 +385,19 @@ MLM_parse_command_execute:
 		jp (hl)
 
 MLM_parse_command_end:
-		; add argc to the source
 		ex de,hl
-
-		dec a
-		ld d,0
-		ld e,a
-		add hl,de
 	pop bc
 	pop de
 	pop af
 	ret
 
 MLM_command_vectors:
-	dw MLMCOM_end_of_list, MLMCOM_note_off
-	dw MLMCOM_set_instrument
+	dw MLMCOM_end_of_list,     MLMCOM_note_off
+	dw MLMCOM_set_instrument,  MLMCOM_wait_ticks_byte
+	dw MLMCOM_wait_ticks_word
 
 MLM_command_argc:
-	db &00, &01, &01
+	db &00, &01, &01, &01, &02
 
 ; a:  channel
 ; bc: timing
@@ -516,7 +514,7 @@ MLMCOM_set_instrument:
 ; c: channel
 ; Arguments:
 ;   1. timing
-MLMCOM_wait_ticks_8:
+MLMCOM_wait_ticks_byte:
 	push hl
 	push bc
 	push af
@@ -525,6 +523,26 @@ MLMCOM_wait_ticks_8:
 		ld b,0
 		ld c,(hl)
 		call MLM_set_timing
+	pop af
+	pop bc
+	pop hl
+	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. timing (LSB)
+;   2. timing (MSB)
+MLMCOM_wait_ticks_word:
+	push hl
+	push bc
+	push af
+	push ix
+		ld ix,MLM_event_arg_buffer
+		ld a,c
+		ld b,(ix+1)
+		ld c,(ix+0)
+		call MLM_set_timing
+	pop ix
 	pop af
 	pop bc
 	pop hl
