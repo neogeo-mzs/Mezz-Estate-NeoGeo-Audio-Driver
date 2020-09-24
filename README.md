@@ -95,10 +95,20 @@ this command ends the playback for the current channel
 ###### Command 4: Wait ticks (word)
 **format: `$04 %TTTTTTTT %TTTTTTTT (Timing; LSB first MSB after, this will always be the case)`**
 
+###### Command 5: Set channel volume
+**format: `$05 %VVVVVVVV %TTTTTTTT (Volume; Timing)`**
+
+###### Command 6: Set master volume
+**format: `$06 %VVVVVVTT %TTTTTTTT (Volume; Timing)`**
+*ADPCM-A only*
+
+###### Command 7: Set panning
+**format: `$07 %LRTTTTTT (Left on; Right on;`Timing)**
+
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
 * B: Play a jingle using SSG 
-* C: Play a jingle using FM (doesn't work correctly)
+* C: Play a jingle using FM
 
 ## NOTICE
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
