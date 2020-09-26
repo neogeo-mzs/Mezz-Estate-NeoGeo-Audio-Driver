@@ -501,19 +501,20 @@ MLM_song2:
 
 MLM_ch2_data:
 	; play note
+	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
 	db 0 | (15<<1) | &80, NOTE_CS
 	db 0 | (15<<1) | &80, NOTE_D
 	db 0 | (15<<1) | &80, NOTE_DS
 	db 0 | (15<<1) | &80, NOTE_E
-	db 0 | (0<<1) | &80, NOTE_F
-	db &03, 15
+	db 0 | (15<<1) | &80, NOTE_F
+
+	db &05, &0F, 0 ; Set Ch. Vol., volume, timing
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
 	db 0 | (15<<1) | &80, NOTE_A
-	db 0 | (5<<1) | &80, NOTE_AS
-	db &04, 10, 0
+	db 0 | (15<<1) | &80, NOTE_AS
 	db 0 | (15<<1) | &80, NOTE_B
 
 	;db &01, 30        ; Note off, timing
@@ -535,18 +536,21 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
 
-	db &01, 30 ; Note off, timing
+	;db &01, 30 ; Note off, timing
 
 	db &00 ; end of list
 	db 30 | &80, 9 | (3<<4)  ; A4
 
 MLM_ch12_data:
+	db &05, &08, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, (1*12) + NOTE_C ; timing | &80, (octave-2)*12 + note
 	db 15 | &80, (1*12) + NOTE_CS
 	db 15 | &80, (1*12) + NOTE_D
 	db 15 | &80, (1*12) + NOTE_DS
 	db 15 | &80, (1*12) + NOTE_E 
-	db 15 | &80, (1*12) + NOTE_F 
+	db 15 | &80, (1*12) + NOTE_F
+
+	db &05, &0F, 0 ; Set Ch. Vol., volume, timing 
 	db 15 | &80, (1*12) + NOTE_FS
 	db 15 | &80, (1*12) + NOTE_G 
 	db 15 | &80, (1*12) + NOTE_GS 

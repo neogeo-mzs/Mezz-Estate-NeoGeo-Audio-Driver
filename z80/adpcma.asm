@@ -62,5 +62,26 @@ PA_stop_sample:
 	pop hl
 	ret
 
+; a: channel
+; c: volume
+PA_set_channel_volume:
+	push de
+		; Sets the panning to center.
+		;   TODO: Load panning from somewhere in WRAM
+		push af
+			ld a,c
+			or a,%11000000
+			ld e,a
+		pop af
+
+		push af
+			add a,REG_PA_CVOL
+			ld d,a
+		pop af
+
+		rst RST_YM_WRITEB
+	pop de
+	ret
+	
 PA_channel_on_masks:
 	db %00000001,%00000010,%00000100,%00001000,%00010000,%00100000
