@@ -287,7 +287,16 @@ MLM_play_note_fm:
 
 		; Find a better way to set attenuator
 		push bc
-			ld c,0
+			; Get FM channel inbetween 0 and 3
+			push af
+				ld a,b
+				sub a,6
+				ld l,a
+				ld h,0
+				ld de,MLM_FM_channel_attenuators
+			pop af
+			add hl,de
+			ld c,(hl)
 			call FM_set_attenuator
 		pop bc
 
@@ -568,13 +577,25 @@ MLMCOM_set_channel_volume:
 		jr c,MLMCOM_set_channel_volume_set_timing
 
 		; channel is SSG...
-		cp a,10
-		jr MLMCOM_set_channel_volume_is_ssg
+		cp a,9
+		jr nc, MLMCOM_set_channel_volume_is_ssg
 
 		; Channel is FM...
-		;   Load attenuator into WRAM, this value
-		;   will be used by the FM note on subroutine
-		;   to set the attenuator.
+
+		;   "Invert" the attenuator (0 is the 
+		;   maximum volume and 127 is the minimum;
+		;   this is counter-intuitive thus it is
+		;   abstracted away)
+		push af
+			ld a,127
+			sub a,c
+			ld c,a
+		pop af
+
+		;   Store the inverted attenuator into 
+		;   WRAM, this value will be used by the 
+		;   FM note on subroutine to set the 
+		;   attenuator.
 		push af
 			sub a,6 ; Get fm channel inbetween 0 and 3
 			ld h,0
