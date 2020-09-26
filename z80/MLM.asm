@@ -337,9 +337,6 @@ MLM_parse_command:
 	push af
 	push de
 	push bc
-		ld a,&39
-		ld (breakpoint),a
-
 		; Lookup command argc and store it into a
 		push hl
 			ld l,(hl)
@@ -394,10 +391,10 @@ MLM_parse_command_end:
 MLM_command_vectors:
 	dw MLMCOM_end_of_list,     MLMCOM_note_off
 	dw MLMCOM_set_instrument,  MLMCOM_wait_ticks_byte
-	dw MLMCOM_wait_ticks_word
+	dw MLMCOM_wait_ticks_word, MLMCOM_set_channel_volume
 
 MLM_command_argc:
-	db &00, &01, &01, &01, &02
+	db &00, &01, &01, &01, &02, &02
 
 ; a:  channel
 ; bc: timing
@@ -547,3 +544,72 @@ MLMCOM_wait_ticks_word:
 	pop bc
 	pop hl
 	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. Volume
+;   2. Timing
+MLMCOM_set_channel_volume:
+	push ix
+	push af
+	push hl
+	push de
+	push bc
+		ld a,&39
+		ld (breakpoint),a
+		
+		ld ix,MLM_event_arg_buffer
+		ld a,c
+		ld c,(ix+0)
+
+		; channel is ADPCM-A...
+		cp a,6
+		call c,PA_set_channel_volume
+		jr c,MLMCOM_set_channel_volume_set_timing
+
+		; channel is SSG...
+		cp a,10
+		jr MLMCOM_set_channel_volume_is_ssg
+
+		; Channel is FM...
+		;   Load attenuator into WRAM, this value
+		;   will be used by the FM note on subroutine
+		;   to set the attenuator.
+		push af
+			sub a,6 ; Get fm channel inbetween 0 and 3
+			ld h,0
+			ld l,a
+			ld de,MLM_FM_channel_attenuators
+			add hl,de
+			ld (hl),c
+		pop af
+
+MLMCOM_set_channel_volume_set_timing:
+		ld c,(ix+1)
+		ld b,0
+		call MLM_set_timing
+	pop bc
+	pop de
+	pop hl
+	pop af
+	pop ix
+	jp MLM_parse_command_end
+
+MLMCOM_set_channel_volume_is_ssg:
+	push bc
+		; Limit the attenuator inbetween 0 and 15
+		;   If the attenuator is higher then 15,
+		;   the value WON'T necessarily be 15.
+		;   Instead, it'll overflow. Too bad!
+		push af
+			ld a,c
+			and a,&0F
+			ld c,a
+		pop af
+
+		push af
+			sub a,10 ; Get SSG channel inbetween 0 and 2
+			call SSG_set_attenuator
+		pop af
+	pop bc
+	jr MLMCOM_set_channel_volume_set_timing

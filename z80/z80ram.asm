@@ -50,4 +50,5 @@ MLM_playback_set_timings:     ds 2*13 ; u16[13]
 MLM_playback_control:         ds 13   ; bool[13]
 MLM_event_arg_buffer:         ds 16   ; u8[16]
 MLM_channel_instruments:      ds 13   ; u8[13]
+MLM_FM_channel_attenuators:   ds 4    ; u8[4]
 MLM_wram_end:
