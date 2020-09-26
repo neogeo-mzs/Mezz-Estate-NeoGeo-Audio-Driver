@@ -114,6 +114,7 @@ this command ends the playback for the current channel
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
 
 ## BUGS
+* Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
 * Implement channel volume event command

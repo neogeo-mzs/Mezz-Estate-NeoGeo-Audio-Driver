@@ -523,15 +523,18 @@ MLM_ch2_data:
 
 MLM_ch8_data:
 	db &02, 1 ; Change instrument
+	db &05, &7F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
 	db 15 | &80, NOTE_D  | (3<<4)
-	db 15 | &80, NOTE_DS | (3<<4) ;---
+	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
 	db 15 | &80, NOTE_F  | (3<<4)
+
+	db &05, &5F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
-	db 15 | &80, NOTE_GS | (3<<4) ;---
+	db 15 | &80, NOTE_GS | (3<<4) 
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
