@@ -501,7 +501,7 @@ MLM_song2:
 
 MLM_ch2_data:
 	; play note
-	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
+	;db &05, &1F, 0 ; Set Ch. Vol., volume, timing
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
 	db 0 | (15<<1) | &80, NOTE_CS
 	db 0 | (15<<1) | &80, NOTE_D
@@ -523,7 +523,7 @@ MLM_ch2_data:
 
 MLM_ch8_data:
 	db &02, 1 ; Change instrument
-	db &05, &7F-&7F, 0 ; Set Ch. Vol., volume, timing
+	;db &05, &7F-&7F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
 	db 15 | &80, NOTE_D  | (3<<4)
@@ -545,7 +545,7 @@ MLM_ch8_data:
 	db 30 | &80, 9 | (3<<4)  ; A4
 
 MLM_ch12_data:
-	db &05, &08, 0 ; Set Ch. Vol., volume, timing
+	;db &05, &0F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, (1*12) + NOTE_C ; timing | &80, (octave-2)*12 + note
 	db 15 | &80, (1*12) + NOTE_CS
 	db 15 | &80, (1*12) + NOTE_D
@@ -553,7 +553,7 @@ MLM_ch12_data:
 	db 15 | &80, (1*12) + NOTE_E 
 	db 15 | &80, (1*12) + NOTE_F
 
-	db &05, &0F, 0 ; Set Ch. Vol., volume, timing 
+	db &05, &08, 0 ; Set Ch. Vol., volume, timing 
 	db 15 | &80, (1*12) + NOTE_FS
 	db 15 | &80, (1*12) + NOTE_G 
 	db 15 | &80, (1*12) + NOTE_GS 
