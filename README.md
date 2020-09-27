@@ -117,6 +117,8 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
-* Implement channel volume event command
-* Implement panning event command
 * Implement master volume event command (ADPCM-A only)
+
+## IDEAS
+* If enough events are left there could be versions
+of events that set the timing to 0 to save space

@@ -125,6 +125,7 @@ RST_YM_WRITEA equ &10
 RST_YM_WRITEB equ &18
 RST_YM_WAIT   equ &08
 
+; MLM defines
 NOTE_C  equ &0
 NOTE_CS equ &1
 NOTE_D  equ &2
@@ -137,3 +138,8 @@ NOTE_GS equ &8
 NOTE_A  equ &9
 NOTE_AS equ &A
 NOTE_B  equ &B
+
+PANNING_NONE   equ %00000000
+PANNING_R      equ %01000000
+PANNING_L      equ %10000000
+PANNING_CENTER equ %11000000

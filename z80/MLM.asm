@@ -38,7 +38,7 @@ MLM_stop_ssg_loop:
 		ld hl,MLM_channel_pannings
 		ld de,MLM_channel_pannings+1
 		ld bc,CHANNEL_COUNT-1
-		ld (hl),%11000000
+		ld (hl),PANNING_CENTER
 		ldir
 	pop af
 	pop bc
@@ -302,6 +302,15 @@ MLM_play_note_fm:
 		ld a,(hl)
 
 		call FM_stop_channel
+
+		push bc
+			ld h,0
+			ld l,b
+			ld de,MLM_channel_pannings
+			add hl,de
+			ld c,(hl)
+			call FM_set_panning
+		pop bc
 
 		; Load instrument
 		push bc
