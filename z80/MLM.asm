@@ -27,6 +27,13 @@ MLM_stop_ssg_loop:
 		call SSG_stop_note
 		djnz MLM_stop_ssg_loop
 
+		; Set all channel volumes to their
+		; default values.
+		ld hl,MLM_default_channel_volumes
+		ld de,MLM_channel_volumes
+		ld bc,CHANNEL_COUNT
+		ldir
+		
 		; Set all pannings to center (%11000000)
 		ld hl,MLM_channel_pannings
 		ld de,MLM_channel_pannings+1
@@ -38,6 +45,11 @@ MLM_stop_ssg_loop:
 	pop de
 	pop hl
 	ret
+
+MLM_default_channel_volumes:
+	db &1F, &1F, &1F, &1F, &1F, &1F ; ADPCM-A channels
+	db &00, &00, &00, &00           ; FM channels
+	db &0F, &0F, &0F                ; SSG channels
 
 ; a: song
 MLM_play_song:
