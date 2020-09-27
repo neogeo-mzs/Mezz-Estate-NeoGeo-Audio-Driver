@@ -64,6 +64,9 @@ PA_stop_sample:
 
 ; a: channel
 ; c: volume
+;   TODO: should deal with loading the panning from
+;         WRAM and setting the OPNB's registers
+;         accordingly
 PA_set_channel_volume:
 	push de
 		; Sets the panning to center.

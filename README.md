@@ -103,7 +103,7 @@ this command ends the playback for the current channel
 *ADPCM-A only*
 
 ###### Command 7: Set panning
-**format: `$07 %LRTTTTTT (Left on; Right on;`Timing)**
+**format: `$07 %LRTTTTTT (Left on; Right on; Timing)**`
 
 ## CONTROLS
 * A: Play a jingle using ADPCM-A

@@ -44,11 +44,18 @@ FM_base_total_levels: ds 4*6 ; u8[6][4]
 FM_pannings: ds 6            ; u8[6]
 
 ; ======== MLM player ========
-MLM_playback_pointers:        ds 2*13 ; void*[13]
-MLM_playback_timings:         ds 2*13 ; u16[13]
-MLM_playback_set_timings:     ds 2*13 ; u16[13]
-MLM_playback_control:         ds 13   ; bool[13]
-MLM_event_arg_buffer:         ds 16   ; u8[16]
-MLM_channel_instruments:      ds 13   ; u8[13]
-MLM_FM_channel_attenuators:   ds 4    ; u8[4]
+CHANNEL_COUNT     equ 13
+FM_CHANNEL_COUNT  equ 4
+SSG_CHANNEL_COUNT equ 3
+PA_CHANNEL_COUNT  equ 6
+
+MLM_playback_pointers:        ds 2*CHANNEL_COUNT  ; void*[13]
+MLM_playback_timings:         ds 2*CHANNEL_COUNT  ; u16[13]
+MLM_playback_set_timings:     ds 2*CHANNEL_COUNT  ; u16[13]
+MLM_playback_control:         ds CHANNEL_COUNT    ; bool[13]
+MLM_event_arg_buffer:         ds 16               ; u8[16]
+MLM_channel_instruments:      ds CHANNEL_COUNT    ; u8[13]
+MLM_FM_channel_attenuators:   ds FM_CHANNEL_COUNT ; u8[4]
+MLM_channel_pannings:         ds CHANNEL_COUNT    ; u8[13]
+MLM_channel_volumes:          ds CHANNEL_COUNT    ; u8[13]
 MLM_wram_end:

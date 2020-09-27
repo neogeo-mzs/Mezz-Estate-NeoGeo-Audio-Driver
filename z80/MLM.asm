@@ -11,6 +11,7 @@ MLM_stop:
 		ld (hl),0
 		ldir
 
+		; Stop ADPCM-A channels
 		ld b,6
 MLM_stop_pa_loop:
 		ld c,b
@@ -18,12 +19,20 @@ MLM_stop_pa_loop:
 		call PA_stop_sample
 		djnz MLM_stop_pa_loop
 
+		; Stop SSG channels
 		ld b,3
 MLM_stop_ssg_loop:
 		ld a,b
 		dec a
 		call SSG_stop_note
 		djnz MLM_stop_ssg_loop
+
+		; Set all pannings to center (%11000000)
+		ld hl,MLM_channel_pannings
+		ld de,MLM_channel_pannings+1
+		ld bc,CHANNEL_COUNT-1
+		ld (hl),%11000000
+		ldir
 	pop af
 	pop bc
 	pop de
@@ -207,7 +216,7 @@ MLM_play_sample_pa:
 	push de
 	push bc
 	push hl
-		; Get sample
+		; Set sample
 		push af
 			ld a,b
 			and a,%00000001
@@ -216,7 +225,7 @@ MLM_play_sample_pa:
 		pop af
 		call PA_set_sample_addr
 
-		; Get timing
+		; Set timing
 		push af
 			ld a,b
 			srl a
@@ -225,6 +234,14 @@ MLM_play_sample_pa:
 			ld b,0
 		pop af
 		call MLM_set_timing
+
+		; Set volume
+		ld h,0
+		ld l,a
+		ld de,MLM_channel_volumes
+		add hl,de
+		ld c,(hl)
+		call PA_set_channel_volume
 
 		; play sample
 		ld h,0
@@ -285,16 +302,11 @@ MLM_play_note_fm:
 			call FM_load_instrument
 		pop bc
 
-		; Find a better way to set attenuator
+		; Set attenuator
 		push bc
-			; Get FM channel inbetween 0 and 3
-			push af
-				ld a,b
-				sub a,6
-				ld l,a
-				ld h,0
-				ld de,MLM_FM_channel_attenuators
-			pop af
+			ld l,b
+			ld h,0
+			ld de,MLM_channel_volumes
 			add hl,de
 			ld c,(hl)
 			call FM_set_attenuator
@@ -318,6 +330,10 @@ MLM_play_note_fm:
 ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
 MLM_play_note_ssg:
 	push af
+	push hl
+	push bc
+	push de
+		; Set timing
 		push bc
 			push af
 				ld a,b
@@ -329,11 +345,28 @@ MLM_play_note_ssg:
 			call MLM_set_timing
 		pop bc
 
-		sub a,10
+		ld b,a   ; backup MLM channel into b
+		sub a,10 ; MLM channel to SSG channel (0~2)
 		call SSG_set_note
 
-		ld c,0 ; instrument TODO: way to change current instrument
+		; Set attenuator
+		ld h,0
+		ld l,b
+		ld de,MLM_channel_volumes
+		add hl,de
+		ld c,(hl)
+		call SSG_set_attenuator
+
+		; Set instrument
+		ld h,0
+		ld l,b
+		ld de,MLM_channel_instruments
+		add hl,de
+		ld c,(hl)
 		call SSG_set_instrument
+	pop de
+	pop bc
+	pop hl
 	pop af
 	jp MLM_parse_note_end
 
@@ -401,9 +434,10 @@ MLM_command_vectors:
 	dw MLMCOM_end_of_list,     MLMCOM_note_off
 	dw MLMCOM_set_instrument,  MLMCOM_wait_ticks_byte
 	dw MLMCOM_wait_ticks_word, MLMCOM_set_channel_volume
+	dw MLMCOM_set_channel_panning
 
 MLM_command_argc:
-	db &00, &01, &01, &01, &02, &02
+	db &00, &01, &01, &01, &02, &02, &01
 
 ; a:  channel
 ; bc: timing
@@ -564,48 +598,18 @@ MLMCOM_set_channel_volume:
 	push hl
 	push de
 	push bc
-		ld a,&39
-		ld (breakpoint),a
-		
 		ld ix,MLM_event_arg_buffer
 		ld a,c
 		ld c,(ix+0)
 
-		; channel is ADPCM-A...
-		cp a,6
-		call c,PA_set_channel_volume
-		jr c,MLMCOM_set_channel_volume_set_timing
+		; Store channel volume/attenuator into WRAM
+		ld h,0
+		ld l,a
+		ld de,MLM_channel_volumes
+		add hl,de
+		ld (hl),c
 
-		; channel is SSG...
-		cp a,9
-		jr nc, MLMCOM_set_channel_volume_is_ssg
-
-		; Channel is FM...
-
-		;   "Invert" the attenuator (0 is the 
-		;   maximum volume and 127 is the minimum;
-		;   this is counter-intuitive thus it is
-		;   abstracted away)
-		push af
-			ld a,127
-			sub a,c
-			ld c,a
-		pop af
-
-		;   Store the inverted attenuator into 
-		;   WRAM, this value will be used by the 
-		;   FM note on subroutine to set the 
-		;   attenuator.
-		push af
-			sub a,6 ; Get fm channel inbetween 0 and 3
-			ld h,0
-			ld l,a
-			ld de,MLM_FM_channel_attenuators
-			add hl,de
-			ld (hl),c
-		pop af
-
-MLMCOM_set_channel_volume_set_timing:
+		; Set timing
 		ld c,(ix+1)
 		ld b,0
 		call MLM_set_timing
@@ -616,21 +620,31 @@ MLMCOM_set_channel_volume_set_timing:
 	pop ix
 	jp MLM_parse_command_end
 
-MLMCOM_set_channel_volume_is_ssg:
+; c: channel
+; Arguments:
+;   1. %LRTTTTTT (Left on; Right on; Timing)
+MLMCOM_set_channel_panning:
+	push af
 	push bc
-		; Limit the attenuator inbetween 0 and 15
-		;   If the attenuator is higher then 15,
-		;   the value WON'T necessarily be 15.
-		;   Instead, it'll overflow. Too bad!
-		push af
-			ld a,c
-			and a,&0F
-			ld c,a
-		pop af
+	push hl
+		; Set panning
+		ld hl,MLM_event_arg_buffer
+		ld a,(hl)
+		and a,%11000000 ; get panning
+		ld hl,MLM_channel_pannings
+		ld b,0
+		add hl,bc
+		ld (hl),a
 
-		push af
-			sub a,10 ; Get SSG channel inbetween 0 and 2
-			call SSG_set_attenuator
-		pop af
+		ld hl,MLM_event_arg_buffer
+		ld a,(hl)
+		and a,%00111111 ; get timing
+		ld l,c ; \
+		ld c,a ;  | Swap registers a and c
+		ld b,0 ;  | using l as an intermediate
+		ld a,l ; /
+		call MLM_set_timing
+	pop hl
 	pop bc
-	jr MLMCOM_set_channel_volume_set_timing
+	pop af
+	jp MLM_parse_command_end
