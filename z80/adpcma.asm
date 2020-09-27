@@ -70,19 +70,23 @@ PA_stop_sample:
 PA_set_channel_volume:
 	push de
 	push hl
-		; Sets the panning to center.
-		;   TODO: Load panning from somewhere in WRAM
+		; Set panning
 		push af
+			ld h,0
+			ld l,a
+			ld de,MLM_channel_pannings
+			add hl,de
+			ld e,(hl)
 			ld a,c
-			or a,%11000000
+			or a,e ; ORs the volume and panning
 			ld e,a
 		pop af
 
+		; Set channel volume
 		push af
 			add a,REG_PA_CVOL
 			ld d,a
 		pop af
-
 		rst RST_YM_WRITEB
 	pop hl
 	pop de

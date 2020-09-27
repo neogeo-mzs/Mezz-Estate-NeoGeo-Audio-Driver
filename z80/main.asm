@@ -509,10 +509,13 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_E
 	db 0 | (15<<1) | &80, NOTE_F
 
-	db &05, &0F, 0 ; Set Ch. Vol., volume, timing
+	db &05, &0F, 0        ; Set Ch. Vol., volume, timing
+	db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
+
+	db &06, PANNING_R | 0 ; Set Pan.
 	db 0 | (15<<1) | &80, NOTE_A
 	db 0 | (15<<1) | &80, NOTE_AS
 	db 0 | (15<<1) | &80, NOTE_B
@@ -531,10 +534,13 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_E  | (3<<4)
 	db 15 | &80, NOTE_F  | (3<<4)
 
-	db &05, &7F-&6F, 0 ; Set Ch. Vol., volume, timing
+	db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
+	db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
+
+	db &06, PANNING_R | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
