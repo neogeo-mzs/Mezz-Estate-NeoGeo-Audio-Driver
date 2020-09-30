@@ -502,6 +502,7 @@ MLM_song2:
 MLM_ch2_data:
 	; play note
 	;db &05, &1F, 0 ; Set Ch. Vol., volume, timing
+	;db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
 	db 0 | (15<<1) | &80, NOTE_CS
 	db 0 | (15<<1) | &80, NOTE_D
@@ -509,7 +510,7 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_E
 	db 0 | (15<<1) | &80, NOTE_F
 
-	db &05, &0F, 0        ; Set Ch. Vol., volume, timing
+	;db &05, &0F, 0        ; Set Ch. Vol., volume, timing
 	db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
@@ -534,7 +535,7 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_E  | (3<<4)
 	db 15 | &80, NOTE_F  | (3<<4)
 
-	db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
+	;db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
 	db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
