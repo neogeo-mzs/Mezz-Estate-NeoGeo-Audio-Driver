@@ -49,6 +49,7 @@ FM_CHANNEL_COUNT  equ 4
 SSG_CHANNEL_COUNT equ 3
 PA_CHANNEL_COUNT  equ 6
 
+MLM_wram_start:
 MLM_playback_pointers:        ds 2*CHANNEL_COUNT  ; void*[13]
 MLM_playback_timings:         ds 2*CHANNEL_COUNT  ; u16[13]
 MLM_playback_set_timings:     ds 2*CHANNEL_COUNT  ; u16[13]
@@ -58,4 +59,6 @@ MLM_channel_instruments:      ds CHANNEL_COUNT    ; u8[13]
 MLM_FM_channel_attenuators:   ds FM_CHANNEL_COUNT ; u8[4]
 MLM_channel_pannings:         ds CHANNEL_COUNT    ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT    ; u8[13]
+MLM_base_time:                ds 1                ; u8
+MLM_base_time_counter:        ds 1                ; u8
 MLM_wram_end:

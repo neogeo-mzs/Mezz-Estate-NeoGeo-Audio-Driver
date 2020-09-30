@@ -233,11 +233,6 @@ IRQ:
 	push hl
 	push ix
 	push iy
-; ====================== General ====================== ;
-		ld a,(counter)
-		inc a
-		ld (counter),a
-
 ; ======================== SSG ======================== ;
 		ld b,3
 
@@ -259,10 +254,14 @@ SSG_update_loop:
 		djnz SSG_update_loop
 
 ; ======================== MLM ======================== ;
-; TODO: if the timing is set to 0, then parse and 
-;       execute the next event immediately next
-;       to the event that has the timing equal
-;       to zero.
+		ld a,(MLM_base_time)
+		ld c,a
+		ld a,(MLM_base_time_counter)	
+		inc a
+		cp a,c
+		ld (MLM_base_time_counter),a
+		jr nz,MLM_update_skip
+
 		ld b,13
 MLM_update_loop:
 		ld c,b
@@ -318,6 +317,7 @@ MLM_update_skip_save_dec_t:
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
+
 		xor a,a ; clear a
 		add a,e
 		add a,d
@@ -327,6 +327,11 @@ MLM_update_skip_save_dec_t:
 MLM_update_loop_next:
 		djnz MLM_update_loop
 
+		; Clear MLM_base_time_counter
+		xor a,a
+		ld (MLM_base_time_counter),a
+
+MLM_update_skip:
 .IRQ_end:
 		; clear Timer B counter and
 		; copy load timer value into
@@ -391,7 +396,7 @@ EntryPoint:
 
 main_loop:
 	halt
-	jp main_loop
+	jr main_loop
 
 set_defaults:
 	push af
