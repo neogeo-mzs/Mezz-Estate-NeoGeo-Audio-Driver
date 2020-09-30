@@ -4,12 +4,19 @@ MLM_stop:
 	push de
 	push bc
 	push af
+		ld a,&39
+		ld (breakpoint),a
+
 		; clear MLM WRAM
-		ld hl,MLM_playback_pointers
-		ld de,MLM_playback_pointers+1
-		ld bc,MLM_wram_end-MLM_playback_pointers-2
+		ld hl,MLM_wram_start
+		ld de,MLM_wram_start+1
+		ld bc,MLM_wram_end-MLM_wram_start-1
 		ld (hl),0
 		ldir
+
+		; Set defaults
+		ld a,1
+		ld (MLM_base_time),a
 
 		; Stop ADPCM-A channels
 		ld b,6
@@ -679,9 +686,6 @@ MLMCOM_set_master_volume:
 	push af
 	push de
 	push bc
-		ld a,&39
-		ld (breakpoint),a
-
 		ld ix,MLM_event_arg_buffer
 
 		; Set master volume
