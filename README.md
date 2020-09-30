@@ -93,17 +93,18 @@ this command ends the playback for the current channel
 **format: `$03 %TTTTTTTT (Timing)`**
 
 ###### Command 4: Wait ticks (word)
-**format: `$04 %TTTTTTTT %TTTTTTTT (Timing; LSB first MSB after, this will always be the case)`**
+**format: `$04 %TTTTTTTT (Timing LSB) %TTTTTTTT (Timing MSB)`**
 
 ###### Command 5: Set channel volume
-**format: `$05 %VVVVVVVV %TTTTTTTT (Volume; Timing)`**
+**format: `$05 %VVVVVVVV (Volume) %TTTTTTTT (Timing)`**
 
-###### Command 6: Set master volume
-**format: `$06 %VVVVVVTT %TTTTTTTT (Volume; Timing)`**
+###### Command 6: Set panning
+**format: `$06 %LRTTTTTT (Left on; Right on; Timing)`**
+
+###### Command 7: Set master volume
+**format: `$07 %VVVVVVTT (Volume; Timing MSB) %TTTTTTTT (Timing LSB)`**
+
 *ADPCM-A only*
-
-###### Command 7: Set panning
-**format: `$07 %LRTTTTTT (Left on; Right on; Timing)**`
 
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
@@ -117,7 +118,7 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
-* Implement master volume event command (ADPCM-A only)
+* Add a base time (similar to the one in deflemask...)
 
 ## IDEAS
 * If enough events are left there could be versions
