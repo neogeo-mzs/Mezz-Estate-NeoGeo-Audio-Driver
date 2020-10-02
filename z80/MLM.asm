@@ -463,9 +463,11 @@ MLM_command_vectors:
 	dw MLMCOM_set_instrument,      MLMCOM_wait_ticks_byte
 	dw MLMCOM_wait_ticks_word,     MLMCOM_set_channel_volume
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
+	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
+	db &02, &02
 
 ; a:  channel
 ; bc: timing
@@ -706,5 +708,53 @@ MLMCOM_set_master_volume:
 	pop bc
 	pop de
 	pop af
+	pop ix
+	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. %BBBBBBBB (Base time)
+;   2. %TTTTTTTT (Timing)
+MLMCOM_set_base_time:
+	push ix
+	push af
+		ld ix,MLM_event_arg_buffer
+
+		; Set base time
+		ld a,(ix+0)
+		ld (MLM_base_time),a
+
+		; Set timing
+		ld a,c
+		ld b,0
+		ld c,(ix+1)
+		call MLM_set_timing
+	pop af
+	pop ix
+	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. %BBBBBBBB (timer B)
+;   2. %TTTTTTTT (Timing)
+MLMCOM_set_timer_b:
+	push ix
+	push de
+	push bc
+	push af
+		ld ix,MLM_event_arg_buffer
+
+		; Set Timer B
+		ld e,(ix+0)
+		call TMB_set_counter_load
+
+		; Set timing
+		ld a,c
+		ld c,(ix+1)
+		ld b,0
+		call MLM_set_timing
+	pop af
+	pop bc
+	pop de
 	pop ix
 	jp MLM_parse_command_end

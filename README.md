@@ -106,6 +106,12 @@ this command ends the playback for the current channel
 
 *ADPCM-A only*
 
+###### Command 8: Set base time
+**format: `$08 %BBBBBBBB (Base Time) %TTTTTTTT (Timing)`**
+
+###### Command 9: Set timer B frequency
+**format: `$09 %BBBBBBBB (timer B) %TTTTTTTT (Timing)`**
+
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
 * B: Play a jingle using SSG 
@@ -118,7 +124,9 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
-* Add a command to set the base time
+* Implement "Set timer B" event
+* Implement "Small position jump" event
+* Implement "Big position jump" event
 
 ## IDEAS
 * If enough events are left there could be versions
