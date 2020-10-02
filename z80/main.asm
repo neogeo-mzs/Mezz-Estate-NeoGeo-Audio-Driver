@@ -378,10 +378,6 @@ EntryPoint:
 	call SetDefaultBanks
 	call set_defaults
 
-	; IRQ should be raised every 1/60th of a second
-	ld e,198                   
-	call TMB_set_counter_load
-
 	; Write 1 to port $C0
 	; (Unsure of the purpose, but every working sound driver has this.)
 	ld   a,1
@@ -458,6 +454,13 @@ ep_fm_loop:
 		call FM_set_attenuator
 
 		djnz ep_fm_loop
+
+		; Set timer B
+		; IRQ should be raised every 1/60th of a second
+		;    e = 256 - (t / 1152 * 4000000)
+		;        256 - (1/60 / 1152 * 4000000)
+		ld e,198                   
+		call TMB_set_counter_load
 	pop hl
 	pop bc
 	pop de
@@ -516,7 +519,9 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_F
 
 	;db &05, &0F, 0        ; Set Ch. Vol., volume, timing
-	db &06, PANNING_L | 0 ; Set Pan., panning | timing
+	db &06, PANNING_L | 0  ; Set Pan., panning | timing
+	db &08, 2, 0           ; Set base time, base time, timing
+	db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
