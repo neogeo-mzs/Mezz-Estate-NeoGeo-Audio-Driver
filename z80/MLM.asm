@@ -4,9 +4,6 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		ld a,&39
-		ld (breakpoint),a
-
 		; clear MLM WRAM
 		ld hl,MLM_wram_start
 		ld de,MLM_wram_start+1
@@ -187,12 +184,6 @@ MLM_update_events_do_update:
 		call z,MLM_parse_command
 		call nz,MLM_parse_note
 
-		; store playback pointer into WRAM
-		ex de,hl
-		ld (hl),d
-		dec hl
-		ld (hl),e
-
 MLM_update_events_skip:
 	pop ix
 	pop af
@@ -222,8 +213,12 @@ MLM_parse_note:
 		jp c,MLM_play_note_fm
 		jp MLM_play_note_ssg
 
-
 MLM_parse_note_end:
+		; store playback pointer into WRAM
+		ex de,hl
+		ld (hl),d
+		dec hl
+		ld (hl),e
 	pop bc
 	pop af
 	ret
@@ -398,15 +393,23 @@ MLM_play_note_ssg:
 	pop af
 	jp MLM_parse_note_end
 
-; [INPUT]
 ;   c:  channel
-;   hl: source
-; [OUTPUT]
-;   hl: source+command_argc
+;   hl: source (playback pointer)
+;   de: &MLM_playback_pointers[channel]
 MLM_parse_command:
 	push af
-	push de
 	push bc
+	push ix
+	push hl
+	push de
+		ld a,&39
+		ld (breakpoint),a
+
+		; Backup &MLM_playback_pointers[channel]
+		; into ix
+		ld ixl,e
+		ld ixh,d
+
 		; Lookup command argc and store it into a
 		push hl
 			ld l,(hl)
@@ -453,8 +456,21 @@ MLM_parse_command_execute:
 
 MLM_parse_command_end:
 		ex de,hl
-	pop bc
+		
+		; Load &MLM_playback_pointers[channel]
+		; back into de
+		ld e,ixl
+		ld d,ixh
+
+		; store playback pointer into WRAM
+		ex de,hl
+		ld (hl),d
+		dec hl
+		ld (hl),e
 	pop de
+	pop hl
+	pop ix
+	pop bc
 	pop af
 	ret
 
