@@ -112,6 +112,11 @@ this command ends the playback for the current channel
 ###### Command 9: Set timer B frequency
 **format: `$09 %BBBBBBBB (timer B) %TTTTTTTT (Timing)`**
 
+###### Command 10: Small position jump
+**format: `$0A %OOOOOOOO (Offset; next event is executed immediately)`**
+
+Offset = destination addr. - (current event addr. + 1 + current event argc)
+
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
 * B: Play a jingle using SSG 
@@ -125,7 +130,6 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 
 ## TODO
 * Implement "Set timer B" event
-* Implement "Small position jump" event
 * Implement "Big position jump" event
 
 ## IDEAS

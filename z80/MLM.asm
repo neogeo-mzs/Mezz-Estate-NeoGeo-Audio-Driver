@@ -191,11 +191,9 @@ MLM_update_events_skip:
 	pop hl
 	ret
 
-; [INPUT]
 ;   c:  channel
-;   hl: source
-; [OUTPUT]
-;   hl: source+2
+;   hl: source (playback pointer)
+;   de: &MLM_playback_pointers[channel]+1
 MLM_parse_note:
 	push af
 	push bc
@@ -395,16 +393,13 @@ MLM_play_note_ssg:
 
 ;   c:  channel
 ;   hl: source (playback pointer)
-;   de: &MLM_playback_pointers[channel]
+;   de: &MLM_playback_pointers[channel]+1
 MLM_parse_command:
 	push af
 	push bc
 	push ix
 	push hl
 	push de
-		ld a,&39
-		ld (breakpoint),a
-
 		; Backup &MLM_playback_pointers[channel]
 		; into ix
 		ld ixl,e
@@ -467,6 +462,8 @@ MLM_parse_command_end:
 		ld (hl),d
 		dec hl
 		ld (hl),e
+
+MLM_parse_command_end_skip_playback_pointer_set:
 	pop de
 	pop hl
 	pop ix
@@ -480,10 +477,11 @@ MLM_command_vectors:
 	dw MLMCOM_wait_ticks_word,     MLMCOM_set_channel_volume
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
 	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
+	dw MLMCOM_small_position_jump
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
-	db &02, &02
+	db &02, &02, &01
 
 ; a:  channel
 ; bc: timing
@@ -513,12 +511,23 @@ MLM_set_timing:
 MLMCOM_end_of_list:
 	push hl
 	push de
+	push af
+	push bc
+		; Set playback control to 0
 		ld h,0
 		ld l,c
 		ld de,MLM_playback_control
 		add hl,de
-
 		ld (hl),0
+
+		; Set timing to 1
+		; (This is done to be sure that
+		;  the next event won't be executed)
+		ld a,c
+		ld bc,1
+		call MLM_set_timing
+	pop bc
+	pop af
 	pop de
 	pop hl
 	jp MLM_parse_command_end
@@ -774,3 +783,38 @@ MLMCOM_set_timer_b:
 	pop de
 	pop ix
 	jp MLM_parse_command_end
+
+; c:  channel
+; ix: &MLM_playback_pointers[channel]+1
+; de: source (playback pointer)
+; Arguments:
+;   1. %OOOOOOOO (Offset)
+MLMCOM_small_position_jump:
+	push hl
+	push de
+	push ix
+		ld hl,MLM_event_arg_buffer
+
+		; Load offset and sign extend 
+		; it to 16bit (result in bc)
+		ld a,(hl)
+		ld l,c     ; Backup channel into l
+		call AtoBCextendendsign
+
+		; Add offset to playback 
+		; pointer and store it into 
+		; MLM_playback_pointers[channel]
+		ld a,l ; Backup channel into a
+		ld l,e
+		ld h,d
+		add hl,bc
+		ld (ix-1),l
+		ld (ix-0),h
+
+		; Set timing to 0
+		ld bc,0
+		call MLM_set_timing
+	pop ix
+	pop de
+	pop hl
+	jp MLM_parse_command_end_skip_playback_pointer_set

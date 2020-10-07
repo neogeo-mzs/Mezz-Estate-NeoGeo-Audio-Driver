@@ -519,21 +519,28 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_F
 
 	;db &05, &0F, 0        ; Set Ch. Vol., volume, timing
-	db &06, PANNING_L | 0  ; Set Pan., panning | timing
-	db &08, 2, 0           ; Set base time, base time, timing
-	db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
+	;db &06, PANNING_L | 0  ; Set Pan., panning | timing
+	;db &08, 2, 0           ; Set base time, base time, timing
+	;db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
 
-	db &06, PANNING_R | 0 ; Set Pan.
+	;db &06, PANNING_R | 0 ; Set Pan.
 	db 0 | (15<<1) | &80, NOTE_A
 	db 0 | (15<<1) | &80, NOTE_AS
 	db 0 | (15<<1) | &80, NOTE_B
 
+MLM_ch2_data_pos_jump:
+	; Small position jump event, offset
+	db &0A, MLM_ch2_data_dest-(MLM_ch2_data_pos_jump+2)
+
+	db &47, &49, &95 ; garbage
+
+MLM_ch2_data_dest:
 	;db &01, 30       ; Note off, timing
 	db &00            ; end of channel event list
-	db 0 | (30<<1) | &80, NOTE_C ; C; shouldn't be played
+	db 0 | (30<<1) | &80, NOTE_B ; C; shouldn't be played
 
 MLM_ch8_data:
 	db &02, 1 ; Change instrument
