@@ -117,6 +117,11 @@ this command ends the playback for the current channel
 
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
+###### Command 11: Big position jump
+**format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
+
+Offset = destination addr. - (current event addr. + 1 + current event argc)
+
 ## CONTROLS
 * A: Play a jingle using ADPCM-A
 * B: Play a jingle using SSG 
@@ -129,8 +134,6 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
-* Implement "Set timer B" event
-* Implement "Big position jump" event
 
 ## IDEAS
 * If enough events are left there could be versions
