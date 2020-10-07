@@ -477,11 +477,11 @@ MLM_command_vectors:
 	dw MLMCOM_wait_ticks_word,     MLMCOM_set_channel_volume
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
 	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
-	dw MLMCOM_small_position_jump
+	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
-	db &02, &02, &01
+	db &02, &02, &01, &02
 
 ; a:  channel
 ; bc: timing
@@ -805,6 +805,40 @@ MLMCOM_small_position_jump:
 		; pointer and store it into 
 		; MLM_playback_pointers[channel]
 		ld a,l ; Backup channel into a
+		ld l,e
+		ld h,d
+		add hl,bc
+		ld (ix-1),l
+		ld (ix-0),h
+
+		; Set timing to 0
+		ld bc,0
+		call MLM_set_timing
+	pop ix
+	pop de
+	pop hl
+	jp MLM_parse_command_end_skip_playback_pointer_set
+
+; c:  channel
+; ix: &MLM_playback_pointers[channel]+1
+; de: source (playback pointer)
+; Arguments:
+;   1. %OOOOOOOO (Offset)
+MLMCOM_big_position_jump:
+	push hl
+	push de
+	push ix
+		ld hl,MLM_event_arg_buffer
+
+		; Load offset into bc
+		ld a,c ; Backup channel into a
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+
+		; Add offset to playback 
+		; pointer and store it into 
+		; MLM_playback_pointers[channel]
 		ld l,e
 		ld h,d
 		add hl,bc

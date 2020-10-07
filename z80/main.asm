@@ -552,13 +552,20 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_E  | (3<<4)
 	db 15 | &80, NOTE_F  | (3<<4)
 
+MLM_ch8_data_pos_jump:
+	db &0B ; Small position jump event
+	dw MLM_ch8_data_dest-(MLM_ch8_data_pos_jump+3)
+
+	ds 512 ; garbage
+
+MLM_ch8_data_dest:
 	;db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
-	db &06, PANNING_L | 0 ; Set Pan., panning | timing
+	;db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
 
-	db &06, PANNING_R | 0 ; Set Pan., panning | timing
+	;db &06, PANNING_R | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
