@@ -1,4 +1,4 @@
-# THIS IS A WIP, DO NOT USE THIS IN YOUR PRODUCTION CODE BECAUSE SHIT WILL FUCK UP!
+# WIP!!
 
 # Mezz'Estate Neogeo Audio Driver
 *ADPCM-B isn't supported as of right now.*
