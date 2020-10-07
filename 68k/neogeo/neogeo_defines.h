@@ -1,9 +1,11 @@
-typedef unsigned char  u8;
-typedef unsigned short u16;
-typedef unsigned int   u32;
-typedef signed char    s8;
-typedef signed short   s16;
-typedef signed int     s32;
+#include <inttypes.h>
+
+typedef unsigned int8_t  u8;
+typedef unsigned int16_t u16;
+typedef unsigned int32_t u32;
+typedef signed int8_t    s8;
+typedef signed int16_t   s16;
+typedef signed int32_t   s32;
 
 typedef volatile unsigned char  vu8;
 typedef volatile unsigned short vu16;

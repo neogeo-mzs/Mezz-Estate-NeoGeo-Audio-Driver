@@ -112,3 +112,15 @@ DivLoop:
        jr nc,DivLoop ;23|21
        inc e        ;--
        jp DivLoop+1
+
+;a to bc (extend sign)
+;inputs:  a  - 8-bit signed number
+;outputs: bc - same 16-bit signed number
+AtoBCextendendsign:
+  push af
+    ld c,a
+    rlca    ; or rla
+    sbc a,a
+    ld b,a
+  pop af
+  ret
