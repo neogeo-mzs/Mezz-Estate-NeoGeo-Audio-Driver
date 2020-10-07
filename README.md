@@ -120,6 +120,7 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 11: Big position jump
 **format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
 
+###### Command
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
 ## CONTROLS
@@ -134,6 +135,7 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
+* Make the "change volume" events change volume immediately
 
 ## IDEAS
 * If enough events are left there could be versions

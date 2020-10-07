@@ -248,12 +248,12 @@ MLM_play_sample_pa:
 		call MLM_set_timing
 
 		; Set volume
-		ld h,0
-		ld l,a
-		ld de,MLM_channel_volumes
-		add hl,de
-		ld c,(hl)
-		call PA_set_channel_volume
+		;ld h,0
+		;ld l,a
+		;ld de,MLM_channel_volumes
+		;add hl,de
+		;ld c,(hl)
+		;call PA_set_channel_volume
 
 		; play sample
 		ld h,0
@@ -651,29 +651,62 @@ MLMCOM_set_channel_volume:
 	push ix
 	push af
 	push hl
-	push de
 	push bc
 		ld ix,MLM_event_arg_buffer
-		ld a,c
-		ld c,(ix+0)
+		ld a,c ; backup channel into a
 
-		; Store channel volume/attenuator into WRAM
+		; Store volume in 
+		; MLM_channel_volumes[channel]
 		ld h,0
 		ld l,a
-		ld de,MLM_channel_volumes
-		add hl,de
+		ld bc,MLM_channel_volumes
+		add hl,bc
+		ld c,(ix+0)
 		ld (hl),c
 
-		; Set timing
+		; if channel is adpcma...
+		cp a,6
+		call c,PA_set_channel_volume
+		jr c,MLMCOM_set_channel_volume_set_timing
+
+		; elseif channel is fm...
+		cp a,10
+		jr c,MLMCOM_set_channel_volume_fm
+
+		; else (channel is ssg)...
+		push af
+			sub a,10
+			call SSG_set_attenuator
+		pop af
+		
+MLMCOM_set_channel_volume_set_timing:
 		ld c,(ix+1)
 		ld b,0
 		call MLM_set_timing
 	pop bc
-	pop de
 	pop hl
 	pop af
 	pop ix
 	jp MLM_parse_command_end
+
+MLMCOM_set_channel_volume_fm:
+	push af
+	push hl
+	push de
+		; Load actual FM channel number
+		; from LUT into a
+		sub a,6
+		ld h,0
+		ld l,a
+		ld de,FM_channel_LUT
+		add hl,de
+		ld a,(hl)
+
+		call FM_set_attenuator
+	pop de
+	pop hl
+	pop af
+	jr MLMCOM_set_channel_volume_set_timing
 
 ; c: channel
 ; Arguments:

@@ -518,7 +518,7 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_E
 	db 0 | (15<<1) | &80, NOTE_F
 
-	;db &05, &0F, 0        ; Set Ch. Vol., volume, timing
+	;db &05, &17, 10        ; Set Ch. Vol., volume, timing
 	;db &06, PANNING_L | 0  ; Set Pan., panning | timing
 	;db &08, 2, 0           ; Set base time, base time, timing
 	;db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
@@ -551,6 +551,7 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
 	db 15 | &80, NOTE_F  | (3<<4)
+	;db &05, &7F-&78, 10 ; Set Ch. Vol., volume, timing
 
 MLM_ch8_data_pos_jump:
 	db &0B ; Small position jump event
@@ -584,7 +585,7 @@ MLM_ch12_data:
 	db 15 | &80, (1*12) + NOTE_E 
 	db 15 | &80, (1*12) + NOTE_F
 
-	db &05, &08, 0 ; Set Ch. Vol., volume, timing 
+	;db &05, &0B, 10 ; Set Ch. Vol., volume, timing 
 	db 15 | &80, (1*12) + NOTE_FS
 	db 15 | &80, (1*12) + NOTE_G 
 	db 15 | &80, (1*12) + NOTE_GS 
@@ -600,7 +601,7 @@ instruments:
 	;============= Instrument 0 ============== ;
 	; SSG
 	;;;;       Volume Macro Metadata        ;;;;
-	db &20       ; Macro size (in nibbles)
+	db &1       ; Macro size (in nibbles)
 	db &FF       ; Loop point (&FF = no loop)
 	dw vol_macro ; Pointer to macro
 	;;;;       Arpeggio Macro Metadata      ;;;;
