@@ -678,7 +678,7 @@ MLMCOM_set_channel_volume:
 			sub a,10
 			call SSG_set_attenuator
 		pop af
-		
+
 MLMCOM_set_channel_volume_set_timing:
 		ld c,(ix+1)
 		ld b,0
@@ -713,27 +713,42 @@ MLMCOM_set_channel_volume_fm:
 ;   1. %LRTTTTTT (Left on; Right on; Timing)
 MLMCOM_set_channel_panning:
 	push af
-	push bc
 	push hl
-		; Set panning
+	push bc
 		ld hl,MLM_event_arg_buffer
-		ld a,(hl)
-		and a,%11000000 ; get panning
-		ld hl,MLM_channel_pannings
-		ld b,0
-		add hl,bc
-		ld (hl),a
 
-		ld hl,MLM_event_arg_buffer
+		ld a,&39
+		ld (breakpoint),a
+		
+		; Load panning into c
 		ld a,(hl)
-		and a,%00111111 ; get timing
-		ld l,c ; \
-		ld c,a ;  | Swap registers a and c
-		ld b,0 ;  | using l as an intermediate
-		ld a,l ; /
+		and a,%11000000
+		ld b,a ; \
+		ld a,c ;  |- Swap a and c sacrificing b
+		ld c,b ; /
+
+		; if channel is adpcma...
+		cp a,6
+		call c,PA_set_channel_panning
+		jr c,MLMCOM_set_channel_panning_set_timing
+
+		; elseif channel is FM...
+		cp a,10
+		call c,FM_set_panning
+
+		; else channel is SSG, the panning will be
+		; ignored since the SSG channels are mono
+
+MLMCOM_set_channel_panning_set_timing:
+		ld b,a ; backup channel in b
+		ld a,(hl)
+		and a,%00111111 ; Get timing
+		ld c,a
+		ld a,b
+		ld b,0
 		call MLM_set_timing
-	pop hl
 	pop bc
+	pop hl
 	pop af
 	jp MLM_parse_command_end
 

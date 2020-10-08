@@ -135,7 +135,6 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * Sending lots of play song signals in a short amount of time (by mashing the A, B and C buttons) softlocks the 68k program. (the z80 is reset or does it also softlock?)
 
 ## TODO
-* Make the "change volume" events change volume immediately
 
 ## IDEAS
 * If enough events are left there could be versions
