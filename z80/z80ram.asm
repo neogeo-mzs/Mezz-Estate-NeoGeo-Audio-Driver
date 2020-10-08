@@ -41,7 +41,6 @@ ssg_vol_attenuators: ds 3 ; u8[3]
 
 ; ======== FM ========
 FM_base_total_levels: ds 4*6 ; u8[6][4]
-FM_pannings: ds 6            ; u8[6]
 
 ; ======== MLM player ========
 CHANNEL_COUNT     equ 13
@@ -56,7 +55,6 @@ MLM_playback_set_timings:     ds 2*CHANNEL_COUNT  ; u16[13]
 MLM_playback_control:         ds CHANNEL_COUNT    ; bool[13]
 MLM_event_arg_buffer:         ds 16               ; u8[16]
 MLM_channel_instruments:      ds CHANNEL_COUNT    ; u8[13]
-MLM_FM_channel_attenuators:   ds FM_CHANNEL_COUNT ; u8[4]
 MLM_channel_pannings:         ds CHANNEL_COUNT    ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT    ; u8[13]
 MLM_base_time:                ds 1                ; u8

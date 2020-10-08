@@ -433,16 +433,22 @@ ep_ssg_loop:
 		; Set fm defaults
 		ld b,4
 ep_fm_loop:
+		; Set panning to CENTER (L on, R on)
+		
+		; Calculate MLM channel (6 to 9)
+		; then set panning
+		ld a,b
+		add a,5
+		ld c,%11000000
+		call FM_set_panning
+
+		; Load correct FM channel in a
 		ld h,0
 		ld l,b
 		ld de,FM_channel_LUT
 		dec hl
 		add hl,de
-
-		; Set panning to CENTER (L on, R on)
 		ld a,(hl)
-		ld c,%11000000
-		call FM_set_panning
 
 		push bc
 			ld b,a
@@ -485,7 +491,7 @@ MLM_header:
 
 MLM_song0:
 	; ADPCM-A channel offsets
-	dw 0, 0, MLM_ch2_data-MLM_header, 0, 0, 0
+	dw 0, 0, MLM_pa_data-MLM_header, 0, 0, 0
 	; FM channel offsets
 	dw 0, 0, 0, 0
 	; SSG channel offsets
@@ -497,17 +503,17 @@ MLM_song1:
 	; FM channel offsets
 	dw 0, 0, 0, 0
 	; SSG channel offsets
-	dw 0, 0, MLM_ch12_data-MLM_header
+	dw 0, 0, MLM_ssg_data-MLM_header
 
 MLM_song2:
 	; ADPCM-A channel offsets
 	dw 0, 0, 0, 0, 0, 0
 	; FM channel offsets
-	dw 0, 0, MLM_ch8_data-MLM_header, 0
+	dw 0, 0, MLM_fm_data-MLM_header, 0
 	; SSG channel offsets
 	dw 0, 0, 0
 
-MLM_ch2_data:
+MLM_pa_data:
 	; play note
 	;db &05, &1F, 0 ; Set Ch. Vol., volume, timing
 	;db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
@@ -531,18 +537,18 @@ MLM_ch2_data:
 	db 0 | (15<<1) | &80, NOTE_AS
 	db 0 | (15<<1) | &80, NOTE_B
 
-MLM_ch2_data_pos_jump:
+MLM_pa_data_pos_jump:
 	; Small position jump event, offset
-	db &0A, MLM_ch2_data_dest-(MLM_ch2_data_pos_jump+2)
+	db &0A, MLM_pa_data_dest-(MLM_pa_data_pos_jump+2)
 
 	db &47, &49, &95 ; garbage
 
-MLM_ch2_data_dest:
+MLM_pa_data_dest:
 	;db &01, 30       ; Note off, timing
 	db &00            ; end of channel event list
 	db 0 | (30<<1) | &80, NOTE_B ; C; shouldn't be played
 
-MLM_ch8_data:
+MLM_fm_data:
 	db &02, 1 ; Change instrument
 	;db &05, &7F-&7F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
@@ -550,16 +556,18 @@ MLM_ch8_data:
 	db 15 | &80, NOTE_D  | (3<<4)
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
-	db 15 | &80, NOTE_F  | (3<<4)
+	db 20 | &80, NOTE_F  | (3<<4)
+	db &06, PANNING_L | 20 ; Set Pan., panning | timing
+
 	;db &05, &7F-&78, 10 ; Set Ch. Vol., volume, timing
 
-MLM_ch8_data_pos_jump:
+MLM_fm_data_pos_jump:
 	db &0B ; Small position jump event
-	dw MLM_ch8_data_dest-(MLM_ch8_data_pos_jump+3)
+	dw MLM_fm_data_dest-(MLM_fm_data_pos_jump+3)
 
 	ds 512 ; garbage
 
-MLM_ch8_data_dest:
+MLM_fm_data_dest:
 	;db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
 	;db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
@@ -576,7 +584,7 @@ MLM_ch8_data_dest:
 	db &00 ; end of list
 	db 30 | &80, 9 | (3<<4)  ; A4
 
-MLM_ch12_data:
+MLM_ssg_data:
 	;db &05, &0F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, (1*12) + NOTE_C ; timing | &80, (octave-2)*12 + note
 	db 15 | &80, (1*12) + NOTE_CS
@@ -601,7 +609,7 @@ instruments:
 	;============= Instrument 0 ============== ;
 	; SSG
 	;;;;       Volume Macro Metadata        ;;;;
-	db &1       ; Macro size (in nibbles)
+	db &20       ; Macro size (in nibbles)
 	db &FF       ; Loop point (&FF = no loop)
 	dw vol_macro ; Pointer to macro
 	;;;;       Arpeggio Macro Metadata      ;;;;
@@ -615,7 +623,7 @@ instruments:
 	; FM
 	; Channel regs
 	db 4 | (4<<3)             ; ALGO | (FB<<3)
-	db 0 | (0<<4) & %00110111 ; PMS | (AMS<<4) & %00110111
+	db 0 | (0<<4)             ; PMS | (AMS<<4) 
 	; Operator 1 regs
 	db 1 | (0<<4)             ; MUL | (DT<<4)
 	db 7                      ; Total Level

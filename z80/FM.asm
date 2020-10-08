@@ -37,20 +37,27 @@ FM_load_instrument_chnl_is_odd:
 		call z,write45
 		call nz,write67
 
+		; Set LRAMSPMS
 		inc hl
 		ld a,(hl)
 
 		push hl
 		push de
-			dec b
+		push bc	
+			; Convert FM channel to MLM channel
+			; (result is in e)
+			ld c,b
+			ld b,0
+			ld hl,FM_to_MLM_channel_LUT
+			add hl,bc
+			ld e,(hl)
 
+			; Load panning
 			ld d,0
-			ld e,b
-			ld hl,FM_pannings
+			ld hl,MLM_channel_pannings
 			add hl,de
 			or a,(hl)
-			
-			inc b
+		pop bc
 		pop de
 		pop hl
 
@@ -304,19 +311,60 @@ FM_set_attenuator_loop_op_is_odd:
 	pop bc
 	ret
 
-; a: channel
+; a: channel (MLM channels, from 6 to 9)
 ; c: panning (0: none, 64: right, 128: left, 192: both)
 FM_set_panning:
 	push hl
 	push de
 	push af
-		dec a
-		ld d,0
-		ld e,a
-		ld hl,FM_pannings
+	push bc
+		ld b,a ; backup channel into b
+
+		; Load current channels's instrument into l
+		ld h,0
+		ld l,a
+		ld de,MLM_channel_instruments
+		add hl,de
+		ld l,(hl)
+
+		; Calculate pointer to instrument into hl
+		ld h,0
+		ld de,INSTRUMENTS
+		add hl,hl
+		add hl,hl
+		add hl,hl
+		add hl,hl
+		add hl,hl ; hl *= 32
 		add hl,de
 
-		ld (hl),c
+		; Load AM_PMS value into a, then OR a
+		; with panning (result is stored in e)
+		inc hl
+		ld a,(hl)
+		or a,c
+		ld e,a
+
+		; Load correct FM channel into a
+		ld a,b
+		sub a,10
+		ld h,0
+		ld l,a
+		ld bc,FM_channel_LUT
+		add hl,bc
+		ld a,(hl)
+
+		; Write result to the correct 
+		; FM register and port
+		ld d,REG_FM_CH13_LRAMSPMS
+		bit 0,a                      ; \ 
+		jr nz,FM_set_panning_ch_odd  ;  | if (fm channel is even) reg++
+		inc d                        ; /
+
+FM_set_panning_ch_odd: 
+		bit 2,a
+		call z,write45
+		call nz,write67            
+	pop bc
 	pop af
 	pop de
 	pop hl
@@ -347,3 +395,7 @@ FM_pitch_LUT:
 
 FM_channel_LUT:
 	db FM_CH1, FM_CH2, FM_CH3, FM_CH4
+
+FM_to_MLM_channel_LUT:
+	;  /// CH1 CH2 /// /// CH3 CH4
+	db 0,  6,  7,  0,  0,  8,  9

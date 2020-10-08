@@ -67,7 +67,9 @@ PA_stop_sample:
 PA_set_channel_volume:
 	push de
 	push hl
-		; Set panning
+		; Load panning from 
+		; MLM_channel_pannings[channel]
+		; and OR it with the volume
 		push af
 			ld h,0
 			ld l,a
@@ -79,7 +81,7 @@ PA_set_channel_volume:
 			ld e,a
 		pop af
 
-		; Set channel volume
+		; Set CVOL register
 		push af
 			add a,REG_PA_CVOL
 			ld d,a
@@ -88,6 +90,36 @@ PA_set_channel_volume:
 	pop hl
 	pop de
 	ret
-	
+
+; a: channel
+; c: panning (0: none, 64: right, 128: left, 192: both)
+PA_set_channel_panning:
+	push hl
+	push de
+	push bc
+		; Load volume from
+		; MLM_channel_volumes[channel]
+		; and OR it with the panning
+		push af
+			ld h,0
+			ld l,a
+			ld de,MLM_channel_volumes
+			add hl,de
+			ld a,(hl)
+			or a,c
+			ld e,a
+		pop af
+
+		; Set CVOL register
+		push af
+			add a,REG_PA_CVOL
+			ld d,a
+		pop af
+		rst RST_YM_WRITEB
+	pop bc
+	pop de
+	pop hl
+	ret
+
 PA_channel_on_masks:
 	db %00000001,%00000010,%00000100,%00001000,%00010000,%00100000
