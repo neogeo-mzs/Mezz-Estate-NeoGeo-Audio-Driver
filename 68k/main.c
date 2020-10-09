@@ -94,9 +94,9 @@ int main()
         render_status.vblank_done = 0;
         render_status.logic_done  = 0;
 
-        if (((NormalInput*)BIOS_P1CHANGE)->left && song_select >= 1)
+        if (((NormalInput*)BIOS_P1CHANGE)->left && song_select > 0)
             song_select--;
-        else if(((NormalInput*)BIOS_P1CHANGE)->right && song_select <= 12)
+        else if(((NormalInput*)BIOS_P1CHANGE)->right && song_select < 12)
             song_select++;
 
         if (((NormalInput*)BIOS_P1CHANGE)->A)
