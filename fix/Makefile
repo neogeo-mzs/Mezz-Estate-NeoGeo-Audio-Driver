@@ -1,22 +1,18 @@
 ######## Mezz'Estate Studios NeoGeo SROM Makefile ########
 
-SFILES := sinsgold.s1
-HFILES := sinsgold.h 
+SFILES := mzs_8x8_font.s1
 
 # Tools
 ROMWAK := romwak
 
 ROM_PAD_KBS := 128
 
-build: srom.bin fix.h
+build: srom.bin 
 
 srom.bin:
 	cat $(SFILES) > srom.tmp.bin
 	$(ROMWAK) /p srom.tmp.bin $@ $(ROM_PAD_KBS) 0
 	rm srom.tmp.bin
-
-fix.h:
-	cat $(HFILES) > $@
 
 .PHONY: clean
 

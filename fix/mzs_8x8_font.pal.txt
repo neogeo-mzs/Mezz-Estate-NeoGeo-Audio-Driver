@@ -1,0 +1,15 @@
+color 1: 8000
+color 2: 7FFF
+color 3: 6323
+color 4: E923
+color 5: AE34
+color 6: DF92
+color 7: 4FE6
+color 8: 16C4
+color 9: 8374
+color 10: F133
+color 11: C468
+color 12: 6ABD
+color 13: 7FFF
+color 14: E2EF
+color 15: 808D

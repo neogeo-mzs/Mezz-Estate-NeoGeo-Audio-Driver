@@ -1,11 +1,14 @@
 #include <inttypes.h>
 
-typedef unsigned int8_t  u8;
-typedef unsigned int16_t u16;
-typedef unsigned int32_t u32;
-typedef signed int8_t    s8;
-typedef signed int16_t   s16;
-typedef signed int32_t   s32;
+#ifndef NEOGEO_DEFINES_H_INCLUDED
+#define NEOGEO_DEFINES_H_INCLUDED
+
+typedef unsigned char  u8;
+typedef unsigned short u16;
+typedef unsigned int   u32;
+typedef signed char    s8;
+typedef signed short   s16;
+typedef signed int     s32;
 
 typedef volatile unsigned char  vu8;
 typedef volatile unsigned short vu16;
@@ -13,6 +16,8 @@ typedef volatile unsigned int   vu32;
 typedef volatile signed char    vs8;
 typedef volatile signed short   vs16;
 typedef volatile signed int     vs32;
+
+typedef unsigned char uchar;
 
 // Hard DIPs:
 #define DIPSW_SETTINGS  0
@@ -74,9 +79,9 @@ typedef volatile signed int     vs32;
 #define REG_PALBANK1    0x3A000F   // Use palette bank 1
 #define REG_PALBANK0    0x3A001F   // Use palette bank 0 (default)
 
-#define REG_VRAMADDR    0x3C0000
-#define REG_VRAMRW      0x3C0002
-#define REG_VRAMMOD     0x3C0004
+#define REG_VRAMADDR    ((u16*)0x3C0000)
+#define REG_VRAMRW      ((u16*)0x3C0002)
+#define REG_VRAMMOD     ((s16*)0x3C0004)
 #define REG_LSPCMODE    0x3C0006
 #define REG_TIMERHIGH   0x3C0008
 #define REG_TIMERLOW    0x3C000A
@@ -125,8 +130,8 @@ typedef volatile signed int     vs32;
 #define BIOS_USER_REQUEST 0x10FDAE
 #define BIOS_USER_MODE    0x10FDAF
 #define BIOS_START_FLAG   0x10FDB4
-#define BIOS_MESS_POINT   0x10FDBE
-#define BIOS_MESS_BUSY    0x10FDC2
+#define BIOS_MESS_POINT   ((u16**)0x10FDBE)
+#define BIOS_MESS_BUSY    ((u8*)0x10FDC2)
 
 // Memory card:
 #define BIOS_CRDF       0x10FDC4   // Byte: function to perform when calling BIOSF_CRDACCESS
@@ -170,3 +175,8 @@ typedef volatile signed int     vs32;
 #define CNT_SELECT1     1
 #define CNT_START2      2
 #define CNT_SELECT2     3
+
+// Macros
+#define PAL(bank, clr)     (PALETTES[16*bank + clr])
+
+#endif // NEOGEO_DEFINES_H_INCLUDED
