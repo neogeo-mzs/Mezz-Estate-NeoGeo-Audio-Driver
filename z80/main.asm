@@ -488,10 +488,20 @@ MLM_header:
 	dw MLM_song0-MLM_header ; song 0 offset
 	dw MLM_song1-MLM_header ; song 1 offset
 	dw MLM_song2-MLM_header ; song 2 offset
+	dw MLM_song3-MLM_header ; song 3 offset
+	dw MLM_song4-MLM_header ; song 4 offset
+	dw MLM_song5-MLM_header ; song 5 offset
+	dw MLM_song6-MLM_header ; song 6 offset
+	dw MLM_song7-MLM_header ; song 7 offset
+	dw MLM_song8-MLM_header ; song 8 offset
+	dw MLM_song9-MLM_header ; song 9 offset
+	dw MLM_song10-MLM_header ; song 10 offset
+	dw MLM_song11-MLM_header ; song 11 offset
+	dw MLM_song12-MLM_header ; song 12 offset
 
 MLM_song0:
 	; ADPCM-A channel offsets
-	dw 0, 0, MLM_pa_data-MLM_header, 0, 0, 0
+	dw MLM_pa_data-MLM_header, 0, 0, 0, 0, 0
 	; FM channel offsets
 	dw 0, 0, 0, 0
 	; SSG channel offsets
@@ -499,19 +509,99 @@ MLM_song0:
 
 MLM_song1:
 	; ADPCM-A channel offsets
-	dw 0, 0, 0, 0, 0, 0
+	dw 0, MLM_pa_data-MLM_header, 0, 0, 0, 0
 	; FM channel offsets
 	dw 0, 0, 0, 0
 	; SSG channel offsets
-	dw 0, 0, MLM_ssg_data-MLM_header
+	dw 0, 0, 0
 
 MLM_song2:
+	; ADPCM-A channel offsets
+	dw 0, 0, MLM_pa_data-MLM_header, 0, 0, 0
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song3:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, MLM_pa_data-MLM_header, 0, 0
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song4:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, MLM_pa_data-MLM_header, 0
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song5:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, MLM_pa_data-MLM_header
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song6:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, 0
+	; FM channel offsets
+	dw MLM_fm_data-MLM_header, 0, 0, 0
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song7:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, 0
+	; FM channel offsets
+	dw 0, MLM_fm_data-MLM_header, 0, 0
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song8:
 	; ADPCM-A channel offsets
 	dw 0, 0, 0, 0, 0, 0
 	; FM channel offsets
 	dw 0, 0, MLM_fm_data-MLM_header, 0
 	; SSG channel offsets
 	dw 0, 0, 0
+
+MLM_song9:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, 0
+	; FM channel offsets
+	dw 0, 0, 0, MLM_fm_data-MLM_header
+	; SSG channel offsets
+	dw 0, 0, 0
+
+MLM_song10:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, 0
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw MLM_ssg_data-MLM_header, 0, 0
+
+MLM_song11:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, 0
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw 0, MLM_ssg_data-MLM_header, 0
+
+MLM_song12:
+	; ADPCM-A channel offsets
+	dw 0, 0, 0, 0, 0, 0
+	; FM channel offsets
+	dw 0, 0, 0, 0
+	; SSG channel offsets
+	dw 0, 0, MLM_ssg_data-MLM_header
 
 MLM_pa_data:
 	; play note
