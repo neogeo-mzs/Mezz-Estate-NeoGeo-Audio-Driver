@@ -17,7 +17,7 @@ NGDEVKIT := /home/gbacretin/Software/ngdevkit
 ROMWAK   := romwak
 
 #ASFLAGS :=
-CFLAGS  := -std=c99 -fomit-frame-pointer -g -Wall -Wextra -Winline
+CFLAGS  := -std=c99 -fomit-frame-pointer -g -Wall -Wextra -Winline -funsigned-char
 LDFLAGS := -L$(NGDEVKIT)/local/m68k-neogeo-elf/lib -specs ngdevkit-specs
 
 build: prom.bin
