@@ -247,14 +247,6 @@ MLM_play_sample_pa:
 		pop af
 		call MLM_set_timing
 
-		; Set volume
-		;ld h,0
-		;ld l,a
-		;ld de,MLM_channel_volumes
-		;add hl,de
-		;ld c,(hl)
-		;call PA_set_channel_volume
-
 		; play sample
 		ld h,0
 		ld l,a
@@ -290,6 +282,11 @@ MLM_play_note_fm:
 	push hl
 	push de
 	push bc
+		push af
+			ld a,&39
+			ld (breakpoint),a
+		pop af
+
 		; backup MLM channel number into b
 		ld b,a
 
@@ -304,12 +301,15 @@ MLM_play_note_fm:
 		call FM_stop_channel
 
 		push bc
+		push af
 			ld h,0
 			ld l,b
 			ld de,MLM_channel_pannings
 			add hl,de
 			ld c,(hl)
+			ld a,b
 			call FM_set_panning
+		pop af
 		pop bc
 
 		; Load instrument
@@ -715,10 +715,8 @@ MLMCOM_set_channel_panning:
 	push af
 	push hl
 	push bc
+	push de
 		ld hl,MLM_event_arg_buffer
-
-		ld a,&39
-		ld (breakpoint),a
 		
 		; Load panning into c
 		ld a,(hl)
@@ -726,6 +724,14 @@ MLMCOM_set_channel_panning:
 		ld b,a ; \
 		ld a,c ;  |- Swap a and c sacrificing b
 		ld c,b ; /
+
+		; Store panning into 
+		; MLM_channel_pannings[channel]
+		ld h,0
+		ld l,a
+		ld de,MLM_channel_pannings
+		add hl,de
+		ld (hl),c
 
 		; if channel is adpcma...
 		cp a,6
@@ -747,6 +753,7 @@ MLMCOM_set_channel_panning_set_timing:
 		ld a,b
 		ld b,0
 		call MLM_set_timing
+	pop de
 	pop bc
 	pop hl
 	pop af

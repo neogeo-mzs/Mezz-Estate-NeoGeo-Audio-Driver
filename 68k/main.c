@@ -12,7 +12,18 @@
 // bpset 18, 1, { print "CHK instruction" }
 // bpset 1C, 1, { print "TRAPV instruction" }
 
-u8 song_select = 0;
+const char* channel_labels[] =
+{
+    "  ADPCM-A 0", "  ADPCM-A 1", "  ADPCM-A 2",
+    "  ADPCM-A 3", "  ADPCM-A 4", "  ADPCM-A 5",
+
+    "  FM 1     ", "  FM 2     ", "  FM 3     ",
+    "  FM 4     ",
+
+    "  SSG A    ", "  SSG B    ", "  SSG C    ",
+};
+
+u8 channel_select = 0;
 
 volatile struct {
     u8 vblank_done : 1;
@@ -26,8 +37,8 @@ void rom_callback_VBlank() {
     {
         FIX_set_cursor(1, 5);
         FIX_print_string("CHANNEL ");
-        FIX_print_byte(song_select);
-
+        FIX_print_byte(channel_select);
+        FIX_print_string(channel_labels[channel_select]);
         BIOS_system_io();
     }
 
@@ -94,13 +105,13 @@ int main()
         render_status.vblank_done = 0;
         render_status.logic_done  = 0;
 
-        if (((NormalInput*)BIOS_P1CHANGE)->left && song_select > 0)
-            song_select--;
-        else if(((NormalInput*)BIOS_P1CHANGE)->right && song_select < 12)
-            song_select++;
+        if (((NormalInput*)BIOS_P1CHANGE)->left && channel_select > 0)
+            channel_select--;
+        else if(((NormalInput*)BIOS_P1CHANGE)->right && channel_select < 12)
+            channel_select++;
 
         if (((NormalInput*)BIOS_P1CHANGE)->A)
-            Z80_play_song(song_select);
+            Z80_play_song(channel_select);
 
         // wait for vblank
         PAL(0, 1) = DARKGREY;

@@ -605,8 +605,8 @@ MLM_song12:
 
 MLM_pa_data:
 	; play note
-	;db &05, &1F, 0 ; Set Ch. Vol., volume, timing
-	;db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
+	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
+	db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
 	db 0 | (15<<1) | &80, NOTE_CS
 	db 0 | (15<<1) | &80, NOTE_D
@@ -614,15 +614,15 @@ MLM_pa_data:
 	db 0 | (15<<1) | &80, NOTE_E
 	db 0 | (15<<1) | &80, NOTE_F
 
-	;db &05, &17, 10        ; Set Ch. Vol., volume, timing
-	;db &06, PANNING_L | 0  ; Set Pan., panning | timing
-	;db &08, 2, 0           ; Set base time, base time, timing
-	;db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
+	db &05, &17, 10        ; Set Ch. Vol., volume, timing
+	db &06, PANNING_L | 0  ; Set Pan., panning | timing
+	db &08, 2, 0           ; Set base time, base time, timing
+	db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
 
-	;db &06, PANNING_R | 0 ; Set Pan.
+	db &06, PANNING_R | 0 ; Set Pan.
 	db 0 | (15<<1) | &80, NOTE_A
 	db 0 | (15<<1) | &80, NOTE_AS
 	db 0 | (15<<1) | &80, NOTE_B
@@ -634,22 +634,20 @@ MLM_pa_data_pos_jump:
 	db &47, &49, &95 ; garbage
 
 MLM_pa_data_dest:
-	;db &01, 30       ; Note off, timing
+	db &01, 30       ; Note off, timing
 	db &00            ; end of channel event list
 	db 0 | (30<<1) | &80, NOTE_B ; C; shouldn't be played
 
 MLM_fm_data:
 	db &02, 1 ; Change instrument
-	;db &05, &7F-&7F, 0 ; Set Ch. Vol., volume, timing
+	db &05, &7F-&7F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
 	db 15 | &80, NOTE_D  | (3<<4)
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
-	db 20 | &80, NOTE_F  | (3<<4)
-	db &06, PANNING_L | 20 ; Set Pan., panning | timing
-
-	;db &05, &7F-&78, 10 ; Set Ch. Vol., volume, timing
+	db 10 | &80, NOTE_F  | (3<<4)
+	db &06, PANNING_L | 10 ; Set Pan., panning | timing
 
 MLM_fm_data_pos_jump:
 	db &0B ; Small position jump event
@@ -659,23 +657,21 @@ MLM_fm_data_pos_jump:
 
 MLM_fm_data_dest:
 	;db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
-	;db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
 
-	;db &06, PANNING_R | 0 ; Set Pan., panning | timing
+	db &06, PANNING_R | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 15 | &80, NOTE_B  | (3<<4)
 
-	;db &01, 30 ; Note off, timing
-
+	db &01, 30 ; Note off, timing
 	db &00 ; end of list
 	db 30 | &80, 9 | (3<<4)  ; A4
 
 MLM_ssg_data:
-	;db &05, &0F, 0 ; Set Ch. Vol., volume, timing
+	db &05, &0F, 0 ; Set Ch. Vol., volume, timing
 	db 15 | &80, (1*12) + NOTE_C ; timing | &80, (octave-2)*12 + note
 	db 15 | &80, (1*12) + NOTE_CS
 	db 15 | &80, (1*12) + NOTE_D
@@ -683,7 +679,7 @@ MLM_ssg_data:
 	db 15 | &80, (1*12) + NOTE_E 
 	db 15 | &80, (1*12) + NOTE_F
 
-	;db &05, &0B, 10 ; Set Ch. Vol., volume, timing 
+	db &05, &0B, 10 ; Set Ch. Vol., volume, timing 
 	db 15 | &80, (1*12) + NOTE_FS
 	db 15 | &80, (1*12) + NOTE_G 
 	db 15 | &80, (1*12) + NOTE_GS 
@@ -691,7 +687,7 @@ MLM_ssg_data:
 	db 15 | &80, (1*12) + NOTE_AS 
 	db 15 | &80, (1*12) + NOTE_B
 
-	;db &01, 26 ; Note off, timing
+	db &01, 30 ; Note off, timing
 	db &00
 
 	org BANK2

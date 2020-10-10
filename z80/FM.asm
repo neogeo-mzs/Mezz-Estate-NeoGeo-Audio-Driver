@@ -346,7 +346,7 @@ FM_set_panning:
 
 		; Load correct FM channel into a
 		ld a,b
-		sub a,10
+		sub a,6
 		ld h,0
 		ld l,a
 		ld bc,FM_channel_LUT

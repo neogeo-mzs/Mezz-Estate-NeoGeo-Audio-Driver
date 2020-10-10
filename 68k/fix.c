@@ -24,7 +24,7 @@ void FIX_set_cursor(u8 x, u8 y)
 	cursor_vram_pointer = 0x7022 + (x<<5) + y; // x<<5 = x*32
 }
 
-void FIX_print_char(char chr)
+void FIX_print_char(const char chr)
 {
 	VRAM_write(
 		cursor_vram_pointer,
@@ -32,7 +32,7 @@ void FIX_print_char(char chr)
 	cursor_vram_pointer += cursor_vram_increment;
 }
 
-void FIX_print_string(char* str)
+void FIX_print_string(const char* str)
 {
 	for(; *str; ++str)
 		FIX_print_char(*str);
