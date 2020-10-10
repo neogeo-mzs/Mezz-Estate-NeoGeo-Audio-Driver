@@ -282,11 +282,6 @@ MLM_play_note_fm:
 	push hl
 	push de
 	push bc
-		push af
-			ld a,&39
-			ld (breakpoint),a
-		pop af
-
 		; backup MLM channel number into b
 		ld b,a
 
@@ -716,10 +711,11 @@ MLMCOM_set_channel_panning:
 	push hl
 	push bc
 	push de
-		ld hl,MLM_event_arg_buffer
+		ld a,&39
+		ld (breakpoint),a
 		
 		; Load panning into c
-		ld a,(hl)
+		ld a,(MLM_event_arg_buffer)
 		and a,%11000000
 		ld b,a ; \
 		ld a,c ;  |- Swap a and c sacrificing b
@@ -747,7 +743,7 @@ MLMCOM_set_channel_panning:
 
 MLMCOM_set_channel_panning_set_timing:
 		ld b,a ; backup channel in b
-		ld a,(hl)
+		ld a,(MLM_event_arg_buffer)
 		and a,%00111111 ; Get timing
 		ld c,a
 		ld a,b

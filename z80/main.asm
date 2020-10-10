@@ -614,7 +614,7 @@ MLM_pa_data:
 	db 0 | (15<<1) | &80, NOTE_E
 	db 0 | (15<<1) | &80, NOTE_F
 
-	db &05, &17, 10        ; Set Ch. Vol., volume, timing
+	db &05, &17, 0        ; Set Ch. Vol., volume, timing
 	db &06, PANNING_L | 0  ; Set Pan., panning | timing
 	db &08, 2, 0           ; Set base time, base time, timing
 	db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
@@ -646,8 +646,7 @@ MLM_fm_data:
 	db 15 | &80, NOTE_D  | (3<<4)
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
-	db 10 | &80, NOTE_F  | (3<<4)
-	db &06, PANNING_L | 10 ; Set Pan., panning | timing
+	db 15 | &80, NOTE_F  | (3<<4
 
 MLM_fm_data_pos_jump:
 	db &0B ; Small position jump event
@@ -656,7 +655,8 @@ MLM_fm_data_pos_jump:
 	ds 512 ; garbage
 
 MLM_fm_data_dest:
-	;db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
+	db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
+	db &06, PANNING_L | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
