@@ -124,3 +124,48 @@ AtoBCextendendsign:
     ld b,a
   pop af
   ret
+
+; Inputs:
+;   c: c is the number to be shifted left
+;   b: b is how many bits c has to be shifted
+;  Outputs
+;   c: shifted number
+;   b: 0
+; DOESN'T CHANGE FLAGS
+shift_left_c_by_b_bits:
+  push af
+    ld a,b
+    or a,a
+    jr z,shift_left_c_by_b_bits_loop_skip
+
+shift_left_c_by_b_bits_loop:
+    sla c
+    djnz shift_left_c_by_b_bits_loop
+
+shift_left_c_by_b_bits_loop_skip:
+  pop af
+  ret
+
+; This subroutine does the same thing
+; as shift_left_c_by_b_bits except it uses
+; sll instead then sla
+; Inputs:
+;   c: c is the number to be shifted left
+;   b: b is how many bits c has to be shifted
+;  Outputs
+;   c: shifted number
+;   b: 0
+; DOESN'T CHANGE FLAGS
+shift_left_c_by_b_bits_1:
+  push af
+    ld a,b
+    or a,a
+    jr z,shift_left_c_by_b_bits_loop_skip
+
+shift_left_c_by_b_bits_1_loop:
+    sll c
+    djnz shift_left_c_by_b_bits_1_loop
+    
+shift_left_c_by_b_bits_1_loop_skip:
+  pop af
+  ret

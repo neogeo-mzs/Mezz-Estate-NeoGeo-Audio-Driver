@@ -133,3 +133,6 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## IDEAS
 * If enough events are left there could be versions
 of events that set the timing to 0 to save space
+
+## COMMENTS
+* Sometimes `<<l` is used in comments, this represents a bitwise left shift that sets the lower bits to 1.

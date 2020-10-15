@@ -711,9 +711,6 @@ MLMCOM_set_channel_panning:
 	push hl
 	push bc
 	push de
-		ld a,&39
-		ld (breakpoint),a
-		
 		; Load panning into c
 		ld a,(MLM_event_arg_buffer)
 		and a,%11000000
