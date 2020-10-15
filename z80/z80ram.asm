@@ -29,7 +29,8 @@ ssg_vol_macros:          ds 6 ; vol_macro*[3]
 ssg_vol_macro_sizes:     ds 3 ; u8[3]
 ssg_vol_macro_counters:  ds 3 ; u8[3]
 ssg_vol_macro_loop_pos:  ds 3 ; u8[3]
-ssg_vol_attenuators: ds 3 ; u8[3]
+ssg_vol_attenuators:     ds 3 ; u8[3]
+ssg_mix_enable_flags:    ds 1 ; u8
 
 ;ssg_base_notes: ds 3         ; u8[3] Current note, without arpeggio applied
 

@@ -399,9 +399,12 @@ set_defaults:
 	push de
 	push bc
 	push hl
-		; Enable SSG and disable noise
+		; Enable SSG Tone and disable noise
 		ld de,REG_SSG_MIX_ENABLE<<8 | %00111000       
 		rst RST_YM_WRITEA
+
+		ld a,%11111000
+		ld (ssg_mix_enable_flags),a
 
 		; ADPCM-A master volume: 32/63
 		ld de,REG_PA_MVOL<<8 | &3F
@@ -695,15 +698,11 @@ instruments:
 	;============= Instrument 0 ============== ;
 	; SSG
 	;;;;       Volume Macro Metadata        ;;;;
-	db &20       ; Macro size (in nibbles)
-	db &FF       ; Loop point (&FF = no loop)
-	dw vol_macro ; Pointer to macro
-	;;;;       Arpeggio Macro Metadata      ;;;;
-;	db &20       ; macro size (in bytes)
-;	db &00       ; Loop point (&FF = no loop)
-;	dw arp_macro ; pointer to macro
-;	ds 24        ; Padding
-	ds 28        ; padding
+	db &20           ; Macro size (in nibbles)
+	db &FF           ; Loop point (&FF = no loop)
+	dw vol_macro     ; Pointer to macro
+	db SSG_MIX_TONE  ; mix
+	ds 27            ; padding
 
 	;============= Instrument 1 ============== ;
 	; FM

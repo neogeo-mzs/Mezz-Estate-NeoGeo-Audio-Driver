@@ -120,6 +120,11 @@ SSG_set_instrument:
 			ld hl,ssg_vol_macros
 			call SSG_set_macro
 		pop hl
+
+		; ======== Set other parameters ========
+		inc hl
+		ld c,(hl)
+		call SSG_set_mix_enable
 	pop de
 	pop hl
 	pop bc
@@ -200,6 +205,9 @@ SSG_set_note:
 	push hl
 	push bc
 	push af
+	push de
+		; Set Coarse and Fine tune
+		ld e,c ; backup channel in e
 		ld h,0
 		ld l,c 
 		ld bc,SSG_pitch_LUT
@@ -210,6 +218,11 @@ SSG_set_note:
 		inc hl
 		ld b,(hl) ; coarse tune
 		call SSG_set_pitch
+
+		; Set noise tune
+		ld d,REG_SSG_CHN_NOISE_TUNE
+		rst RST_YM_WRITEA
+	pop de
 	pop af
 	pop bc
 	pop hl
@@ -375,6 +388,64 @@ SSG_stop_note:
 	pop hl
 	pop bc
 	ret
+
+; a: channel
+; c: mix (0: none, 1: tone, 2: noise, 3: tone and noise)
+SSG_set_mix_enable:
+	push af
+	push bc
+	push de
+	push hl
+		push af
+			ld a,&39
+			ld (breakpoint),a
+		pop af
+
+		ld d,a ; backup channel in d
+		ld e,c ; backup mix enum in e
+		
+		ld a,(ssg_mix_enable_flags)
+
+		; clear_flag = 
+		;    (SSG_mix_enable_clear_LUT[ch] <<l ch)
+		; mix_en_flags &= clear_flag
+		ld h,0
+		ld l,e
+		ld bc,SSG_mix_enable_clear_LUT
+		add hl,bc
+		ld c,(hl)
+		ld b,d
+		call shift_left_c_by_b_bits_1
+		and a,c
+
+		; set_flag =
+		;    (SSG_mix_enable_set_LUT[ch] << ch)
+		; mix_en_flags |= set_flag
+		ld h,0
+		ld l,e
+		ld bc,SSG_mix_enable_set_LUT
+		add hl,bc
+		ld c,(hl)
+		ld b,d
+		call shift_left_c_by_b_bits
+		or a,c
+
+		ld (ssg_mix_enable_flags),a
+
+		ld e,a
+		ld d,REG_SSG_MIX_ENABLE
+		rst RST_YM_WRITEA
+	pop hl
+	pop de
+	pop bc
+	pop af
+	ret
+
+SSG_mix_enable_clear_LUT:
+	db %11111111, %11111110, %11110111, %11110110
+
+SSG_mix_enable_set_LUT:
+	db %00001001, %00001000, %00000001, %00000000
 
 SSG_vol_lut:
 	binary "ssg_vol_lut.bin"
