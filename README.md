@@ -120,6 +120,10 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 11: Big position jump
 **format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
 
+###### Command 12: Portamento slide
+**format: `$0C %SSSSSSSS (Signed pitch offset per tick) %TTTTTTTT (Timing)`**
+
+
 ###### Command
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
@@ -129,8 +133,16 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## BUGS
 
 ## TODO
+* pitch slide command
 
 ## IDEAS
+* Add support for jingles (songs that can play while another song is playing)
+
+* 68k commands that play a sample/note without
+having to specify the exact channel (only the kind
+of channel). The driver would choose which channel
+to play this on (the first unused one, if any)
+
 * If enough events are left there could be versions
 of events that set the timing to 0 to save space
 

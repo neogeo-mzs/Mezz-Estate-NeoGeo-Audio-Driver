@@ -179,53 +179,87 @@ FM_set_note:
 	push de
 	push af
 		; Lookup F-Number from FM_pitch_LUT
-		; and store it into a
+		; and store it into de
 		ld a,c
 		and a,&0F
 		sla a
 		ld h,0
 		ld l,a
-		ld de,FM_pitch_LUT+1 ; Get most significant byte first
+		ld de,FM_pitch_LUT
 		add hl,de
 		ld e,(hl)
+		inc hl
+		ld d,(hl)
 
-		; Set block and MSBs of F-Num
+		; Load block into c
 		ld a,c
 		srl a   ; -OOO---- -> --OOO---
 		and a,%00111000
-		or a,e
-		ld e,a
+		ld c,a
 
-		; Calculate channel register address
-		;   if channel is even (is CH2 or CH4), then
-		;   increment REG_FM_CH13_FBLOCK, this results
-		;   in REG_FM_CH24_FBLOCK
+		ex de,hl
+		call FM_set_pitch
+	pop af
+	pop de
+	pop hl
+	ret
+
+; b: channel
+; c: block<<3
+; hl: f-number
+FM_set_pitch:
+	push de
+	push af
+		; OR the f-number MSB and block together
+		ld a,c
+		or a,h
+		ld h,a
+
+		; Store frequency and block into 
+		; FM_channel_pitches[channel]
+		push bc
+			ex de,hl
+			ld h,0
+			ld l,b
+			ld bc,FM_channel_pitches
+			add hl,hl
+			add hl,bc
+			ld (hl),e
+			inc hl
+			ld (hl),d
+			ex de,hl
+		pop bc
+
+		; ======== Write to F-Block ======== ;
+		;   Calculate channel register address
+		;    if channel is even (is CH2 or CH4), then
+		;    increment REG_FM_CH13_FBLOCK, this results
+		;    in REG_FM_CH24_FBLOCK
 		ld d,REG_FM_CH13_FBLOCK
 		bit 0,b
 		jp nz,FM_set_note_chnl_is_odd
 		inc d
 
 FM_set_note_chnl_is_odd:
-		; if the channel is CH1 or CH2, then write to 
-		; port A, else write to port B
+		;  if the channel is CH1 or CH2, then write to 
+		;  port A, else write to port B
+		ld e,h
 		bit 2,b
 		call z,write45
 		call nz,write67
 
+		; ======== Write to F-number ========;
 		dec d
 		dec d
 		dec d
 		dec d
 
-		dec hl
-		ld e,(hl)
-
+		ld e,l
 		bit 2,b
 		call z,write45
 		call nz,write67
 	pop af
 	pop de
-	pop hl
 	ret
 
 ; a: channel

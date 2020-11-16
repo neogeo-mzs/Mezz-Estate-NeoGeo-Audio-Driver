@@ -295,6 +295,7 @@ MLM_play_note_fm:
 
 		call FM_stop_channel
 
+		; Set panning
 		push bc
 		push af
 			ld h,0
@@ -473,10 +474,11 @@ MLM_command_vectors:
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
 	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
+	dw MLMCOM_portamento_slide
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
-	db &02, &02, &01, &02
+	db &02, &02, &01, &02, &02
 
 ; a:  channel
 ; bc: timing
@@ -900,3 +902,63 @@ MLMCOM_big_position_jump:
 	pop de
 	pop hl
 	jp MLM_parse_command_end_skip_playback_pointer_set
+
+; c: channel
+; Arguments:
+;   1. %SSSSSSSS (Signed pitch offset per tick)
+;   2. %TTTTTTTT (Timing)
+MLMCOM_portamento_slide:
+	push hl
+	push de
+		ld h,0
+		ld l,c
+		ld de,FM_channel_pitch_offsets
+		add hl,hl
+		add hl,de
+
+	pop de
+	pop hl
+	jp MLM_parse_command_end
+
+	; ===== THIS SHOULD BE EXECUTED EACH TICK ===== ;
+	push hl
+	push de
+	push af
+	push ix
+		; Load FM_channel_pitches[channel]
+		; into de
+		ld h,0
+		ld l,c
+		ld de,FM_channel_pitches
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+
+		; Sign extend pitch offset 
+		; into bc (8bit -> 16bit)
+		ld l,c ; backup channel into l
+		ld a,(MLM_event_arg_buffer)
+		call AtoBCextendendsign
+
+		; de = pitch_ofs + fm_frequency
+		ld a,l ; backup channel into a
+		ex de,hl
+		add hl,bc
+		ex de,hl
+
+		; Store offset pitch back into
+		; FM_channel_pitches[channel]
+		ld h,0
+		ld l,a
+		ld bc,FM_channel_pitches
+		add hl,hl
+		add hl,bc
+		ld (hl),e
+		inc hl
+		ld (hl),d
+	pop ix
+	pop af
+	pop de
+	pop hl
