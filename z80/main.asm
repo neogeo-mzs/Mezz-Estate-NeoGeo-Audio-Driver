@@ -607,6 +607,9 @@ MLM_song12:
 	dw 0, 0, MLM_ssg_data-MLM_header
 
 MLM_pa_data:
+	db 0 | (15<<1) | &80, 5
+	db &00
+	
 	; play note
 	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
 	db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
@@ -649,7 +652,7 @@ MLM_fm_data:
 	db 15 | &80, NOTE_D  | (3<<4)
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
-	db 15 | &80, NOTE_F  | (3<<4
+	db 15 | &80, NOTE_F  | (3<<4)
 
 MLM_fm_data_pos_jump:
 	db &0B ; Small position jump event

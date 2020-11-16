@@ -41,13 +41,11 @@ ssg_mix_enable_flags:    ds 1 ; u8
 ;ssg_arp_macro_loop_pos: ds 3 ; u8[3]
 
 ; ======== FM ========
-FM_base_total_levels: ds 4*6 ; u8[6][4]
+FM_base_total_levels:     ds 4*(FM_CHANNEL_COUNT+2) ; u8[6][4]
+FM_channel_pitches:       ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]
+FM_channel_pitch_offsets: ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]     ; u8[6]
 
 ; ======== MLM player ========
-CHANNEL_COUNT     equ 13
-FM_CHANNEL_COUNT  equ 4
-SSG_CHANNEL_COUNT equ 3
-PA_CHANNEL_COUNT  equ 6
 
 MLM_wram_start:
 MLM_playback_pointers:        ds 2*CHANNEL_COUNT  ; void*[13]
