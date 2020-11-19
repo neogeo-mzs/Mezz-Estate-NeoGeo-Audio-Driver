@@ -13,7 +13,7 @@ MLM         equ MLM_header
 ; * Coin sound (code $5F)
 ; * Eyecatch music (code $7F)
 ;==============================================================================;
-	org $0000
+	org &0000
 
 ; Start ($0000)
 ; Z80 program entry point.
@@ -32,7 +32,7 @@ Start:
 ; These vectors can be called via "rst n", where n is one of the locations in
 ; the above list (though only the lower byte, e.g. rst $08).
 ;==============================================================================;
-	org $0008
+	org &0008
 
 ; check_busy_flag ($0008)
 ; Continually checks the busy flag in Status 0 until it's clear.
@@ -42,7 +42,7 @@ j_YM_reg_wait:
 	jp YM_reg_wait
 
 ;==============================================================================;
-	org $0010
+	org &0010
 
 ; j_write45 ($0010)
 ; Jumps to a routine that writes the contents of de to ports 4 and 5.
@@ -51,7 +51,7 @@ j_write45:
 	jp   write45
 
 ;==============================================================================;
-	org $0018
+	org &0018
 
 ; j_write67 ($0018)
 ; Jumps to a routine that writes the contents of de to ports 6 and 7.
@@ -64,7 +64,7 @@ j_write67:
 ; $0028 - unused
 ; $0030 - unused
 ;==============================================================================;
-	org $0038
+	org &0038
 
 ; j_IRQ
 ; Disables interrupts and jumps to the real IRQ routine.
@@ -78,7 +78,7 @@ j_IRQ:
 	ascii "MZS sound driver by GbaCretin"
 
 ;==============================================================================;
-	org $0066
+	org &0066
 
 ; NMI
 NMI:

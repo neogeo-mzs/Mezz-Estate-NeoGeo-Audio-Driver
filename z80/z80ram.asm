@@ -1,6 +1,6 @@
 ; RAM defines for Dummy Z80 sound driver
 
-	org $F800
+	org &F800
 
 breakpoint: ds 1    ; used for debugging
 
