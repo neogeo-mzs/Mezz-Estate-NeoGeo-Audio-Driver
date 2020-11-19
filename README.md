@@ -146,5 +146,15 @@ to play this on (the first unused one, if any)
 * If enough events are left there could be versions
 of events that set the timing to 0 to save space
 
+## BUILDING
+
+### Dependencies
+
+Install all of these, they need to be all in $PATH.
+
+```
+mame, romwak, freem's ADPCMA sample encoder, vasm, make, ngdevkit's gcc toolchain, python (3.7 or newer), vasm
+```
+
 ## COMMENTS
 * Sometimes `<<l` is used in comments, this represents a bitwise left shift that sets the lower bits to 1.

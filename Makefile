@@ -14,7 +14,7 @@ CROMS_PATH := spr
 VROM_PATH  := smp
 
 BUILD_PATH := build
-MAME_ROM_PATH=/home/gbacretin/.mame/roms/neogeo
+MAME_ROM_PATH=$(HOME)/.mame/roms/neogeo
  
 ROM_NAME := homebrew
 
