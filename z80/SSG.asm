@@ -396,11 +396,6 @@ SSG_set_mix_enable:
 	push bc
 	push de
 	push hl
-		push af
-			ld a,&39
-			ld (breakpoint),a
-		pop af
-
 		ld d,a ; backup channel in d
 		ld e,c ; backup mix enum in e
 		

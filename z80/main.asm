@@ -607,8 +607,8 @@ MLM_song12:
 	dw 0, 0, MLM_ssg_data-MLM_header
 
 MLM_pa_data:
-	db 0 | (15<<1) | &80, 5
-	db &00
+	;db 0 | (15<<1) | &80, 5
+	;db &00
 	
 	; play note
 	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
@@ -620,7 +620,8 @@ MLM_pa_data:
 	db 0 | (15<<1) | &80, NOTE_E
 	db 0 | (15<<1) | &80, NOTE_F
 
-	db &05, &17, 0        ; Set Ch. Vol., volume, timing
+	db &0C, 0, 0           ; Port. slide, should be skipped
+	db &05, &17, 0         ; Set Ch. Vol., volume, timing
 	db &06, PANNING_L | 0  ; Set Pan., panning | timing
 	db &08, 2, 0           ; Set base time, base time, timing
 	db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
@@ -652,10 +653,11 @@ MLM_fm_data:
 	db 15 | &80, NOTE_D  | (3<<4)
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
-	db 15 | &80, NOTE_F  | (3<<4)
+	db 0 | &80, NOTE_F  | (3<<4)
+	db &0C, 4, 15       ; Port. slide, slide speed, timing
 
 MLM_fm_data_pos_jump:
-	db &0B ; Small position jump event
+	db &0B ; Big position jump event
 	dw MLM_fm_data_dest-(MLM_fm_data_pos_jump+3)
 
 	ds 512 ; garbage
@@ -684,7 +686,8 @@ MLM_ssg_data:
 	db 15 | &80, (1*12) + NOTE_DS
 	db 15 | &80, (1*12) + NOTE_E 
 	db 15 | &80, (1*12) + NOTE_F
-
+	db &0C, 0, 0           ; Port. slide, should be skipped
+	
 	db &05, &0B, 10 ; Set Ch. Vol., volume, timing 
 	db 15 | &80, (1*12) + NOTE_FS
 	db 15 | &80, (1*12) + NOTE_G 
