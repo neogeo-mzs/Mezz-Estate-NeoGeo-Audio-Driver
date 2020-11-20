@@ -233,105 +233,9 @@ IRQ:
 	push hl
 	push ix
 	push iy
-; ======================== SSG ======================== ;
-		ld b,3
+		call SSG_irq
+		call MLM_irq
 
-SSG_update_loop:
-		ld a,b
-		dec a
-
-		call SSG_update_volume
-
-		ld de,ssg_vol_macro_sizes
-		call SSG_counter_increment ; Update volume counter
-
-;   Arpeggio macros were implemented, but they sound
-;   terrible, so I removed them, use at your own risk.       
-;		call SSG_update_pitch
-;		ld de,ssg_arp_macro_sizes
-;		call SSG_counter_increment ; Update arpeggio counter
-
-		djnz SSG_update_loop
-
-; ======================== MLM ======================== ;
-		ld a,(MLM_base_time)
-		ld c,a
-		ld a,(MLM_base_time_counter)	
-		inc a
-		cp a,c
-		ld (MLM_base_time_counter),a
-		jr nz,MLM_update_skip
-
-		ld b,13
-MLM_update_loop:
-		ld c,b
-		dec c
-
-		; if MLM_playback_control[ch] == 0 then
-		; do not update this channel
-		ld h,0
-		ld l,c
-		ld de,MLM_playback_control
-		add hl,de
-		ld a,(hl)
-		cp a,0
-		jr z,MLM_update_loop_next
-
-		; de = MLM_playback_timings[channel]
-		ld h,0
-		ld l,c
-		ld de,MLM_playback_timings
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-
-		dec de ; decrement timing
-
-		; if timing==0 update events
-		; else save decremented timing
-		xor a,a
-		add a,d
-		add a,e
-
-MLM_update_do_execute_events:
-		call z,MLM_update_events
-		jr c,MLM_update_do_save_dec_t
-		jr z,MLM_update_skip_save_dec_t
-
-MLM_update_do_save_dec_t:
-		ld (hl),d
-		dec hl
-		ld (hl),e
-
-MLM_update_skip_save_dec_t:
-		; if MLM_playback_set_timings[ch] is 0
-		; (thus the timing was set to 0 during this loop)
-		; then execute the next event
-		ld h,0
-		ld l,c
-		ld de,MLM_playback_set_timings
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-
-		xor a,a ; clear a
-		add a,e
-		add a,d
-		jr c,MLM_update_loop_next
-		jr z,MLM_update_do_execute_events
-
-MLM_update_loop_next:
-		djnz MLM_update_loop
-
-		; Clear MLM_base_time_counter
-		xor a,a
-		ld (MLM_base_time_counter),a
-
-MLM_update_skip:
 .IRQ_end:
 		; clear Timer B counter and
 		; copy load timer value into
@@ -687,7 +591,7 @@ MLM_ssg_data:
 	db 15 | &80, (1*12) + NOTE_E 
 	db 15 | &80, (1*12) + NOTE_F
 	db &0C, 0, 0           ; Port. slide, should be skipped
-	
+
 	db &05, &0B, 10 ; Set Ch. Vol., volume, timing 
 	db 15 | &80, (1*12) + NOTE_FS
 	db 15 | &80, (1*12) + NOTE_G 

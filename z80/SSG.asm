@@ -1,3 +1,24 @@
+SSG_irq:
+	ld b,3
+	
+SSG_update_loop:
+	ld a,b
+	dec a
+
+	call SSG_update_volume
+
+	ld de,ssg_vol_macro_sizes
+	call SSG_counter_increment ; Update volume counter
+
+;   Arpeggio macros were implemented, but they sound
+;   terrible, so I removed them, use at your own risk.       
+;		call SSG_update_pitch
+;		ld de,ssg_arp_macro_sizes
+;		call SSG_counter_increment ; Update arpeggio counter
+
+	djnz SSG_update_loop
+	ret
+	
 ; a:  SSG channel
 ; bc: pitch (----CCCCFFFFFFFF; Coarse tune, Fine tune)
 SSG_set_pitch:
