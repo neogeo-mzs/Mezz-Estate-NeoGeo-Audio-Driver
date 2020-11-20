@@ -42,9 +42,8 @@ ssg_mix_enable_flags:    ds 1 ; u8
 
 ; ======== FM ========
 FM_base_total_levels:     ds 4*(FM_CHANNEL_COUNT+2) ; u8[6][4]
-FM_channel_pitches:       ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]
-FM_channel_pitch_offsets: ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]     ; u8[6]
-
+FM_channel_pitches:       ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]     ; u8[6]
+FM_portamento_slide:      ds 2*FM_CHANNEL_COUNT     ; u16[4]
 ; ======== MLM player ========
 
 MLM_wram_start:

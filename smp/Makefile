@@ -18,7 +18,6 @@ vrom.bin: $(PCMA_FILES)
 	$(ROMWAK) /p adpcma_sample_lut.bin adpcma_sample_lut.bin 2 0
 
 $(PCMA_FILES): %.pcma : %.raw
-	mkdir -p pcma
 	$(ADPCMA) $< $@
 	
 .PHONY: clean

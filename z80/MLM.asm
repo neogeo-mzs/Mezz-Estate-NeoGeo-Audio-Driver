@@ -910,55 +910,42 @@ MLMCOM_big_position_jump:
 MLMCOM_portamento_slide:
 	push hl
 	push de
-		ld h,0
-		ld l,c
-		ld de,FM_channel_pitch_offsets
+	push ix
+	push bc
+	push af
+		ld ixl,c ; Backup MLM channel into ixl
+
+		; Jump to the end of the subroutine
+		; if the channel isn't FM
+		ld a,c
+		cp a,MLM_CH_FM1
+		jr c,MLMCOM_portamento_slide_skip
+		cp a,MLM_CH_FM4+1
+		jr nc,MLMCOM_portamento_slide_skip
+
+		; Load 8bit signed pitch offset, sign extend
+		; it to 16bit, then load it into WRAM
+		ld a,(MLM_event_arg_buffer)
+		call AtoBCextendendsign
+		ld hl,FM_portamento_slide-(MLM_CH_FM1*2)
+		ld d,0
+		ld e,ixl
+		ex de,hl
 		add hl,hl
 		add hl,de
+		ld (hl),c
+		inc hl
+		ld (hl),b
 
+MLMCOM_portamento_slide_skip:
+		ld a,(MLM_event_arg_buffer+1)
+		ld c,a
+		ld a,ixl
+		ld b,0
+		call MLM_set_timing
+	pop af
+	pop bc
+	pop ix
 	pop de
 	pop hl
 	jp MLM_parse_command_end
-
-	; ===== THIS SHOULD BE EXECUTED EACH TICK ===== ;
-	push hl
-	push de
-	push af
-	push ix
-		; Load FM_channel_pitches[channel]
-		; into de
-		ld h,0
-		ld l,c
-		ld de,FM_channel_pitches
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-
-		; Sign extend pitch offset 
-		; into bc (8bit -> 16bit)
-		ld l,c ; backup channel into l
-		ld a,(MLM_event_arg_buffer)
-		call AtoBCextendendsign
-
-		; de = pitch_ofs + fm_frequency
-		ld a,l ; backup channel into a
-		ex de,hl
-		add hl,bc
-		ex de,hl
-
-		; Store offset pitch back into
-		; FM_channel_pitches[channel]
-		ld h,0
-		ld l,a
-		ld bc,FM_channel_pitches
-		add hl,hl
-		add hl,bc
-		ld (hl),e
-		inc hl
-		ld (hl),d
-	pop ix
-	pop af
-	pop de
-	pop hl
