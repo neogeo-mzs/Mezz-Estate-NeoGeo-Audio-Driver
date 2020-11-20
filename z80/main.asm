@@ -233,9 +233,10 @@ IRQ:
 	push hl
 	push ix
 	push iy
-		call SSG_irq
 		call MLM_irq
-
+		call FM_irq
+		call SSG_irq
+		
 .IRQ_end:
 		; clear Timer B counter and
 		; copy load timer value into
