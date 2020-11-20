@@ -1,3 +1,8 @@
+; DOESN'T BACKUP REGISTERS
+FM_irq:
+	
+	ret
+
 ; b: channel
 ; c: instrument
 ; resets the volume of all operators.
