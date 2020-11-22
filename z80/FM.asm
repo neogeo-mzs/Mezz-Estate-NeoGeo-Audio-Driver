@@ -1,6 +1,5 @@
 ; DOESN'T BACKUP REGISTERS
 FM_irq:
-	
 	ret
 
 ; b: channel
@@ -215,11 +214,6 @@ FM_set_note:
 FM_set_pitch:
 	push de
 	push af
-		; OR the f-number MSB and block together
-		ld a,c
-		or a,h
-		ld h,a
-
 		; Store frequency and block into 
 		; FM_channel_pitches[channel]
 		push bc
@@ -234,6 +228,11 @@ FM_set_pitch:
 			ld (hl),d
 			ex de,hl
 		pop bc
+		
+		; OR the f-number MSB and block together
+		ld a,c
+		or a,h
+		ld h,a
 
 		; ======== Write to F-Block ======== ;
 		;   Calculate channel register address
@@ -413,10 +412,28 @@ FM_set_panning_ch_odd:
 FM_stop_channel:
 	push af
 	push de
+		; Stop the OPNB FM channel
 		ld d,REG_FM_KEY_ON
 		and a,%00000111
 		ld e,a
 		rst RST_YM_WRITEA
+
+		; Load 0~3 FM channel 
+		; index into l
+		ld h,0
+		ld l,a
+		ld de,FM_to_MLM_channel_LUT
+		add hl,de
+		ld l,(hl)
+
+		; Clear FM_portamento_slide[channel]
+		ld h,0
+		ld de,FM_portamento_slide
+		add hl,hl
+		add hl,de
+		ld (hl),0
+		inc hl
+		ld (hl),0
 	pop de
 	pop af
 	ret
