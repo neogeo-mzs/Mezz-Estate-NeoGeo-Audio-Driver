@@ -93,6 +93,13 @@ MLM_stop:
 		ld (hl),0
 		ldir
 
+		; clear FM WRAM
+		ld hl,FM_wram_start
+		ld de,FM_wram_start+1
+		ld bc,FM_wram_end-FM_wram_start-1
+		ld (hl),0
+		ldir
+
 		; Set defaults
 		ld a,1
 		ld (MLM_base_time),a
@@ -346,6 +353,11 @@ MLM_play_sample_pa:
 ;   a:  channel+6
 ;   bc: source
 MLM_play_note_fm:
+	push af
+		ld a,&39
+		ld (breakpoint),a
+	pop af
+
 	; Set Timing
 	push bc
 		; Mask timing
@@ -586,6 +598,47 @@ MLM_set_timing:
 	ret
 
 ; c: channel
+MLM_stop_channel:
+	push hl
+	push de
+	push af
+		ld h,0
+		ld l,c
+		ld de,MLM_stop_channel_LUT
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		jp (hl)
+MLM_stop_channel_return:
+	pop af
+	pop de
+	pop hl
+	ret
+
+MLM_stop_channel_LUT:
+	dsw 6, MLM_stop_channel_return
+	dsw 4, MLM_stop_channel_FM
+	dsw 3, MLM_stop_channel_return
+
+; c: channel
+MLM_stop_channel_FM:
+	push bc
+	push hl
+	push af
+		ld hl,FM_channel_LUT
+		ld b,0
+		add hl,bc
+		ld a,(hl)
+		call FM_stop_channel
+	pop af
+	pop hl
+	pop bc
+	jp MLM_stop_channel_return
+
+; c: channel
 ;   Sets MLM_playback_control[channel] to 0 (false)
 MLMCOM_end_of_list:
 	push hl
@@ -605,6 +658,7 @@ MLMCOM_end_of_list:
 		ld a,c
 		ld bc,1
 		call MLM_set_timing
+MLMCOM_end_of_list_return:
 	pop bc
 	pop af
 	pop de

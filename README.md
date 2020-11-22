@@ -131,6 +131,7 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
 
 ## BUGS
+* If the pitch slide is set to anything that isn't 0, notes seem to be triggered afterwards
 
 ## TODO
 * pitch slide command

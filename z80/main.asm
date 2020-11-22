@@ -236,7 +236,7 @@ IRQ:
 		call MLM_irq
 		call FM_irq
 		call SSG_irq
-		
+
 .IRQ_end:
 		; clear Timer B counter and
 		; copy load timer value into
@@ -459,7 +459,7 @@ MLM_song6:
 	; ADPCM-A channel offsets
 	dw 0, 0, 0, 0, 0, 0
 	; FM channel offsets
-	dw MLM_fm_data-MLM_header, 0, 0, 0
+	dw MLM_fm_data1-MLM_header, 0, 0, 0
 	; SSG channel offsets
 	dw 0, 0, 0
 
@@ -467,7 +467,7 @@ MLM_song7:
 	; ADPCM-A channel offsets
 	dw 0, 0, 0, 0, 0, 0
 	; FM channel offsets
-	dw 0, MLM_fm_data-MLM_header, 0, 0
+	dw 0, MLM_fm_data2-MLM_header, 0, 0
 	; SSG channel offsets
 	dw 0, 0, 0
 
@@ -475,7 +475,7 @@ MLM_song8:
 	; ADPCM-A channel offsets
 	dw 0, 0, 0, 0, 0, 0
 	; FM channel offsets
-	dw 0, 0, MLM_fm_data-MLM_header, 0
+	dw 0, 0, MLM_fm_data1-MLM_header, 0
 	; SSG channel offsets
 	dw 0, 0, 0
 
@@ -483,7 +483,7 @@ MLM_song9:
 	; ADPCM-A channel offsets
 	dw 0, 0, 0, 0, 0, 0
 	; FM channel offsets
-	dw 0, 0, 0, MLM_fm_data-MLM_header
+	dw 0, 0, 0, MLM_fm_data2-MLM_header
 	; SSG channel offsets
 	dw 0, 0, 0
 
@@ -550,38 +550,46 @@ MLM_pa_data_dest:
 	db &00            ; end of channel event list
 	db 0 | (30<<1) | &80, NOTE_B ; C; shouldn't be played
 
-MLM_fm_data:
+MLM_fm_data1:
 	db &02, 1 ; Change instrument
-	db &05, &7F-&7F, 0 ; Set Ch. Vol., volume, timing
+	
+	db &0C, -24, 0       ; Port. slide, slide speed, timing
+	db 15 | &80, NOTE_FS | (3<<4)
+	db &00
+
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
 	db 15 | &80, NOTE_D  | (3<<4)
 	db 15 | &80, NOTE_DS | (3<<4) 
 	db 15 | &80, NOTE_E  | (3<<4)
-	db 0 | &80, NOTE_F  | (3<<4)
-	db &0C, 4, 15       ; Port. slide, slide speed, timing
+	db 15 | &80, NOTE_F  | (3<<4)
 
-MLM_fm_data_pos_jump:
-	db &0B ; Big position jump event
-	dw MLM_fm_data_dest-(MLM_fm_data_pos_jump+3)
-
-	ds 512 ; garbage
-
-MLM_fm_data_dest:
-	db &05, &7F-&78, 0 ; Set Ch. Vol., volume, timing
-	db &06, PANNING_L | 0 ; Set Pan., panning | timing
+	db &0C, -24, 0       ; Port. slide, slide speed, timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
-
-	db &06, PANNING_R | 0 ; Set Pan., panning | timing
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
-	db 15 | &80, NOTE_B  | (3<<4)
-
-	db &01, 30 ; Note off, timing
+	db 30 | &80, NOTE_B  | (3<<4)
 	db &00 ; end of list
-	db 30 | &80, 9 | (3<<4)  ; A4
+
+MLM_fm_data2:
+	db &02, 1 ; Change instrument
+	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
+	db 15 | &80, NOTE_CS | (3<<4)
+	db 15 | &80, NOTE_D  | (3<<4)
+	db 15 | &80, NOTE_DS | (3<<4) 
+	db 15 | &80, NOTE_E  | (3<<4)
+	db 15 | &80, NOTE_F  | (3<<4)
+
+	db &0C, 16, 0       ; Port. slide, slide speed, timing
+	db 15 | &80, NOTE_FS | (3<<4)
+	db 15 | &80, NOTE_G  | (3<<4) 
+	db 15 | &80, NOTE_GS | (3<<4) 
+	db 15 | &80, NOTE_A  | (3<<4)
+	db 15 | &80, NOTE_AS | (3<<4)
+	db 30 | &80, NOTE_B  | (3<<4)
+	db &00 ; end of list
 
 MLM_ssg_data:
 	db &05, &0F, 0 ; Set Ch. Vol., volume, timing
