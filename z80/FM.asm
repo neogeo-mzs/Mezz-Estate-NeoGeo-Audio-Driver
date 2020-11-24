@@ -1,6 +1,59 @@
 ; DOESN'T BACKUP REGISTERS
 FM_irq:
+	ld b,6
+
+FM_irq_loop:
+	; If the channel doesn't exist, 
+	; skip to the next iteration
+	ld a,b
+	cp a,3
+	jr z,FM_irq_loop_continue
+	cp a,4
+	jr z,FM_irq_loop_continue
+
+	; Load FM_channel_fblocks[channel]
+	; into c
+	ld h,0
+	ld l,b
+	ld de,FM_channel_fblocks
+	add hl,de
+	ld c,(hl)
+
+	; Load FM_channel_fnums[channel]
+	; into hl
+	ld h,0
+	ld l,b
+	ld de,FM_channel_fnums
+	add hl,hl
+	add hl,de
+	ld e,(hl)
+	inc hl
+	ld d,(hl)
+	ex de,hl
+
+	; Load FM_portamento_slide[channel]
+	; into de
+	push hl
+		ld h,0
+		ld l,b
+		ld de,FM_portamento_slide
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+	pop hl
+
+	add hl,de ; add offset to pitch
+	call FM_set_pitch
+	
+FM_irq_loop_continue:
+	djnz FM_irq_loop
 	ret
+
+; b: channel
+; c: block<<3
+; hl: f-number
 
 ; b: channel
 ; c: instrument
@@ -214,13 +267,13 @@ FM_set_note:
 FM_set_pitch:
 	push de
 	push af
-		; Store frequency and block into 
-		; FM_channel_pitches[channel]
+		; Store the frequency number into 
+		; FM_channel_fnums[channel]
 		push bc
 			ex de,hl
 			ld h,0
 			ld l,b
-			ld bc,FM_channel_pitches
+			ld bc,FM_channel_fnums
 			add hl,hl
 			add hl,bc
 			ld (hl),e
@@ -228,7 +281,19 @@ FM_set_pitch:
 			ld (hl),d
 			ex de,hl
 		pop bc
-		
+
+		; Store fblock into
+		; FM_channel_fblocks[channel]
+		push hl
+		push de
+			ld h,0
+			ld l,b
+			ld de,FM_channel_fblocks
+			add hl,de
+			ld (hl),c
+		pop de
+		pop hl
+
 		; OR the f-number MSB and block together
 		ld a,c
 		or a,h

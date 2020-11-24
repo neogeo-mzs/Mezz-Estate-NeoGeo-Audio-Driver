@@ -147,6 +147,8 @@ to play this on (the first unused one, if any)
 * If enough events are left there could be versions
 of events that set the timing to 0 to save space
 
+* Use a 68k command queue?
+
 ## BUILDING
 
 ### Dependencies
