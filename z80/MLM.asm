@@ -353,11 +353,6 @@ MLM_play_sample_pa:
 ;   a:  channel+6
 ;   bc: source
 MLM_play_note_fm:
-	push af
-		ld a,&39
-		ld (breakpoint),a
-	pop af
-
 	; Set Timing
 	push bc
 		; Mask timing
@@ -1049,30 +1044,38 @@ MLMCOM_portamento_slide:
 	push ix
 	push bc
 	push af
+		ld a,&39
+		ld (breakpoint),a
+
 		ld ixl,c ; Backup MLM channel into ixl
 
 		; Jump to the end of the subroutine
 		; if the channel isn't FM
 		ld a,c
-		cp a,MLM_CH_FM1
+		cp a,MLM_CH_FM1   ; if a < MLM_CH_FM1
 		jr c,MLMCOM_portamento_slide_skip
-		cp a,MLM_CH_FM4+1
+		cp a,MLM_CH_FM4+1 ; if a > MLM_CH_FM4
 		jr nc,MLMCOM_portamento_slide_skip
 
+		; Load internal fm channel into l
+		ld h,0
+		ld l,c
+		ld de,FM_channel_LUT-MLM_CH_FM1
+		add hl,de
+		ld l,(hl)
+
 		; Load 8bit signed pitch offset, sign extend
-		; it to 16bit, then load it into WRAM
+		; it to 16bit, then store it into WRAM
 		ld a,(MLM_event_arg_buffer)
 		call AtoBCextendendsign
-		ld hl,FM_portamento_slide-(MLM_CH_FM1*2)
-		ld d,0
-		ld e,ixl
-		ex de,hl
+		ld h,0
+		ld de,FM_portamento_slide
 		add hl,hl
 		add hl,de
 		ld (hl),c
 		inc hl
 		ld (hl),b
-
+		
 MLMCOM_portamento_slide_skip:
 		ld a,(MLM_event_arg_buffer+1)
 		ld c,a
