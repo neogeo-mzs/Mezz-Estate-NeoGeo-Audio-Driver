@@ -1,5 +1,3 @@
-# WIP!!
-
 # Mezz'Estate Neogeo Audio Driver
 *ADPCM-B isn't supported as of right now.*
 
@@ -120,9 +118,14 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 11: Big position jump
 **format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
 
-###### Command 12: Portamento slide
+###### Command 12: Portamento slide (Still not implemented)
 **format: `$0C %SSSSSSSS (Signed pitch offset per tick) %TTTTTTTT (Timing)`**
 
+###### Command 13: YM2610 Port A write
+**format: `$0D %AAAAAAAA (Address) %DDDDDDDD (Data; next event is executed immediately)`**
+
+###### Command 14: YM2610 Port B write
+**format: `$0E %AAAAAAAA (Address) %DDDDDDDD (Data; next event is executed immediately)`**
 
 ###### Command
 Offset = destination addr. - (current event addr. + 1 + current event argc)

@@ -563,11 +563,12 @@ MLM_command_vectors:
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
 	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
-	dw MLMCOM_portamento_slide
+	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
+	dw MLMCOM_portb_write
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
-	db &02, &02, &01, &02, &02
+	db &02, &02, &01, &02, &02, &02, &02
 
 ; a:  channel
 ; bc: timing
@@ -1039,6 +1040,7 @@ MLMCOM_big_position_jump:
 ;   1. %SSSSSSSS (Signed pitch offset per tick)
 ;   2. %TTTTTTTT (Timing)
 MLMCOM_portamento_slide:
+	jp MLM_parse_command_end
 	push hl
 	push de
 	push ix
@@ -1087,4 +1089,52 @@ MLMCOM_portamento_slide_skip:
 	pop ix
 	pop de
 	pop hl
+	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. %AAAAAAAA (Address)
+;   2. %DDDDDDDD (Data)
+MLMCOM_porta_write:
+	push de
+	push ix
+	push af
+	push bc
+		ld ix,MLM_event_arg_buffer
+
+		ld d,(ix+0)
+		ld e,(ix+1)
+		rst RST_YM_WRITEA
+
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	pop ix
+	pop de
+	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. %AAAAAAAA (Address)
+;   2. %DDDDDDDD (Data)
+MLMCOM_portb_write:
+	push de
+	push ix
+	push af
+	push bc
+		ld ix,MLM_event_arg_buffer
+
+		ld d,(ix+0)
+		ld e,(ix+1)
+		rst RST_YM_WRITEB
+
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	pop ix
+	pop de
 	jp MLM_parse_command_end
