@@ -514,8 +514,8 @@ MLM_song12:
 MLM_pa_data:
 	;db 0 | (15<<1) | &80, 5
 	;db &00
-	
-	; play note
+
+
 	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
 	db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
@@ -539,23 +539,15 @@ MLM_pa_data:
 	db 0 | (15<<1) | &80, NOTE_AS
 	db 0 | (15<<1) | &80, NOTE_B
 
-MLM_pa_data_pos_jump:
-	; Small position jump event, offset
-	db &0A, MLM_pa_data_dest-(MLM_pa_data_pos_jump+2)
-
-	db &47, &49, &95 ; garbage
-
-MLM_pa_data_dest:
 	db &01, 30       ; Note off, timing
-	db &00            ; end of channel event list
-	db 0 | (30<<1) | &80, NOTE_B ; C; shouldn't be played
+	db &00           ; end of channel event list
 
 MLM_fm_data1:
 	db &02, 1 ; Change instrument
 	
-	db &0C, -24, 0       ; Port. slide, slide speed, timing
-	db 15 | &80, NOTE_FS | (3<<4)
-	db &00
+	;db &0C, -24, 0       ; Port. slide, slide speed, timing
+	;db 15 | &80, NOTE_FS | (3<<4)
+	;db &00
 
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
