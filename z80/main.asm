@@ -238,11 +238,11 @@ IRQ:
 		call SSG_irq
 
 .IRQ_end:
-		; clear Timer B counter and
+		; clear Timer A counter and
 		; copy load timer value into
 		; the counter
 		ld d,REG_TIMER_CNT
-		ld e,%00101010
+		ld e,%00010101
 		rst RST_YM_WRITEA
 
 	; restore register state
@@ -257,6 +257,8 @@ IRQ:
 	ei
 	ret
 
+IRQ_reg_timer_cnt_values:
+	db %00101010, %00010101
 ;==============================================================================;
 ; EntryPoint
 ; The entry point of the sound driver. Sets up the working conditions.
@@ -371,10 +373,10 @@ ep_fm_loop:
 
 		; Set timer B
 		; IRQ should be raised every 1/60th of a second
-		;    e = 256 - (t / 1152 * 4000000)
-		;        256 - (1/60 / 1152 * 4000000)
-		ld e,198                   
-		call TMB_set_counter_load
+		;    e = 1024 - (t / 72 * 4000000)
+		;        1024 - (1/60 / 72 * 4000000)
+		ld bc,&0062                 
+		call TMA_set_counter_load
 	pop hl
 	pop bc
 	pop de
@@ -512,12 +514,8 @@ MLM_song12:
 	dw 0, 0, MLM_ssg_data-MLM_header
 
 MLM_pa_data:
-	;db 0 | (15<<1) | &80, 5
-	;db &00
-
-
 	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
-	db &07, (&3F<<2) | 0, 0 ; (volume<<2) | timing msb, timing lsb
+	db &07, (&3F<<2) | 0, 0 ; Set master vol., (volume<<2) | timing msb, timing lsb
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
 	db 0 | (15<<1) | &80, NOTE_CS
 	db 0 | (15<<1) | &80, NOTE_D
@@ -528,8 +526,6 @@ MLM_pa_data:
 	db &0C, 0, 0           ; Port. slide, should be skipped
 	db &05, &17, 0         ; Set Ch. Vol., volume, timing
 	db &06, PANNING_L | 0  ; Set Pan., panning | timing
-	db &08, 2, 0           ; Set base time, base time, timing
-	db &09, 227, 0         ; Set Timer B, Timer B, timing (timer every 120hz)
 	db 0 | (15<<1) | &80, NOTE_FS
 	db 0 | (15<<1) | &80, NOTE_G
 	db 0 | (15<<1) | &80, NOTE_GS
@@ -543,6 +539,7 @@ MLM_pa_data:
 	db &00           ; end of channel event list
 
 MLM_fm_data1:
+MLM_fm_data2:
 	db &02, 1 ; Change instrument
 	
 	;db &0C, -24, 0       ; Port. slide, slide speed, timing
@@ -557,15 +554,20 @@ MLM_fm_data1:
 	db 15 | &80, NOTE_F  | (3<<4)
 
 	db &0C, -24, 0       ; Port. slide, slide speed, timing
+	db &06, PANNING_L | 0  ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
+
+	db &06, PANNING_R | 0  ; Set Pan., panning | timing
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 30 | &80, NOTE_B  | (3<<4)
+
+	db &01, 30       ; Note off, timing
 	db &00 ; end of list
 
-MLM_fm_data2:
+;MLM_fm_data2:
 	db &02, 1 ; Change instrument
 	db 15 | &80, NOTE_C  | (3<<4)  ; timing | &80, note | (octave<<4)
 	db 15 | &80, NOTE_CS | (3<<4)
@@ -575,12 +577,16 @@ MLM_fm_data2:
 	db 15 | &80, NOTE_F  | (3<<4)
 
 	db &0C, 16, 0       ; Port. slide, slide speed, timing
+	db &06, PANNING_L | 0  ; Set Pan., panning | timing
 	db 15 | &80, NOTE_FS | (3<<4)
 	db 15 | &80, NOTE_G  | (3<<4) 
 	db 15 | &80, NOTE_GS | (3<<4) 
+	db &06, PANNING_R | 0  ; Set Pan., panning | timing
 	db 15 | &80, NOTE_A  | (3<<4)
 	db 15 | &80, NOTE_AS | (3<<4)
 	db 30 | &80, NOTE_B  | (3<<4)
+
+	db &01, 30       ; Note off, timing
 	db &00 ; end of list
 
 MLM_ssg_data:

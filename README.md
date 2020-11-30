@@ -107,8 +107,9 @@ this command ends the playback for the current channel
 ###### Command 8: Set base time
 **format: `$08 %BBBBBBBB (Base Time) %TTTTTTTT (Timing)`**
 
-###### Command 9: Set timer B frequency
+###### Command 9: Set timer B frequency (Currently disabled)
 **format: `$09 %BBBBBBBB (timer B) %TTTTTTTT (Timing)`**
+*This also enables timer b and disables timer a*
 
 ###### Command 10: Small position jump
 **format: `$0A %OOOOOOOO (Offset; next event is executed immediately)`**
@@ -127,7 +128,10 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 14: YM2610 Port B write
 **format: `$0E %AAAAAAAA (Address) %DDDDDDDD (Data; next event is executed immediately)`**
 
-###### Command
+###### Command 15: Set timer A frequency
+**format: `$0F %AAAAAAAA (timer A LSB) %TTTTTTAA (Timing; timer A MSB)`**
+*This also enables timer a and disables timer b*
+
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
 ## NOTICE
@@ -135,8 +139,12 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 
 ## BUGS
 * If the pitch slide is set to anything that isn't 0, notes seem to be triggered afterwards
+* z80/68k communication doesn't work on real hardware
 
 ## TODO
+* Add timer a support
+* sfx priority
+* bgm fade in/out
 * pitch slide command
 
 ## IDEAS

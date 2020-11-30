@@ -564,11 +564,11 @@ MLM_command_vectors:
 	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
-	dw MLMCOM_portb_write
+	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
-	db &02, &02, &01, &02, &02, &02, &02
+	db &02, &02, &01, &02, &02, &02, &02, &02
 
 ; a:  channel
 ; bc: timing
@@ -945,6 +945,7 @@ MLMCOM_set_base_time:
 ;   1. %BBBBBBBB (timer B)
 ;   2. %TTTTTTTT (Timing)
 MLMCOM_set_timer_b:
+	jp MLM_parse_command_end
 	push ix
 	push de
 	push bc
@@ -1137,4 +1138,36 @@ MLMCOM_portb_write:
 	pop af
 	pop ix
 	pop de
+	jp MLM_parse_command_end
+
+; c: channel
+; Arguments:
+;   1. %AAAAAAAA (timer A LSB) 
+;   2. %TTTTTTAA (Timing; timer A MSB)
+MLMCOM_set_timer_a:
+	push ix
+	push bc
+	push af
+	push de
+		ld ix,MLM_event_arg_buffer
+		ld e,c ; backup channel in e
+
+		; Set timer a counter load
+		ld c,(ix+0)
+		ld a,(ix+1)
+		and a,%00000011
+		ld b,a
+		call TMA_set_counter_load
+
+		ld b,0
+		ld a,(ix+1)
+		srl a
+		srl a
+		ld c,a
+		ld a,e
+		call MLM_set_timing
+	pop de
+	pop af
+	pop bc
+	pop ix
 	jp MLM_parse_command_end
