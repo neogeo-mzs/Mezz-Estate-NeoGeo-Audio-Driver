@@ -118,6 +118,7 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 
 ###### Command 11: Big position jump
 **format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
+Offset = destination addr. - (current event addr. + 1 + current event argc)
 
 ###### Command 12: Portamento slide (Still not implemented)
 **format: `$0C %SSSSSSSS (Signed pitch offset per tick) %TTTTTTTT (Timing)`**
@@ -129,10 +130,11 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 **format: `$0E %AAAAAAAA (Address) %DDDDDDDD (Data; next event is executed immediately)`**
 
 ###### Command 15: Set timer A frequency
-**format: `$0F %AAAAAAAA (timer A LSB) %TTTTTTAA (Timing; timer A MSB)`**
+**format: `$0F %AAAAAAAA (timer A MSB) %TTTTTTAA (Timing; timer A LSB)`**
 *This also enables timer a and disables timer b*
 
-Offset = destination addr. - (current event addr. + 1 + current event argc)
+###### Command 16~31: Wait ticks (nibble)
+**format: `$1T (Timing)`**
 
 ## NOTICE
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)

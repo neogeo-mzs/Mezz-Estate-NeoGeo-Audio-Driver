@@ -58,7 +58,7 @@ void print_gui()
     for (u16 i = 6; i > 0; --i)
         FIX_print_char(0x80);   // horizontal line
 
-    FIX_print_string("\x81Mezz'Estate Audio test\x82");
+    FIX_print_string("\x81Mezz'Estate Audio Test\x82");
 
     for (u16 i = 6; i > 0; --i)
         FIX_print_char(0x80);   // horizontal line
