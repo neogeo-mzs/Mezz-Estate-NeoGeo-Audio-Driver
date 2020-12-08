@@ -1,3 +1,7 @@
 *.o
 *.pcma
+*.elf
 build
+z80/listing.txt
+z80/adpcma_sample_lut.bin
+history
