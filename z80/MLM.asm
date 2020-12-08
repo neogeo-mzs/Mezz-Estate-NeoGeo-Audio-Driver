@@ -162,7 +162,7 @@ MLM_play_song_set_timing_loop:
 		inc hl
 		djnz MLM_play_song_set_timing_loop
 
-		; Load MLM song header (hl = MLM_header[song])
+		; Load MLM song header (hl = &MLM_header[song])
 		ld h,0
 		ld l,a
 		add hl,hl
@@ -286,6 +286,8 @@ MLM_update_events_skip:
 MLM_parse_note:
 	push af
 	push bc
+	push hl
+	push de
 		ld a,c
 		ld b,(hl)
 		inc hl
@@ -306,6 +308,8 @@ MLM_parse_note_end:
 		ld (hl),d
 		dec hl
 		ld (hl),e
+	pop de
+	pop hl
 	pop bc
 	pop af
 	ret
@@ -485,7 +489,7 @@ MLM_parse_command:
 	push ix
 	push hl
 	push de
-		; Backup &MLM_playback_pointers[channel]
+		; Backup &MLM_playback_pointers[channel]+1
 		; into ix
 		ld ixl,e
 		ld ixh,d
@@ -565,10 +569,12 @@ MLM_command_vectors:
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
+	dsw 16, MLMCOM_wait_ticks_nibble
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
 	db &02, &02, &01, &02, &02, &02, &02, &02
+	dsb 16, &00
 
 ; a:  channel
 ; bc: timing
@@ -1047,9 +1053,6 @@ MLMCOM_portamento_slide:
 	push ix
 	push bc
 	push af
-		ld a,&39
-		ld (breakpoint),a
-
 		ld ixl,c ; Backup MLM channel into ixl
 
 		; Jump to the end of the subroutine
@@ -1142,25 +1145,28 @@ MLMCOM_portb_write:
 
 ; c: channel
 ; Arguments:
-;   1. %AAAAAAAA (timer A LSB) 
-;   2. %TTTTTTAA (Timing; timer A MSB)
+;   1. %AAAAAAAA (timer A MSB) 
+;   2. %TTTTTTAA (Timing; timer A LSB)
 MLMCOM_set_timer_a:
 	push ix
 	push bc
 	push af
 	push de
+		ld a,&39
+		ld (breakpoint),a
+
 		ld ix,MLM_event_arg_buffer
 		ld e,c ; backup channel in e
 
 		; Set timer a counter load
-		ld c,(ix+0)
+		ld b,(ix+0)
 		ld a,(ix+1)
 		and a,%00000011
-		ld b,a
+		ld c,a
 		call TMA_set_counter_load
 
 		ld b,0
-		ld a,(ix+1)
+		;ld a,(ix+1)
 		srl a
 		srl a
 		ld c,a
@@ -1170,4 +1176,27 @@ MLMCOM_set_timer_a:
 	pop af
 	pop bc
 	pop ix
+	jp MLM_parse_command_end
+
+; c: channel
+; de: playback pointer
+MLMCOM_wait_ticks_nibble:
+	push hl
+	push af
+	push bc
+		; Load command ($1T) in a
+		ld h,d
+		ld l,e
+		dec hl
+		ld a,(hl)
+		ld l,c ; backup channel
+
+		and a,&0F ; get timing
+		ld c,a
+		ld b,0
+		ld a,l
+		call MLM_set_timing
+	pop bc
+	pop af
+	pop hl
 	jp MLM_parse_command_end

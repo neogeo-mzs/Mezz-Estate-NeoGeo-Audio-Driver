@@ -1,5 +1,6 @@
 ; Timer A set counter load
-; bc: counter
+; b: counter msb (%MMMMMMMM)
+; c: counter lsb (%------LL)
 TMA_set_counter_load:
 	push de
 	push bc

@@ -514,6 +514,12 @@ MLM_song12:
 	dw 0, 0, MLM_ssg_data-MLM_header
 
 MLM_pa_data:
+	db &0F, 1023>>2, 1023 % 11 ; Set timer a to 44100Hz
+	db 0 | (0<<1) | &80, NOTE_C
+	db &04, 44100 & 255, 44100 >> 8
+	db 0 | (0<<1) | &80, NOTE_D
+	db &00 ;eol
+
 	db &05, &1F, 0 ; Set Ch. Vol., volume, timing
 	db &07, (&3F<<2) | 0, 0 ; Set master vol., (volume<<2) | timing msb, timing lsb
 	db 0 | (15<<1) | &80, NOTE_C ; Sample MSB | (Timing<<1) | &80, Sample LSB
