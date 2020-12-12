@@ -150,6 +150,7 @@ MLM_play_song:
 	push de
 	push af
 	push bc
+	push ix
 		call MLM_stop
 		call set_defaults
 
@@ -234,6 +235,7 @@ MLM_play_song_loop_skip:
 		inc de
 		inc ix
 		djnz MLM_play_song_loop
+	pop ix
 	pop bc
 	pop af
 	pop de
@@ -1152,9 +1154,6 @@ MLMCOM_set_timer_a:
 	push bc
 	push af
 	push de
-		ld a,&39
-		ld (breakpoint),a
-
 		ld ix,MLM_event_arg_buffer
 		ld e,c ; backup channel in e
 

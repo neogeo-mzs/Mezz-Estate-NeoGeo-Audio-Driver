@@ -72,3 +72,8 @@ void Z80_play_song(u8 song)
 	Z80_send_byte(0x17); // command (Play song)
 	Z80_send_byte(song);
 }
+
+void Z80_stop_song()
+{
+	Z80_send_byte(0x18); // command (Stop song)
+}

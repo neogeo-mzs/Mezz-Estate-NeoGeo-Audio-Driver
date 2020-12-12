@@ -167,3 +167,10 @@ MLM_CH_FM4  equ 9
 MLM_CH_SSG1 equ 10
 MLM_CH_SSG2 equ 11
 MLM_CH_SSG3 equ 12
+
+; structs
+	struct ComBuffer
+mlm_is_play_song_requested db 0
+mlm_requested_song         db 0
+mlm_is_stop_song_requested db 0
+	endstruct

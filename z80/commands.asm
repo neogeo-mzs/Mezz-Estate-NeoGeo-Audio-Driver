@@ -1,3 +1,47 @@
+; DOESN'T SAVE REGISTERS
+COM_irq:
+	ld a,&40
+	ld (breakpoint),a
+
+	; Load the pointer to the 
+	; assigned buffer in ix
+	ld a,(com_buffer_select)
+	ld ix,com_buffers        
+	cp a,0                        ; if buffer select 
+	jr z,COM_irq_use_first_buffer ; is 0, use 1st buffer
+	ld de,ComBuffer ; If it isn't, use the 2nd
+	add ix,de       ; buffer
+
+COM_irq_use_first_buffer:
+	; If ComBuffer.mlm_is_play_song_requested is 1,
+	; play the song in ComBuffer.mlm_requested_song.
+	ld a,(ix+ComBuffer.mlm_requested_song)
+	ld c,(ix+ComBuffer.mlm_is_play_song_requested)
+	dec c                ; if c is equal to 0,
+	call z,MLM_play_song ; call MLM_play_song
+
+	; If ComBuffer.mlm_is_stop_song_requested 
+	; is 1, stop the song.
+	ld a,(ix+ComBuffer.mlm_is_stop_song_requested)
+	dec a
+	call z,MLM_stop
+
+	; Clear assigned buffer
+	ld e,ixl ; - Load pointer to buffer in de
+	ld d,ixh ; /
+	ld l,e   ; - Load pointer to buffer in hl
+	ld h,d   ; /
+	inc de
+	ld bc,ComBuffer-1
+	ld (hl),0
+	ldir     ; Memory fills the buffer with 0
+
+	; Flip buffer select
+	ld a,(com_buffer_select)
+	xor a,1
+	ld (com_buffer_select),a
+	ret
+
 command_nop:
 	jp NMI_execute_command_end
 
@@ -341,9 +385,40 @@ command_play_FM_note:
 command_play_song:
 	push af
 	push hl
-		ld hl,com_arg_buffer
-		ld a,(hl)
-		call MLM_play_song
+		; Load the pointer to the 
+		; assigned buffer in ix
+		ld a,(com_buffer_select)
+		ld ix,com_buffers        
+		cp a,1                                  ; if buffer select 
+		jr z,command_play_song_use_first_buffer ; is 1, use 1st buffer
+		ld de,ComBuffer ; If it isn't, use the 2nd
+		add ix,de       ; buffer
+
+command_play_song_use_first_buffer:
+		; Set the assigned buffer
+		ld (ix+ComBuffer.mlm_is_play_song_requested),1
+		ld a,(com_arg_buffer)
+		ld (ix+ComBuffer.mlm_requested_song),a
+	pop hl
+	pop af
+	jp NMI_execute_command_end
+
+; Arguments:
+command_stop_song:
+	push af
+	push hl
+		; Load the pointer to the 
+		; assigned buffer in ix
+		ld a,(com_buffer_select)
+		ld ix,com_buffers        
+		cp a,1                                  ; if buffer select 
+		jr z,command_stop_song_use_first_buffer ; is 1, use 1st buffer
+		ld de,ComBuffer ; If it isn't, use the 2nd
+		add ix,de       ; buffer
+
+command_stop_song_use_first_buffer:
+		; Set the assigned buffer
+		ld (ix+ComBuffer.mlm_is_stop_song_requested),1
 	pop hl
 	pop af
 	jp NMI_execute_command_end
