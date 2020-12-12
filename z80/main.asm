@@ -209,18 +209,21 @@ command_vector:
 	; &15: Play SSG note (3 arguments)
 	; &16: Play FM note (5 arguments)
 	; &17: Play song (1 argument)
+	; &18: Stop song
 	dw command_nop,         command01_Setup,       command_nop,          command03_Setup
 	dw command_nop,         command_nop,           command_nop,          command_nop
 	dw command_nop,         command_nop,           command_stop_ssg,     command_silence_fm
 	dw command_stop_adpcma, command_nop,           command_nop,          command_play_adpcma_sample
 	dw command_nop,         command_nop,           command_nop,          command_set_adpcma_mvol
 	dw command_set_irq_freq,command_play_ssg_note, command_play_FM_note, command_play_song
+	dw command_stop_song
 
 command_argc:
 	db &00, &00, &00, &00, &00, &00, &00, &00
 	db &00, &00, &00, &00, &00, &00, &00, &03
 	db &00, &00, &00, &01, &01, &03, &05, &01
-
+	db &00
+	
 ;==============================================================================;
 ; Real IRQ code
 IRQ:
@@ -233,6 +236,7 @@ IRQ:
 	push hl
 	push ix
 	push iy
+		call COM_irq
 		call MLM_irq
 		call FM_irq
 		call SSG_irq

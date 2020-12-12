@@ -35,7 +35,7 @@ void rom_callback_VBlank() {
     // too long, skip the frame
     if (render_status.logic_done)
     {
-        FIX_set_cursor(1, 5);
+        FIX_set_cursor(1, 6);
         FIX_print_string("CHANNEL ");
         FIX_print_byte(channel_select);
         FIX_print_string(channel_labels[channel_select]);
@@ -88,7 +88,9 @@ void print_gui()
     FIX_set_cursor(1, 2);
     FIX_print_string("\x8C\x8D Select a channel");
     FIX_set_cursor(1, 3);
-    FIX_print_string("\x88  test channel");
+    FIX_print_string("\x88  play channel");
+    FIX_set_cursor(1, 4);
+    FIX_print_string("\x89  stop channel");
 }   
 
 int main()
@@ -112,6 +114,8 @@ int main()
 
         if (((NormalInput*)BIOS_P1CHANGE)->A)
             Z80_play_song(channel_select);
+        if (((NormalInput*)BIOS_P1CHANGE)->B)
+            Z80_stop_song();
 
         // wait for vblank
         PAL(0, 1) = DARKGREY;

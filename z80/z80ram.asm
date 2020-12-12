@@ -1,5 +1,3 @@
-; RAM defines for Dummy Z80 sound driver
-
 	org &F800
 
 breakpoint: ds 1    ; used for debugging
@@ -15,10 +13,16 @@ com_arg_buffer: ds 16 ; u8[16]
 ; for an argument.
 com_loading_arg:       ds 1 ; u8
 com_current_arg_index: ds 1 ; u8
-
 com_68k_input:     ds 1 ; u8
 com_68k_increment: ds 1 ; u8
 com_68k_command:   ds 1 ; u8
+
+
+com_buffers:
+com_buffer1	ComBuffer ,,
+com_buffer2	ComBuffer ,,
+
+com_buffer_select:         ds 1 ; bool
 
 ; ======== SSG variables ========
 

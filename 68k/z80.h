@@ -42,3 +42,4 @@ void Z80_set_irq_frequency(u8 frequency);
 void Z80_play_ssg_note(u8 note, u8 instrument, SSGChannel channel, u8 volume);
 void Z80_play_fm_note(u8 note, u8 instrument, u8 attenuator, Panning panning, u8 op_slot, u8 channel);
 void Z80_play_song(u8 song);
+void Z80_stop_song();
