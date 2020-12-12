@@ -1,4 +1,5 @@
 #include "z80.h"
+#include "utils.h"
 
 void Z80_send_byte(u8 byte)
 {
@@ -6,10 +7,13 @@ void Z80_send_byte(u8 byte)
 	static u8 reply_increment = 0x00;
 
 	while(*REG_SOUND != expected_reply);
+
 	*REG_SOUND = byte;
 
 	reply_increment++;
 	expected_reply = byte+reply_increment;
+
+	wait_loop(32);
 }
 
 void Z80_stop_ssg()
