@@ -1,8 +1,5 @@
 ; DOESN'T SAVE REGISTERS
 COM_irq:
-	ld a,&40
-	ld (breakpoint),a
-
 	; Load the pointer to the 
 	; assigned buffer in ix
 	ld a,(com_buffer_select)
@@ -380,11 +377,18 @@ command_play_FM_note:
 	pop ix
 	jp NMI_execute_command_end
 
+; Command &17:
+; 
 ; Arguments:
 ;	1. song
 command_play_song:
 	push af
 	push hl
+	push ix
+	push de
+		ld a,&39
+		ld (breakpoint),a
+
 		; Load the pointer to the 
 		; assigned buffer in ix
 		ld a,(com_buffer_select)
@@ -399,14 +403,21 @@ command_play_song_use_first_buffer:
 		ld (ix+ComBuffer.mlm_is_play_song_requested),1
 		ld a,(com_arg_buffer)
 		ld (ix+ComBuffer.mlm_requested_song),a
+	pop de
+	pop ix
 	pop hl
 	pop af
 	jp NMI_execute_command_end
 
-; Arguments:
+; Command &18
 command_stop_song:
 	push af
 	push hl
+	push ix
+	push de
+		ld a,&39
+		ld (breakpoint),a
+		
 		; Load the pointer to the 
 		; assigned buffer in ix
 		ld a,(com_buffer_select)
@@ -419,6 +430,8 @@ command_stop_song:
 command_stop_song_use_first_buffer:
 		; Set the assigned buffer
 		ld (ix+ComBuffer.mlm_is_stop_song_requested),1
+	pop de
+	pop ix
 	pop hl
 	pop af
 	jp NMI_execute_command_end

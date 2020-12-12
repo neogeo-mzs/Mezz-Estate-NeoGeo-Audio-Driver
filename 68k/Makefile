@@ -16,7 +16,7 @@ OBJCOPY  := $(CROSS)objcopy
 ROMWAK   := romwak
 
 #ASFLAGS :=
-CFLAGS  := -std=c99 -fomit-frame-pointer -g -Wall -Wextra -Winline -funsigned-char
+CFLAGS  := -std=c99 -fomit-frame-pointer -g -Og -Wall -Wextra -Winline -funsigned-char
 LDFLAGS := -specs ngdevkit-specs -Wl,--defsym,rom_eye_catcher_mode=2 
 
 build: prom.bin

@@ -6,6 +6,7 @@ RM    := rm
 MAME  := mame
 GNGEO := ngdevkit-gngeo
 ZIP   := zip
+LN    := ln 
 
 PROM_PATH  := 68k
 M1ROM_PATH := z80
@@ -16,18 +17,25 @@ VROM_PATH  := smp
 BUILD_PATH := build
 MAME_ROM_PATH=$(HOME)/.mame/roms/neogeo
  
-ROM_NAME := homebrew
+ROM_NAME := puzzledp
 
 build: srom croms vrom m1rom prom
 	rm -rf build
 	mkdir build
-	$(MV) $(PROM_PATH)/prom.bin $(BUILD_PATH)/prom.bin
-	$(MV) $(M1ROM_PATH)/m1rom.bin $(BUILD_PATH)/m1rom.bin
-	$(MV) $(SROM_PATH)/srom.bin $(BUILD_PATH)/srom.bin
-	$(MV) $(CROMS_PATH)/c1rom.bin $(BUILD_PATH)/c1rom.bin
-	$(MV) $(CROMS_PATH)/c2rom.bin $(BUILD_PATH)/c2rom.bin
-	$(MV) $(VROM_PATH)/vrom.bin $(BUILD_PATH)/vrom.bin
+	$(MV) $(PROM_PATH)/prom.bin $(BUILD_PATH)/202-p1.bin
+	$(MV) $(M1ROM_PATH)/m1rom.bin $(BUILD_PATH)/202-m1.bin
+	$(MV) $(SROM_PATH)/srom.bin $(BUILD_PATH)/202-s1.bin
+	$(MV) $(CROMS_PATH)/c1rom.bin $(BUILD_PATH)/202-c1.bin
+	$(MV) $(CROMS_PATH)/c2rom.bin $(BUILD_PATH)/202-c2.bin
+	$(MV) $(VROM_PATH)/vrom.bin $(BUILD_PATH)/202-v1.bin
 	
+	$(LN) $(BUILD_PATH)/202-p1.bin $(BUILD_PATH)/202-p1.p1
+	$(LN) $(BUILD_PATH)/202-m1.bin $(BUILD_PATH)/202-m1.m1
+	$(LN) $(BUILD_PATH)/202-s1.bin $(BUILD_PATH)/202-s1.s1
+	$(LN) $(BUILD_PATH)/202-c1.bin $(BUILD_PATH)/202-c1.c1
+	$(LN) $(BUILD_PATH)/202-c2.bin $(BUILD_PATH)/202-c2.c2
+	$(LN) $(BUILD_PATH)/202-v1.bin $(BUILD_PATH)/202-v1.v1
+
 prom: 
 	$(MAKE) -C $(PROM_PATH)
 
@@ -65,11 +73,11 @@ mame_debug: build
 	$(MAME) neogeo $(ROM_NAME) -window -prescale 3 -debug $(mame_args)
 
 gngeo: build
-	$(ZIP) -r -j $(BUILD_PATH)/homebrew.zip $(BUILD_PATH)/*.bin
+	$(ZIP) -r -j $(BUILD_PATH)/puzzledp.zip $(BUILD_PATH)/*.bin
 	$(CP) neogeo.zip $(BUILD_PATH)/neogeo.zip 
-	$(GNGEO) -i$(BUILD_PATH) --scale=3 homebrew
+	$(GNGEO) -i$(BUILD_PATH) --scale=3 --screen320 puzzledp
 
 gngeo_debug: build
-	$(ZIP) -r -j $(BUILD_PATH)/homebrew.zip $(BUILD_PATH)/*.bin
+	$(ZIP) -r -j $(BUILD_PATH)/puzzledp.zip $(BUILD_PATH)/*.bin
 	$(CP) neogeo.zip $(BUILD_PATH)/neogeo.zip 
-	$(GNGEO) -i$(BUILD_PATH) --scale=1 -D homebrew
+	$(GNGEO) -i$(BUILD_PATH) --scale=2 --screen320 -D puzzledp

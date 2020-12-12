@@ -91,6 +91,9 @@ NMI:
 	push de
 	push bc
 	push af
+		ld a,&40
+		ld (breakpoint),a
+
 		in a,(READ_68K)
 		ld (com_68k_input),a ; backup 68k input
 
@@ -121,7 +124,6 @@ NMI_end:
 	pop hl
 	pop iy
 	pop ix
-
 	retn
 
 ; a: 68k input
@@ -172,7 +174,7 @@ NMI_load_argument:
 	; execute the command
 	cp a,0
 	ld a,(com_68k_command)
-	jp z,NMI_execute_command
+	jp z,NMI_execute_command ; This can be rewritten better.
 
 	jp NMI_end
 
@@ -189,7 +191,7 @@ NMI_execute_command:
 	ld d,(hl)
 	ex de,hl
 
-	jp hl
+	jp (hl)
 
 NMI_execute_command_end:
 	; Tell the driver to wait for a command next.

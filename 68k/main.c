@@ -31,6 +31,8 @@ volatile struct {
 } render_status;
 
 void rom_callback_VBlank() {
+    static u32 frames = 0;
+
     // if the logic code is taking 
     // too long, skip the frame
     if (render_status.logic_done)
@@ -39,6 +41,12 @@ void rom_callback_VBlank() {
         FIX_print_string("CHANNEL ");
         FIX_print_byte(channel_select);
         FIX_print_string(channel_labels[channel_select]);
+        
+        FIX_set_cursor(1, 8);
+        FIX_print_long(frames);
+        frames++;
+        FIX_set_cursor(1, 9);
+        FIX_print_byte(*((u8*)BIOS_P1CURRENT));
         BIOS_system_io();
     }
 
