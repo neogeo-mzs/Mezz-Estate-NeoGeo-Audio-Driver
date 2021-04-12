@@ -1,10 +1,11 @@
 ; Memory map
-FIXED equ &0000
-BANK3 equ &8000
-BANK2 equ &C000
-BANK1 equ &E000
-BANK0 equ &F000
-WRAM  equ &F800
+FIXED       equ &0000
+BANK3       equ &8000
+BANK2       equ &C000
+BANK1       equ &E000
+BANK0       equ &F000
+WRAM_START  equ &F800
+WRAM_END    equ &FFFF
 
 ; Port map
 READ_68K    equ &00
@@ -126,9 +127,20 @@ REG_PB_VOL		equ &1B
 REG_P_FLAGS		equ &1C
 
 ; RSTs
-RST_YM_WRITEA equ &10
-RST_YM_WRITEB equ &18
-RST_YM_WAIT   equ &08
+RST_YM_DELAY1 equ &08
+RST_YM_DELAY2 equ &10
+RST_YM_WRITEA equ &18
+RST_YM_WRITEB equ &20
+
+; Timer control
+TM_CNT_LOAD_TA       equ %00000001
+TM_CNT_LOAD_TB       equ %00000010
+TM_CNT_ENABLE_TA_IRQ equ %00000100
+TM_CNT_ENABLE_TB_IRQ equ %00001000
+TM_CNT_TA_FLG_RESET  equ %00010000
+TM_CNT_TB_FLG_RESET  equ %00100000
+TM_CNT_2CH_MODE      equ %01000000
+TM_CNT_CSM_MODE      equ %10000000
 
 ; MLM defines
 NOTE_C  equ &0
@@ -168,9 +180,18 @@ MLM_CH_SSG1 equ 10
 MLM_CH_SSG2 equ 11
 MLM_CH_SSG3 equ 12
 
-; structs
-	struct ComBuffer
-mlm_is_play_song_requested db 0
-mlm_requested_song         db 0
-mlm_is_stop_song_requested db 0
-	endstruct
+; Should always be a multiple of 2
+; and also be smaller than 128
+COM_BUFFER_LENGTH equ 32
+IRQ_BUFFER_LENGTH equ 16
+
+UCOM_MASK         equ %01111111
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                    MACROS                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	macro srl_hl
+		srl h
+		rr l
+	endm

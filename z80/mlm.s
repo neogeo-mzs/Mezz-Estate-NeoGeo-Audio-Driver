@@ -1,5 +1,8 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
+	ld iyl,0 ; Clear active mlm channel counter
+
+	; base time counter code
 	ld a,(MLM_base_time)
 	ld c,a
 	ld a,(MLM_base_time_counter)	
@@ -8,53 +11,57 @@ MLM_irq:
 	ld (MLM_base_time_counter),a
 	jr nz,MLM_update_skip
 
-	ld b,13
+	;ld b,13 ;; In deflemask mlm exports, only one channel is used, it's a waste to check all channels
 MLM_update_loop:
-	ld c,b
-	dec c
+	;ld c,b
+	;dec c Just deal with channel 1
+	ld c,0
 
 	; if MLM_playback_control[ch] == 0 then
 	; do not update this channel
-	ld h,0
-	ld l,c
-	ld de,MLM_playback_control
-	add hl,de
-	ld a,(hl)
-	cp a,0
+	;ld h,0
+	;ld l,c
+	;ld de,MLM_playback_control
+	;add hl,de
+	;ld a,(hl)
+	ld a,(MLM_playback_control)
+	or a,a ; cp a,0
 	jr z,MLM_update_loop_next
 
-	; de = MLM_playback_timings[channel]
-	ld h,0
-	ld l,c
-	ld de,MLM_playback_timings
-	add hl,hl
-	add hl,de
+	inc iyl ; increment active mlm channel counter
+
+	; hl = &MLM_playback_timings[channel]
+	; de = *hl
+	;ld h,0
+	;ld l,c
+	;ld de,MLM_playback_timings
+	;add hl,hl
+	;add hl,de
+	ld hl,MLM_playback_timings
 	ld e,(hl)
 	inc hl
 	ld d,(hl)
 
-	dec de ; decrement timing
-
-	; if timing==0 update events
-	; else save decremented timing
-	xor a,a
-	add a,d
-	add a,e
-
-MLM_update_do_execute_events:
-	call z,MLM_update_events
-	jr c,MLM_update_do_save_dec_t
-	jr z,MLM_update_skip_save_dec_t
-
-MLM_update_do_save_dec_t:
+	; Decrement the timing and 
+	; store it back into WRAM
+	dec de 
 	ld (hl),d
 	dec hl
 	ld (hl),e
 
-MLM_update_skip_save_dec_t:
+	; if timing==0 update events
+	; else save decremented timing
+	push hl
+		ld hl,0
+		sbc hl,de
+	pop hl
+
+MLM_update_check_execute_events:
+	call z,MLM_update_events
+
 	; if MLM_playback_set_timings[ch] is 0
 	; (thus the timing was set to 0 during this loop)
-	; then execute the next event
+	; then execute the next event immediately
 	ld h,0
 	ld l,c
 	ld de,MLM_playback_set_timings
@@ -64,19 +71,27 @@ MLM_update_skip_save_dec_t:
 	inc hl
 	ld d,(hl)
 
-	xor a,a ; clear a
-	add a,e
-	add a,d
-	jr c,MLM_update_loop_next
-	jr z,MLM_update_do_execute_events
+	; compare de to 0
+	push hl
+		ld hl,0
+		sbc hl,de
+	pop hl
+	jr z,MLM_update_check_execute_events
 
 MLM_update_loop_next:
-	djnz MLM_update_loop
+	;djnz MLM_update_loop ;; only one channel is used for deflemask mlm export, no need for this loop :)
 
 	; Clear MLM_base_time_counter
 	xor a,a
 	ld (MLM_base_time_counter),a
 
+	; if active mlm channel counter is 0,
+	; then all channels have stopped, proceed
+	; to call MLM_stop
+	ld a,iyl
+	or a,a ; cp a,0
+	call z,MLM_stop
+	
 MLM_update_skip:
 	ret
 
@@ -100,39 +115,24 @@ MLM_stop:
 		ld (hl),0
 		ldir
 
-		; Set defaults
+		; Set WRAM variables
+		;ld a,1
+		;ld (MLM_base_time),a
+
+		; Clear other WRAM variables
+		xor a,a
+		ld (EXT_2CH_mode),a
+
+		; Reset the banking to its
+		; starting state (ZONE3 
+		; mapped to $4000~7FFF)
 		ld a,1
-		ld (MLM_base_time),a
+		in a,($0B)
 
-		; Stop ADPCM-A channels
-		ld b,6
-MLM_stop_pa_loop:
-		ld c,b
-		dec c
-		call PA_stop_sample
-		djnz MLM_stop_pa_loop
-
-		; Stop SSG channels
-		ld b,3
-MLM_stop_ssg_loop:
-		ld a,b
-		dec a
-		call SSG_stop_note
-		djnz MLM_stop_ssg_loop
-
-		; Set all channel volumes to their
-		; default values.
-		ld hl,MLM_default_channel_volumes
-		ld de,MLM_channel_volumes
-		ld bc,CHANNEL_COUNT
-		ldir
-		
-		; Set all pannings to center (%11000000)
-		ld hl,MLM_channel_pannings
-		ld de,MLM_channel_pannings+1
-		ld bc,CHANNEL_COUNT-1
-		ld (hl),PANNING_CENTER
-		ldir
+		call ssg_stop
+		call fm_stop
+		call pa_stop
+		call pb_stop
 	pop af
 	pop bc
 	pop de
@@ -152,37 +152,39 @@ MLM_play_song:
 	push bc
 	push ix
 		call MLM_stop
-		call set_defaults
+		call set_default_banks
 
-		; set all channel timings to 1
+		; set all channel timings to 0
 		ld b,13
-		ld hl,MLM_playback_timings
 MLM_play_song_set_timing_loop:
-		ld (hl),1
-		inc hl
-		inc hl
+		push bc
+			ld a,b
+			dec a
+			ld bc,0
+			call MLM_set_timing
+		pop bc
 		djnz MLM_play_song_set_timing_loop
 
-		; Load MLM song header (hl = &MLM_header[song])
+		; Load MLM song header (hl = &MLM_START[song])
 		ld h,0
 		ld l,a
 		add hl,hl
-		ld de,MLM_header
+		ld de,MLM_START
 		add hl,de
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
-		ld hl,MLM_header
+		ld hl,MLM_START
 		add hl,de
 
 		; Load MLM playback pointers
 		;
-		; u16* src = MLM_header[song];
+		; u16* src = MLM_START[song];
 		; u16* dst = MLM_playback_pointers;
 		;
 		; for (int i = 13; i > 0; i--)
 		; { 
-		;     *dst = *src + MLM_header; 
+		;     *dst = *src + MLM_START; 
 		;     
 		;	  u8 playback_cnt = 0;
 		; 
@@ -205,7 +207,7 @@ MLM_play_song_loop:
 			inc hl
 			ld b,(hl)
 
-			ld hl,MLM_header
+			ld hl,MLM_START
 			add hl,bc
 
 			ex de,hl
@@ -213,12 +215,22 @@ MLM_play_song_loop:
 			inc hl
 			ld (hl),d
 
-			xor a,a ; clear a
-			add a,c
-			add a,b
+			
+			; if bc is zero jump to...
+			push hl
+				ld hl,0
+				or a,a ; reset carry flag
+				sbc hl,bc
+			pop hl
 			ld a,0
-			jr c,MLM_play_song_loop_dont_skip
 			jr z,MLM_play_song_loop_skip
+
+			;xor a,a ; clear a
+			;add a,c
+			;add a,b
+			;ld a,0
+			;jr c,MLM_play_song_loop_dont_skip
+			;jr z,MLM_play_song_loop_skip
 
 MLM_play_song_loop_dont_skip:
 			inc a
@@ -235,6 +247,32 @@ MLM_play_song_loop_skip:
 		inc de
 		inc ix
 		djnz MLM_play_song_loop
+
+		; Load and set timer a
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		call ta_counter_load_set
+
+		; Load and set base time
+		ex de,hl
+		inc hl
+		ld a,(hl)
+		ld (MLM_base_time),a
+
+		; Set other WRAM variables
+		ld a,2
+		ld (MLM_unused_block),a
+		dec a ; ld a,1
+		ld (MLM_current_block),a
+		
+		; Copy MLM_playback_pointers
+		; to MLM_playback_start_pointers
+		ld hl,MLM_playback_pointers
+		ld de,MLM_playback_start_pointers
+		ld bc,2*CHANNEL_COUNT
+		ldir
 	pop ix
 	pop bc
 	pop af
@@ -243,37 +281,42 @@ MLM_play_song_loop_skip:
 	ret
 
 ; c: channel
+; 225 t-states at worst, excluding function calls inside it.
 MLM_update_events:
 	push hl
 	push de
 	push af
 	push ix
 		; de = MLM_playback_pointers[ch]
-		ld h,0
-		ld l,c
-		add hl,hl
-		ld de,MLM_playback_pointers
-		add hl,de
+		;ld h,0
+		;ld l,c
+		;add hl,hl
+		;ld de,MLM_playback_pointers
+		;add hl,de
+		ld hl,MLM_playback_pointers
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
 
 		; if MLM_playback_pointers[ch] == NULL then return
-		xor a,a ; clear a
-		add a,d
-		add a,e
-		jr c,MLM_update_events_do_update
+		push hl
+			ld hl,0
+			or a,a    ; clear carry flag
+			sbc hl,de ; compare
+		pop hl
 		jr z,MLM_update_events_skip
 
-MLM_update_events_do_update:
 		; If the first byte's most significant bit is 0, then
 		; parse it and evaluate it as a note, else parse 
 		; and evaluate it as a command
 		ex de,hl
+		;ld a,(hl)
+		;bit 7,a
+		;call z,MLM_parse_command
+		;call nz,MLM_parse_note
+
 		ld a,(hl)
-		bit 7,a
-		call z,MLM_parse_command
-		call nz,MLM_parse_note
+		call MLM_parse_command
 
 MLM_update_events_skip:
 	pop ix
@@ -303,7 +346,6 @@ MLM_parse_note:
 		cp a,10
 		jp c,MLM_play_note_fm
 		jp MLM_play_note_ssg
-
 MLM_parse_note_end:
 		; store playback pointer into WRAM
 		ex de,hl
@@ -491,10 +533,15 @@ MLM_parse_command:
 	push ix
 	push hl
 	push de
+	push iy
 		; Backup &MLM_playback_pointers[channel]+1
 		; into ix
 		ld ixl,e
 		ld ixh,d
+
+		; backup the command's first byte into iyl
+		ld a,(hl)
+		ld iyl,a
 
 		; Lookup command argc and store it into a
 		push hl
@@ -521,7 +568,7 @@ MLM_parse_command:
 
 		; If the command's argc is 0, 
 		; just execute the command
-		cp a,0
+		or a,a ; cp a,0
 		jr z,MLM_parse_command_execute
 
 		; if it isn't, load arguments into
@@ -555,6 +602,7 @@ MLM_parse_command_end:
 		ld (hl),e
 
 MLM_parse_command_end_skip_playback_pointer_set:
+	pop iy
 	pop de
 	pop hl
 	pop ix
@@ -571,12 +619,30 @@ MLM_command_vectors:
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
-	dsw 16, MLMCOM_wait_ticks_nibble
+	dsw 16,  MLMCOM_wait_ticks_nibble
+	dw MLMCOM_nop,                 MLMCOM_jump_in_current_zone
+	dw MLMCOM_bankswitch_current_zone_and_jump_to_unused_zone
+	dsw 13,  MLMCOM_invalid ; Invalid commands
+	dsw 16,  MLMCOM_multi_porta_write
+	dsw 16,  MLMCOM_multi_portb_write
+	dsw 192, MLMCOM_invalid ; Invalid commands
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
 	db &02, &02, &01, &02, &02, &02, &02, &02
-	dsb 16, &00
+	dsb 16, &00 ; Wait ticks nibble
+	db &00, &02, &03
+	dsb 13, 0   ; Invalid commands all have no arguments
+
+	; multi port a write argcs
+	db &04, &06, &08, &0A, &0C, &0E, &10, &12
+	db &14, &16, &18, &1A, &1C, &1E, &20, &22
+
+	; multi port b write argcs
+	db &04, &06, &08, &0A, &0C, &0E, &10, &12
+	db &14, &16, &18, &1A, &1C, &1E, &20, &22
+
+	dsb 192, 0 ; Invalid commands all have no arguments
 
 ; a:  channel
 ; bc: timing
@@ -643,7 +709,6 @@ MLM_stop_channel_FM:
 	jp MLM_stop_channel_return
 
 ; c: channel
-;   Sets MLM_playback_control[channel] to 0 (false)
 MLMCOM_end_of_list:
 	push hl
 	push de
@@ -960,9 +1025,10 @@ MLMCOM_set_timer_b:
 	push af
 		ld ix,MLM_event_arg_buffer
 
-		; Set Timer B
+		; Set Timer B (will be loaded later)
 		ld e,(ix+0)
-		call TMB_set_counter_load
+		ld d,REG_TMB_COUNTER 
+		rst RST_YM_WRITEA
 
 		; Set timing
 		ld a,c
@@ -1075,9 +1141,9 @@ MLMCOM_portamento_slide:
 		; Load 8bit signed pitch offset, sign extend
 		; it to 16bit, then store it into WRAM
 		ld a,(MLM_event_arg_buffer)
-		call AtoBCextendendsign
+		;call AtoBCextendendsign
 		ld h,0
-		ld de,FM_portamento_slide
+		;ld de,FM_portamento_slide
 		add hl,hl
 		add hl,de
 		ld (hl),c
@@ -1115,6 +1181,20 @@ MLMCOM_porta_write:
 		ld a,c
 		ld bc,0
 		call MLM_set_timing
+
+		; If address isn't equal to 
+		; REG_TIMER_CNT return
+		ld a,d
+		cp a,REG_TIMER_CNT
+		jr nz,MLMCOM_porta_write_return
+
+		; If address is equal to &27, then
+		; store the data's 7th bit in WRAM
+		ld a,e
+		and a,%01000000 ; bit 6 enables 2CH mode
+		ld (EXT_2CH_mode),a
+		
+MLMCOM_porta_write_return:
 	pop bc
 	pop af
 	pop ix
@@ -1158,14 +1238,17 @@ MLMCOM_set_timer_a:
 		ld e,c ; backup channel in e
 
 		; Set timer a counter load
-		ld b,(ix+0)
-		ld a,(ix+1)
-		and a,%00000011
-		ld c,a
-		call TMA_set_counter_load
+		ld d,REG_TMA_COUNTER_MSB
+		ld e,(ix+0)
+		rst RST_YM_WRITEA
+		inc d
+		ld e,(ix+1)
+		rst RST_YM_WRITEA
+		ld de,(REG_TIMER_CNT<<8) | %10101
+		RST RST_YM_WRITEA
 
 		ld b,0
-		;ld a,(ix+1)
+		ld a,(ix+1)
 		srl a
 		srl a
 		ld c,a
@@ -1198,4 +1281,294 @@ MLMCOM_wait_ticks_nibble:
 	pop bc
 	pop af
 	pop hl
+	jp MLM_parse_command_end
+
+; c: channel
+MLMCOM_nop:
+	push af
+	push bc
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	jp MLM_parse_command_end
+
+; c:  channel
+; ix: &MLM_playback_pointers[channel]+1
+; Arguments:
+;	1. %AAAAAAAA (Address LSB) 
+;   2. %---AAAAA (Address MSB)
+MLMCOM_jump_in_current_zone:
+	push af
+	push bc
+	push iy
+	push hl
+		ld iy,MLM_event_arg_buffer
+
+		ld a,(MLM_current_block)  ; - Store current block in b
+		ld b,a                    ; /
+		call MLM_get_current_zone ; Store current zone in a
+		ld l,(iy+0)               ; - Store relative addr. in hl
+		ld h,(iy+1)               ; /
+		call MLM_zone_relative_addr_to_ptr
+
+		ld (ix-1),l
+		ld (ix-0),h
+
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop hl
+	pop iy
+	pop bc
+	pop af
+	jp MLM_parse_command_end_skip_playback_pointer_set
+
+; c:  channel
+; ix: &MLM_playback_pointers[channel]+1
+; Arguments:
+;   1. %AAAAAAAA (Address LSB) 
+;   2. %-----AAA (Address MSB)
+;   3. %BBBBBBBB (Bank)
+MLMCOM_bankswitch_current_zone_and_jump_to_unused_zone:
+	push iy
+	push af
+	push bc
+	push hl
+		ld a,&39
+		ld (breakpoint),a
+		
+		ld iy,MLM_event_arg_buffer
+
+		; Convert relative addr. inbetween 
+		; $0000 and $07FF to actual pointer
+		ld a,(MLM_unused_block)
+		ld b,a                    ; backup precedent unused block
+		ld (MLM_current_block),a  ; The currently unused block will soon be the current block
+		call MLM_get_current_zone ; - Get unused zone by negating current zone's bit 0.
+		xor a,1                   ; / 
+		ld l,(iy+0)               ; - Load relative address from argument buffer
+		ld h,(iy+1)               ; /
+		call MLM_zone_relative_addr_to_ptr
+
+		; MLM_playback_pointers[channel] = hl
+		ld (ix-1),l
+		ld (ix-0),h
+
+		ld a,(iy+2)
+		call MLM_bankswitch_unused_zone
+
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop hl
+	pop bc
+	pop af
+	pop iy
+	jp MLM_parse_command_end_skip_playback_pointer_set
+
+; [input]
+; 	ix: &playback_ptr + 1
+; [output]
+;   a: current zone (0: Zone 3; 1: Zone 2)
+; Changes flags!! (WORKS CORRECTLY)
+MLM_get_current_zone:
+	; Assert that playback ptr is in valid bounds,
+	; ($8000~$DFFF) if it isn't, crash the driver.
+	ld a,(ix-0)
+	cp a,&80
+	call c,softlock  ; if a < &80  then...
+	cp a,&E0
+	call nc,softlock ; if a >= &E0 then...
+
+	; If playback ptr is inbetween $8000~$BFFF,
+	; it's in Zone 3, thus return 0. If that isn't
+	; the case, then it must be in Zone 2 (inbetween)
+	cp a,&C0
+	ld a,0 
+	ret c  ; if a < &C0 then...
+
+	ld a,1
+	ret    ; else...
+
+; [input]
+;   a: zone (0: Zone 3; 1: Zone 2)
+;   b: bank
+;   hl: relative address
+; [output]
+;   hl: pointer
+; Changes flags!!!
+MLM_zone_relative_addr_to_ptr:
+	; Make sure relative addr. is inbetween $0000 and $07FF
+	push af
+		ld a,h
+		and a,%00011111
+		ld h,a
+	pop af
+
+	cp a,0
+	jr z,MLM_zone_zone3_addr_to_ptr ; if a == ZONE3 then...
+
+	; else... (a == ZONE2)
+	push bc
+		ld bc,BANK2
+		add hl,bc
+	pop bc
+	ret
+
+MLM_zone_zone3_addr_to_ptr:
+	push bc
+	push af
+		; if bank is even, then return relative addr. + $8000
+		; else, return relative addr. + $A000.
+		;   It does this branchless by multiplying bit 0 by 32
+		;   and then by 256 and then add it to the relative addr+$8000.
+		;   if the bit was 0, then nothing else will be added, if the bit
+		;   was 1 then $2000 will also be added. a+$8000+$2000 = a+$A000.
+		ld a,b
+		and a,1
+		sla a ; \
+		sla a ;  \
+		sla a ;  | a *= 32
+		sla a ;  /
+		sla a ; /
+		ld b,a
+		ld c,0
+
+		add hl,bc
+		ld bc,$8000
+		add hl,bc
+	pop af
+	pop bc
+	ret
+
+; ix: &playback_ptr + 1
+; a: bank
+MLM_bankswitch_unused_zone:
+	push af
+	push bc
+		ld (MLM_unused_block),a
+		ld b,a ; backup bank in b
+
+		; Store current zone into a
+		call MLM_get_current_zone
+		
+		; If current zone is Zone 3 (a=0),
+		; then bankswitch Zone 2. Else, the
+		; current zone is Zone 2, proceed
+		; to bankswitch Zone 3.
+		or a,a ; cp a,0
+		jr z,MLM_bankswitch_zone2
+
+		ld a,b ; load bank in a
+		srl a  ; a /= 2
+		in a,($0B)
+	pop bc
+	pop af
+	ret
+
+MLM_bankswitch_zone2:
+		ld a,b ; load bank in a
+		in a,($0A)
+	pop bc
+	pop af
+	ret
+
+; invalid command, plays a noisy beep
+; and softlocks the driver
+MLMCOM_invalid:
+	call softlock
+
+; c: channel
+; de: playback pointer
+; iyl: first command byte
+; Arguments:
+;   1. %AAAAAAAA (Address)
+;   2. %DDDDDDDD (Data)
+;   ...
+MLMCOM_multi_porta_write:
+	push de
+	push ix
+	push af
+	push bc
+		ld a,iyl
+		and a,&0F
+		ld b,a
+		inc b
+		inc b
+
+		ld ix,MLM_event_arg_buffer
+
+MLMCOM_multi_porta_write_loop:
+		; Write to the YM2610
+		ld d,(ix+0)
+		ld e,(ix+1)
+		rst RST_YM_WRITEA
+
+		; If address isn't equal to 
+		; REG_TIMER_CNT return
+		ld a,d
+		cp a,REG_TIMER_CNT
+		jr nz,MLMCOM_porta_write_continue
+
+		; If address is equal to &27, then
+		; store the data's 7th bit in WRAM
+		ld a,e
+		and a,%01000000 ; bit 6 enables 2CH mode
+		ld (EXT_2CH_mode),a
+		
+MLMCOM_porta_write_continue:
+		inc ix
+		inc ix
+		djnz MLMCOM_multi_porta_write_loop
+
+		; Set timing to 0
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	pop ix
+	pop de
+	jp MLM_parse_command_end
+
+; c: channel
+; de: playback pointer
+; iyl: first command byte
+; Arguments:
+;   1. %AAAAAAAA (Address)
+;   2. %DDDDDDDD (Data)
+;   ...
+MLMCOM_multi_portb_write:
+	push de
+	push ix
+	push af
+	push bc
+		ld a,iyl
+		and a,&0F
+		ld b,a
+		inc b
+		inc b
+
+		ld ix,MLM_event_arg_buffer
+
+MLMCOM_multi_portb_write_loop:
+		; Write to the YM2610
+		ld d,(ix+0)
+		ld e,(ix+1)
+		rst RST_YM_WRITEB
+		
+		inc ix
+		inc ix
+		djnz MLMCOM_multi_portb_write_loop
+
+		; Set timing to 0
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	pop ix
+	pop de
 	jp MLM_parse_command_end

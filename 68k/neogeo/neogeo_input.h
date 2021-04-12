@@ -12,7 +12,7 @@ typedef struct {
     u8 left  : 1;
     u8 down  : 1;
     u8 up    : 1;
-} NormalInput;
+} JoypadInput;
 
 typedef struct {
     u8 select_p4 : 1;

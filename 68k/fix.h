@@ -1,14 +1,18 @@
+#ifndef FIX_H_INCLUDED
+#define FIX_H_INCLUDED
+
 #include "neogeo/neogeo.h"
 
-extern const u16 font_color_palette[16];
+extern const u16 font_palette[16];
 
-extern u8 fix_print_palette;
-extern u8 cursor_vram_increment;
+void FIX_SetCursor(u8 x, u8 y);
+void FIX_SetPalette(u8 pal);
+void FIX_PrintChar(const char chr);
+void FIX_PrintStringEx(const char* str, u8 limit);
+void FIX_PrintString(const char* str);
+void FIX_PrintNibble(u8 nibble);
+void FIX_PrintByte(u8 byte);
+void FIX_PrintWord(u16 word);
+void FIX_PrintLong(u32 lng);
 
-void FIX_set_cursor(u8 x, u8 y);
-void FIX_print_char(const char chr);
-void FIX_print_char_repeat(const char chr, u16 times);
-void FIX_print_string(const char* str);
-void FIX_print_byte(u8 byte);
-void FIX_print_word(u16 word);
-void FIX_print_long(u32 lng);
+#endif

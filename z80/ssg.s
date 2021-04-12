@@ -1,3 +1,17 @@
+ssg_stop:
+	push de
+		ld de,(REG_SSG_CHA_VOL<<8) | &00
+		rst RST_YM_WRITEA
+		ld de,(REG_SSG_CHB_VOL<<8) | &00
+		rst RST_YM_WRITEA
+		ld de,(REG_SSG_CHC_VOL<<8) | &00
+		rst RST_YM_WRITEA
+
+		ld de,(REG_SSG_MIX_ENABLE<<8) | &3F
+		rst RST_YM_WRITEA
+	pop de
+	ret
+
 SSG_irq:
 	ld b,3
 	
@@ -464,8 +478,8 @@ SSG_mix_enable_set_LUT:
 	db %00001001, %00001000, %00000001, %00000000
 
 SSG_vol_lut:
-	binary "ssg_vol_lut.bin"
+	incbin "ssg_vol_lut.bin"
 
 ; LUT containing the pitch of each note from C2 to B7
 SSG_pitch_LUT:
-	binary "ssg_pitch_lut.bin"
+	incbin "ssg_pitch_lut.bin"

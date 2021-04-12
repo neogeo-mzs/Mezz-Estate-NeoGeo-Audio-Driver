@@ -1,17 +1,9 @@
 #include "neogeo/neogeo.h"
+#include "fix.h"
 
 u16 cursor_vram_pointer;
-u8  fix_print_palette;
-
-u8 cursor_vram_increment = 32;
-
-const u16 font_color_palette[16] =
-{
-	0x8000, 0x8000, 0x7FFF, 0x6323, 
-	0xE923, 0xAE34, 0xDF92, 0x4FE6, 
-	0x16C4, 0x8374, 0xF133, 0xC468, 
-	0x6ABD, 0x7FFF, 0xE2EF, 0x808D
-};
+u8 cursor_x, cursor_y;
+u8  fix_print_palette = 0;
 
 const char hex_digits[] = 
 {
@@ -19,46 +11,88 @@ const char hex_digits[] =
 	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 };
 
-void FIX_set_cursor(u8 x, u8 y)
+const u16 font_palette[16] =
+{
+	0x8000, 0x8000, 0x7FFF, 0x6323, 
+	0xE923, 0xAE34, 0xDF92, 0x4FE6, 
+	0x16C4, 0x8374, 0xF133, 0xC468, 
+	0x6ABD, 0x7FFF, 0xE2EF, 0x808D
+};
+
+void FIX_SetCursor(u8 x, u8 y)
 {
 	cursor_vram_pointer = 0x7022 + (x<<5) + y; // x<<5 = x*32
+	cursor_x = x;
+	cursor_y = y;
 }
 
-void FIX_print_char(const char chr)
+
+void FIX_SetPalette(u8 pal)
+{
+	fix_print_palette = pal & 0x0F; // This way the palette is guaranted to be inbetween 0 and 15
+}
+
+void FIX_PrintChar(const char chr)
 {
 	VRAM_write(
 		cursor_vram_pointer,
 		(fix_print_palette<<12) | chr);
-	cursor_vram_pointer += cursor_vram_increment;
+	cursor_vram_pointer += 32;
+	cursor_x += 1;
 }
 
-void FIX_print_string(const char* str)
+void FIX_PrintStringEx(const char* str, u8 limit)
 {
+	u8 start_x = cursor_x;
+
 	for(; *str; ++str)
-		FIX_print_char(*str);
+	{
+		switch (*str)
+		{
+		case '\n':
+			FIX_SetCursor(start_x, cursor_y+1);
+			break;
+
+		default:
+			if (cursor_x >= limit)
+				FIX_SetCursor(start_x, cursor_y+1);
+			FIX_PrintChar(*str);
+			break;
+		}
+	}
 }
 
-void FIX_print_byte(u8 byte)
+void FIX_PrintString(const char* str)
 {
-	FIX_print_char(hex_digits[byte >> 4]);
-	FIX_print_char(hex_digits[byte & 0x0F]);
+	FIX_PrintStringEx(str, FIX_LAYER_COLUMNS_SAFE);
 }
 
-void FIX_print_word(u16 word)
+void FIX_PrintNibble(u8 nibble)
 {
-	FIX_print_char(hex_digits[word >> 12]);
-	FIX_print_char(hex_digits[word >> 8 & 0x0F]);
-	FIX_print_char(hex_digits[word >> 4 & 0x0F]);
-	FIX_print_char(hex_digits[word & 0x0F]);
+	FIX_PrintChar(hex_digits[nibble & 0x0F]);
 }
-void FIX_print_long(u32 lng)
+
+void FIX_PrintByte(u8 byte)
 {
-	FIX_print_char(hex_digits[lng >> 28]);
-	FIX_print_char(hex_digits[lng >> 24 & 0x0F]);
-	FIX_print_char(hex_digits[lng >> 20 & 0x0F]);
-	FIX_print_char(hex_digits[lng >> 16 & 0x0F]);
-	FIX_print_char(hex_digits[lng >> 12 & 0x0F]);
-	FIX_print_char(hex_digits[lng >> 8 & 0x0F]);
-	FIX_print_char(hex_digits[lng >> 4 & 0x0F]);
-	FIX_print_char(hex_digits[lng & 0x0F]);
+	FIX_PrintNibble(byte >> 4);
+    FIX_PrintNibble(byte & 0x0F);
+}
+
+void FIX_PrintWord(u16 word)
+{
+	FIX_PrintChar(hex_digits[word >> 12]);
+	FIX_PrintChar(hex_digits[word >> 8 & 0x0F]);
+	FIX_PrintChar(hex_digits[word >> 4 & 0x0F]);
+	FIX_PrintChar(hex_digits[word & 0x0F]);
+}
+void FIX_PrintLong(u32 lng)
+{
+	FIX_PrintChar(hex_digits[lng >> 28]);
+	FIX_PrintChar(hex_digits[lng >> 24 & 0x0F]);
+	FIX_PrintChar(hex_digits[lng >> 20 & 0x0F]);
+	FIX_PrintChar(hex_digits[lng >> 16 & 0x0F]);
+	FIX_PrintChar(hex_digits[lng >> 12 & 0x0F]);
+	FIX_PrintChar(hex_digits[lng >> 8 & 0x0F]);
+	FIX_PrintChar(hex_digits[lng >> 4 & 0x0F]);
+	FIX_PrintChar(hex_digits[lng & 0x0F]);
 }

@@ -1,3 +1,16 @@
+fm_stop:
+	push de
+		ld de,(REG_FM_KEY_ON<<8) | FM_CH1
+		rst RST_YM_WRITEA
+		ld e,FM_CH2
+		rst RST_YM_WRITEA
+		ld e,FM_CH3
+		rst RST_YM_WRITEA
+		ld e,FM_CH4
+		rst RST_YM_WRITEA
+	pop de
+	ret
+
 ; DOESN'T BACKUP REGISTERS
 FM_irq:
 	ld b,6
@@ -91,8 +104,8 @@ FM_load_instrument_chnl_is_odd:
 		; if the channel is CH1 or CH2, then write to 
 		; port A, else write to port B
 		bit 2,b
-		call z,write45
-		call nz,write67
+		call z,port_write_a
+		call nz,port_write_b
 
 		; Set LRAMSPMS
 		inc hl
@@ -126,8 +139,8 @@ FM_load_instrument_chnl_is_odd:
 		inc d
 
 		bit 2,b
-		call z,write45
-		call nz,write67
+		call z,port_write_a
+		call nz,port_write_b
 
 		;;;;;; Set operator registers ;;;;;;
 		inc hl
@@ -210,8 +223,8 @@ FM_set_operator_loop:
 		ld e,(hl)
 
 		bit 2,a
-		call z,write45
-		call nz,write67
+		call z,port_write_a
+		call nz,port_write_b
 
 		push af
 			ld a,d
@@ -314,8 +327,8 @@ FM_set_note_chnl_is_odd:
 		;  port A, else write to port B
 		ld e,h
 		bit 2,b
-		call z,write45
-		call nz,write67
+		call z,port_write_a
+		call nz,port_write_b
 
 		; ======== Write to F-number ========;
 		dec d
@@ -325,8 +338,8 @@ FM_set_note_chnl_is_odd:
 
 		ld e,l
 		bit 2,b
-		call z,write45
-		call nz,write67
+		call z,port_write_a
+		call nz,port_write_b
 	pop af
 	pop de
 	ret
@@ -402,8 +415,8 @@ FM_set_attenuator_loop_op_is_odd:
 
 		ld e,ixl
 		bit 2,a
-		call z,write45
-		call nz,write67
+		call z,port_write_a
+		call nz,port_write_b
 
 		dec hl
 
@@ -465,8 +478,8 @@ FM_set_panning:
 
 FM_set_panning_ch_odd: 
 		bit 2,a
-		call z,write45
-		call nz,write67            
+		call z,port_write_a
+		call nz,port_write_b            
 	pop bc
 	pop af
 	pop de
