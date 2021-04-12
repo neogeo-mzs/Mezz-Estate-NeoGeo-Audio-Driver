@@ -620,29 +620,13 @@ MLM_command_vectors:
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
 	dsw 16,  MLMCOM_wait_ticks_nibble
-	dw MLMCOM_nop,                 MLMCOM_jump_in_current_zone
-	dw MLMCOM_bankswitch_current_zone_and_jump_to_unused_zone
-	dsw 13,  MLMCOM_invalid ; Invalid commands
-	dsw 16,  MLMCOM_multi_porta_write
-	dsw 16,  MLMCOM_multi_portb_write
-	dsw 192, MLMCOM_invalid ; Invalid commands
+	dsw 96,  MLMCOM_invalid ; Invalid commands
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
 	db &02, &02, &01, &02, &02, &02, &02, &02
 	dsb 16, &00 ; Wait ticks nibble
-	db &00, &02, &03
-	dsb 13, 0   ; Invalid commands all have no arguments
-
-	; multi port a write argcs
-	db &04, &06, &08, &0A, &0C, &0E, &10, &12
-	db &14, &16, &18, &1A, &1C, &1E, &20, &22
-
-	; multi port b write argcs
-	db &04, &06, &08, &0A, &0C, &0E, &10, &12
-	db &14, &16, &18, &1A, &1C, &1E, &20, &22
-
-	dsb 192, 0 ; Invalid commands all have no arguments
+	dsb 96, 0   ; Invalid commands all have no arguments
 
 ; a:  channel
 ; bc: timing

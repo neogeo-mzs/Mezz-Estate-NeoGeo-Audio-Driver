@@ -4,7 +4,7 @@
 
 INSTRUMENTS equ 0
 ADPCMA_SMPS equ 0
-MLM_START   equ BANK3+&2000
+MLM_START   equ BANK3
 
 j_startup:
 	di
@@ -144,17 +144,17 @@ play_sample:
 
 set_default_banks:
 	push af
-		; Set $F000-$F7FF bank to bank $1E (30 *  2K)
-		ld a,&1E
+		; Set $F000-$F7FF bank to bank $16 (22 *  2K; $B000~$B7FF)
+		ld a,&16
 		in a,(&08)
-		; Set $E000-$EFFF bank to bank $0E (14 *  4K)
-		ld a,&0E
+		; Set $E000-$EFFF bank to bank $0A (10 *  4K; $A000~$AFFF)
+		ld a,&0A
 		in a,(&09)
-		; Set $C000-$DFFF bank to bank $02 ( 2 *  8K)
-		ld a,&02
+		; Set $C000-$DFFF bank to bank $04 ( 4 *  8K; $8000~$9FFF)
+		ld a,&04
 		in a,(&0A)
-		; Set $8000-$BFFF bank to bank $00 ( 0 * 16K)
-		ld a,&00
+		; Set $8000-$BFFF bank to bank $01 ( 1 * 16K; $4000~$7FFF)
+		ld a,&01
 		in a,(&0B)
 	pop af
 	ret
