@@ -57,14 +57,14 @@ typedef unsigned char uchar;
 
 // Zones:
 #define RAMSTART        0x100000   // 68k work RAM
-#define PALETTES        ((vu16*)0x400000)   // Palette RAM
-#define BACKDROP        (PALETTES+(16*2*256)-2)
+#define PALETTE_RAM     ((vu16*)0x400000)   // Palette RAM
+#define BACKDROP        (PALETTE_RAM+(16*2*256)-2)
 #define MEMCARD         0x800000   // Memory card
 #define SYSROM          0xC00000   // System ROM
 
 // Registers:
 #define REG_P1CNT       0x300000
-#define REG_DIPSW       0x300001   // Dipswitches/Watchdog
+#define REG_DIPSW       ((vu8*)0x300001)   // Dipswitches/Watchdog
 #define REG_SOUND       ((vu8*)0x320000)   // Z80 I/O
 #define REG_STATUS_A    0x320001
 #define REG_P2CNT       0x340000
@@ -72,10 +72,10 @@ typedef unsigned char uchar;
 #define REG_POUTPUT     0x380001   // Joypad port outputs
 #define REG_SLOT        0x380021   // Slot select
 
-#define REG_NOSHADOW    0x3A0001   // Video output normal/dark
+#define REG_NOSHADOW    0x3A0001   // Video output Joypad/dark
 #define REG_SHADOW      0x3A0011
-#define REG_BRDFIX      0x3A000B   // Use embedded fix tileset
-#define REG_CRTFIX      0x3A001B   // Use game fix tileset
+#define REG_BRDFIX      ((u8*)0x3A000B)   // Use embedded fix tileset and m1 rom
+#define REG_CRTFIX      ((u8*)0x3A001B)   // Use game fix tileset and m1 rom
 #define REG_PALBANK1    0x3A000F   // Use palette bank 1
 #define REG_PALBANK0    0x3A001F   // Use palette bank 0 (default)
 
@@ -85,7 +85,7 @@ typedef unsigned char uchar;
 #define REG_LSPCMODE    0x3C0006
 #define REG_TIMERHIGH   0x3C0008
 #define REG_TIMERLOW    0x3C000A
-#define REG_IRQACK      0x3C000C
+#define REG_IRQACK      ((vu8*)0x3C000C)
 #define REG_TIMERSTOP   0x3C000E
 
 // System ROM calls:
@@ -103,24 +103,24 @@ typedef unsigned char uchar;
 #define SYS_MESS_OUT      0xC004CE
 
 // RAM locations:
-#define BIOS_SYSTEM_MODE  0x10FD80
+#define BIOS_SYSTEM_MODE  ((vu8*)0x10FD80)
 #define BIOS_MVS_FLAG     0x10FD82
 #define BIOS_COUNTRY_CODE 0x10FD83
 #define BIOS_GAME_DIP     0x10FD84   // Start of soft DIPs settings (up to 0x10FD93)
 
 // Set by SYS_IO:
 #define BIOS_P1STATUS   0x10FD94
-#define BIOS_P1PREVIOUS 0x10FD95
-#define BIOS_P1CURRENT  0x10FD96
-#define BIOS_P1CHANGE   0x10FD97
-#define BIOS_P1REPEAT   0x10FD98
+#define BIOS_P1PREVIOUS ((volatile JoypadInput*)0x10FD95)
+#define BIOS_P1CURRENT  ((volatile JoypadInput*)0x10FD96)
+#define BIOS_P1CHANGE   ((volatile JoypadInput*)0x10FD97)
+#define BIOS_P1REPEAT   ((volatile JoypadInput*)0x10FD98)
 #define BIOS_P1TIMER    0x10FD99
 
 #define BIOS_P2STATUS   0x10FD9A
-#define BIOS_P2PREVIOUS 0x10FD9B
-#define BIOS_P2CURRENT  0x10FD9C
-#define BIOS_P2CHANGE   0x10FD9D
-#define BIOS_P2REPEAT   0x10FD9E
+#define BIOS_P2PREVIOUS ((volatile JoypadInput*)0x10FD9B)
+#define BIOS_P2CURRENT  ((volatile JoypadInput*)0x10FD9C)
+#define BIOS_P2CHANGE   ((volatile JoypadInput*)0x10FD9D)
+#define BIOS_P2REPEAT   ((volatile JoypadInput*)0x10FD9E)
 #define BIOS_P2TIMER    0x10FD9F
 
 // find more info on player 3 and player 4 registers
@@ -176,7 +176,8 @@ typedef unsigned char uchar;
 #define CNT_START2      2
 #define CNT_SELECT2     3
 
-// Macros
-#define PAL(bank, clr)     (PALETTES[16*bank + clr])
+#define FIX_LAYER_COLUMNS      40
+#define FIX_LAYER_ROWS         28
+#define FIX_LAYER_COLUMNS_SAFE (FIX_LAYER_COLUMNS-2)
 
 #endif // NEOGEO_DEFINES_H_INCLUDED

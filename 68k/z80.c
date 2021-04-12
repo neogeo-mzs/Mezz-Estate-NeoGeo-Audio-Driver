@@ -1,83 +1,65 @@
 #include "z80.h"
 #include "utils.h"
+#include "fix.h"
 
-void Z80_send_byte(u8 byte)
+// Both the command's and the
+// parameter's MSB is always
+// set to 1
+void Z80_send_user_command(u8 command, u8 parameter)
 {
-	static u8 expected_reply = 0x39;
-	static u8 reply_increment = 0x00;
+	const u8 user_com_mask = 0x80;
+	//u8 tmp = 0;
 
-	while(*REG_SOUND != expected_reply);
+	/*for (int i = 0; i < 4; i++)
+	{
+		FIX_SetCursor(0, i);
+		FIX_PrintString("--");
+	}*/
+	command |= user_com_mask;
+	parameter |= user_com_mask;
 
-	*REG_SOUND = byte;
+	*REG_SOUND = command;
 
-	reply_increment++;
-	expected_reply = byte+reply_increment;
+	/*FIX_SetCursor(0, 0);
+	FIX_PrintNibble(command >> 4);
+    FIX_PrintNibble(command & 0x0F);*/
 
-	wait_loop(32);
-}
+	while (*REG_SOUND != (command ^ 0xFF))
+	{
+		/*FIX_SetCursor(0, 1);
+		tmp = *REG_SOUND;
 
-void Z80_stop_ssg()
-{
-	Z80_send_byte(0x0A); // command (stop SSG channels)
-}
+		FIX_PrintNibble(tmp >> 4);
+    	FIX_PrintNibble(tmp & 0x0F);*/
+	};
 
-void Z80_silence_fm()
-{
-	Z80_send_byte(0x0B); // command (Silence FM channels)
-}
+	wait_loop(16);
 
-void Z80_stop_adpcma()
-{
-	Z80_send_byte(0x0C); // command (Stop ADPCM-A samples)
-}
+	/*FIX_SetCursor(0, 1);
+	tmp = *REG_SOUND;
+	FIX_PrintNibble(tmp >> 4);
+   	FIX_PrintNibble(tmp & 0x0F);*/
 
-void Z80_play_adpcma_sample(u16 sfx_id, Panning panning, u8 volume, ADPCMChannel channel)
-{
-	Z80_send_byte(0x0F);                                        // command (play ADPCM sample)
-	Z80_send_byte(sfx_id & 0x00FF);                             // sample id LSB
-	Z80_send_byte((volume & 0x1F) | (panning << 6));            // Channel Volume (LR-VVVVV)
-	Z80_send_byte((channel & 0x07) | ((sfx_id & 0x0100) >> 5)); // ----SCCC (Sample id MSB, Channel)
-}
+	*REG_SOUND = parameter;
 
-void Z80_set_adpcma_master_volume(u8 volume)
-{
-	Z80_send_byte(0x13);   // command (Set ADPCM-A volume)
-	Z80_send_byte(volume); 
-}
+	/*FIX_SetCursor(0, 2);
+	FIX_PrintNibble(parameter >> 4);
+    FIX_PrintNibble(parameter & 0x0F);*/
 
-void Z80_set_irq_frequency(u8 frequency)
-{
-	Z80_send_byte(0x14);      // command (Set IRQ frequency)
-	Z80_send_byte(frequency);
-}
+	while (*REG_SOUND != (parameter ^ 0xFF))
+	{
+		/*FIX_SetCursor(0, 3);
+		tmp = *REG_SOUND;
 
-void Z80_play_ssg_note(u8 note, u8 instrument, SSGChannel channel, u8 volume)
-{
-	if (volume > 15) volume = 15;
+		FIX_PrintNibble(tmp >> 4);
+    	FIX_PrintNibble(tmp & 0x0F);*/
+	}
 
-	Z80_send_byte(0x15);       // command (Play SSG note)
-	Z80_send_byte(note);
-	Z80_send_byte(instrument);
-	Z80_send_byte(channel | (volume<<4));
-}
+	wait_loop(16);
 
-void Z80_play_fm_note(u8 note, u8 instrument, u8 attenuator, Panning panning, u8 op_slot, u8 channel)
-{
-	Z80_send_byte(0x16); // command (Play FM note)
-	Z80_send_byte(note);
-	Z80_send_byte(instrument);
-	Z80_send_byte(attenuator);
-	Z80_send_byte(panning<<6);
-	Z80_send_byte(channel | (op_slot<<4));
-}
+	/*FIX_SetCursor(0, 3);
+	tmp = *REG_SOUND;
 
-void Z80_play_song(u8 song)
-{
-	Z80_send_byte(0x17); // command (Play song)
-	Z80_send_byte(song);
-}
-
-void Z80_stop_song()
-{
-	Z80_send_byte(0x18); // command (Stop song)
+	FIX_PrintNibble(tmp >> 4);
+   	FIX_PrintNibble(tmp & 0x0F);*/
 }

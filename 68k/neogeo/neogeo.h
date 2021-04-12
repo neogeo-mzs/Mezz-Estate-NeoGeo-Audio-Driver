@@ -2,3 +2,4 @@
 #include "neogeo_bios.h"
 #include "neogeo_input.h"
 #include "neogeo_vram.h"
+#include "neogeo_palette.h"

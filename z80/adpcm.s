@@ -1,3 +1,14 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                 ADPCM-A                 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+pa_stop:
+	push de
+		ld de,(REG_PA_CTRL<<8) | &9F
+		rst RST_YM_WRITEB
+	pop de
+	ret
+
 ; a:  channel
 ; de: sample id (-------SSSSSSSSS; Sample)
 PA_set_sample_addr:
@@ -9,7 +20,7 @@ PA_set_sample_addr:
 
 		add hl,hl   ; sample_addr_ofs = sample_id*4
 		add hl,hl
-		ld de,PA_sample_LUT
+		ld de,ADPCMA_SMPS
 		add hl,de   ; sample_addr_ptr = sample_addr_ofs + pa_sample_LUT
 
 		add a,REG_PA_STARTL
@@ -123,3 +134,17 @@ PA_set_channel_panning:
 
 PA_channel_on_masks:
 	db %00000001,%00000010,%00000100,%00001000,%00010000,%00100000
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                 ADPCM-B                 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+pb_stop:
+	push de
+		ld de,(REG_PB_CTRL<<8) | &01
+		rst RST_YM_WRITEB
+
+		dec e
+		rst RST_YM_WRITEB
+	pop de
+	ret

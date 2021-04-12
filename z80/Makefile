@@ -4,9 +4,9 @@
 VASM   := vasmz80_oldstyle
 ROMWAK := romwak
 
-SRC := main.asm
+SRC := main.s
+VASM_FLAGS := -Fbin -nosym
 
-VASM_FLAGS   := -Fbin -nosym
 build: m1rom.bin
 
 m1rom.bin: $(SRC)
