@@ -15,12 +15,12 @@ R         | RR
 
 ## Z80 memory map
 Address space | Description           | Usage
---------------|-----------------------|----------------------
+--------------|-----------------------|---------------------------------------------
 $0000 ~ $7FFF | Static main code bank | code
 $8000 ~ $BFFF | Switchable bank 3     | songs
 $C000 ~ $DFFF | Switchable bank 2     | instruments
-$E000 ~ $EFFF | Switchable bank 1     | macros (other data?)
-$F000 ~ $F7FF | Switchable bank 0     | ADPCM-A addresses
+$E000 ~ $EFFF | Switchable bank 1     | Other data (macros, ADPCM addresses, etc...)
+$F000 ~ $F7FF | Switchable bank 0     | Other data (macros, ADPCM addresses, etc...)
 $F800 ~ $FFFF | Work RAM              | Work RAM
 
 ## MLM format documentation
@@ -28,12 +28,15 @@ $F800 ~ $FFFF | Work RAM              | Work RAM
 ### BANK3
 BANK3 contains the song data. it must begin with this header:
 
-|offsets | description                             | bytes 
-|--------|-----------------------------------------|-------
-|$0000   | song 0 offset                           | 2
-|...     | ...                                     | 
-|...     | last song offset (maximum of 256 songs) | 2
+|offsets | description                              | bytes 
+|--------|------------------------------------------|-------
+|$0000   | song 0 bank (Zone3)                      | 1
+|$0001   | song 0 offset                            | 2
+|...     | ...                                      |
+|...     | last song bank (Zone3)                   | 1
+|...     | last song offset (maximum of 256* songs) | 2
 
+* Only the first 128 songs can be played as of right now.
 
 each song should start with this header
 
@@ -43,7 +46,10 @@ offsets | description       | bytes
 $0000   | channel 0 offset  | 2
 ...     | ...               |
 $001A   | channel 12 offset | 2
-
+$001C   | Timer A counter   | 2
+$001E   | Zone 2 bank       | 1
+$001F   | Zone 1 bank       | 1
+$0020   | Zone 0 bank       | 1
 
 each channel is an array of events. The driver executes the event, and then waits the amount of time specifies in the event.
 Events can be split in two categories, depending on the most significant bit. 
@@ -99,6 +105,8 @@ this command ends the playback for the current channel
 ###### Command 6: Set panning
 **format: `$06 %LRTTTTTT (Left on; Right on; Timing)`**
 
+*ADPCM-A and FM only*
+
 ###### Command 7: Set master volume
 **format: `$07 %VVVVVVTT (Volume; Timing MSB) %TTTTTTTT (Timing LSB)`**
 
@@ -107,9 +115,7 @@ this command ends the playback for the current channel
 ###### Command 8: Set base time
 **format: `$08 %BBBBBBBB (Base Time) %TTTTTTTT (Timing)`**
 
-###### Command 9: Set timer B frequency (Currently disabled)
-**format: `$09 %BBBBBBBB (timer B) %TTTTTTTT (Timing)`**
-*This also enables timer b and disables timer a*
+###### Command 9: EMPTY SPOT
 
 ###### Command 10: Small position jump
 **format: `$0A %OOOOOOOO (Offset; next event is executed immediately)`**
@@ -131,7 +137,6 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 
 ###### Command 15: Set timer A frequency
 **format: `$0F %AAAAAAAA (timer A MSB) %TTTTTTAA (Timing; timer A LSB)`**
-*This also enables timer a and disables timer b*
 
 ###### Command 16~31: Wait ticks (nibble)
 **format: `$1T (Timing)`**
