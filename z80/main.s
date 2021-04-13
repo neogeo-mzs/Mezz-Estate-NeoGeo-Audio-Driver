@@ -2,10 +2,6 @@
 
 	include "def.inc"
 
-INSTRUMENTS equ 0
-ADPCMA_SMPS equ 0
-MLM_START   equ BANK3
-
 j_startup:
 	di
 	jp startup
@@ -42,7 +38,6 @@ NMI:
 	push ix
 	push iy
 		in a,(READ_68K)
-
 		or a,a ; cp a,&00
 		jr z,NMI_do_nothing
 		cp a,&01
@@ -80,7 +75,7 @@ startup:
 
 	; Silence YM2610
 	call fm_stop
-	call pa_stop
+	call PA_reset
 	call pb_stop
 	call ssg_stop
 
@@ -200,46 +195,70 @@ softlock:
 	include "math.s"
 	include "irq.s"
 
-	org &2000 ; block 1
+	org &4000 ; block 1
 MLM_header:
-	dw MLM_song_0-MLM_header
+	dw MLM_song_pa1-MLM_header
+	dw MLM_song_pa2-MLM_header
+	dw MLM_song_pa3-MLM_header
+	dw MLM_song_pa4-MLM_header
+	dw MLM_song_pa5-MLM_header
+	dw MLM_song_pa6-MLM_header
 
-MLM_song_0:
+MLM_song_pa1:
 	dw MLM_el_pa-MLM_header
 	dsw 12, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 
+MLM_song_pa2
+	dw 0
+	dw MLM_el_pa-MLM_header
+	dsw 11, 0
+	dw 98 ; Timer A frequency
+	db 1  ; base time (0 is invalid)
+
+MLM_song_pa3:
+	dsw 2,0
+	dw MLM_el_pa-MLM_header
+	dsw 10, 0
+	dw 98 ; Timer A frequency
+	db 1  ; base time (0 is invalid)
+
+MLM_song_pa4:
+	dsw 3,0
+	dw MLM_el_pa-MLM_header
+	dsw 9, 0
+	dw 98 ; Timer A frequency
+	db 1  ; base time (0 is invalid)
+
+MLM_song_pa5:
+	dsw 4,0
+	dw MLM_el_pa-MLM_header
+	dsw 8, 0
+	dw 98 ; Timer A frequency
+	db 1  ; base time (0 is invalid)
+
+MLM_song_pa6:
+	dsw 5,0
+	dw MLM_el_pa-MLM_header
+	dsw 7, 0
+	dw 98 ; Timer A frequency
+	db 1  ; base time (0 is invalid)
+
 MLM_el_pa: ; Start in Zone 3
-	; YM2610 4 port a writes
-	db &32, &00,&38       ; Set CHA fine tune
-	db      &01,&02       ; Set CHA coarse tune
-	db      &07,%00111110 ; Set CHA mixing
-	db      &08,10        ; SSG CHA volume
-	db &03,60             ; wait 1 second
-	;db &22, &00, &00, &03 ; bankswitch current zone to bank 3, then flip zones and jump to address $000
-
-	; YM2610 2 port a writes
-	db &30,&00,&38 ; Set CHA fine tune
-	db     &01,&03 ; Set CHA coarse tune
-	db &03,60
-
-	; YM2610 2 port a writes
-	db &30,&00,&38 ; Set CHA fine tune
-	db     &01,&04 ; Set CHA coarse tune
-	db &03,60
-
-	db &21, (MLM_el_pa - &2000) & &FF, (MLM_el_pa - &2000) >> 8 ; Jump in current zone
-
-	;db &22, &00, &00, &02 ; bankswitch current zone to bank 3, then flip zones and jump to address $000
-
-	org &6000 ; block 3
-
-	; YM2610 2 port a writes
-	db &30,&00,&38 ; Set CHA fine tune
-	db     &01,&05 ; Set CHA coarse tune
-	db &03,60
-
-	db &22,&07,&00, &03 ; bankswitch current zone to bank 4, then flip zones and jump to address $009 (MLM_el_pa_loop)
+	db &80 | 60, 0 ; Play ADPCM-A sample 0 (C)
+	db &80 | 60, 2 ; Play ADPCM-A sample 2 (D)
+	db &00 ; End of song
 	
+	; Instruments
+	org &8000
+
+	; Instrument 0 (ADPCM-A)
+	dw &E000 ; Point to ADPCM-A sample LUT (in Zone 1)
+	dsb 30,0 ; padding
+
+	; Other data
+	org &A000
+	incbin "adpcma_sample_lut.bin"
+
 	include "wram.s"

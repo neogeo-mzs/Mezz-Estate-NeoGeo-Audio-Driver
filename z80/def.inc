@@ -7,6 +7,11 @@ BANK0       equ &F000
 WRAM_START  equ &F800
 WRAM_END    equ &FFFF
 
+MLM_HEADER  equ FIXED+&4000
+MLM_SONGS   equ BANK3
+INSTRUMENTS equ BANK2
+OTHER_DATA  equ BANK1
+
 ; Port map
 READ_68K    equ &00
 YM2610_A0   equ &04
