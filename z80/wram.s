@@ -24,8 +24,6 @@ MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
 MLM_base_time:                ds 1                   ; u8
 MLM_base_time_counter:        ds 1                   ; u8
-MLM_unused_block:             ds 1                   ; u8 (The current block loaded in the currently UNUSED zone)
-MLM_current_block:            ds 1
 MLM_wram_end:
 
 ; ======== SSG variables ========
@@ -52,7 +50,6 @@ FM_wram_start:
 FM_base_total_levels:     ds 4*(FM_CHANNEL_COUNT+2) ; u8[6][4]
 FM_channel_fnums:         ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]
 FM_channel_fblocks:       ds FM_CHANNEL_COUNT+2     ; u8[6]
-FM_portamento_slide:      ds 2*(FM_CHANNEL_COUNT+2) ; u16[4]
 FM_wram_end:
 
 ; ======== IRQ ========
