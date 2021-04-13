@@ -11,19 +11,19 @@ MLM_irq:
 	ld (MLM_base_time_counter),a
 	jr nz,MLM_update_skip
 
-	;ld b,13 ;; In deflemask mlm exports, only one channel is used, it's a waste to check all channels
+	ld b,13 
 MLM_update_loop:
-	;ld c,b
-	;dec c Just deal with channel 1
+	ld c,b
+	dec c
 	ld c,0
 
 	; if MLM_playback_control[ch] == 0 then
 	; do not update this channel
-	;ld h,0
-	;ld l,c
-	;ld de,MLM_playback_control
-	;add hl,de
-	;ld a,(hl)
+	ld h,0
+	ld l,c
+	ld de,MLM_playback_control
+	add hl,de
+	ld a,(hl)
 	ld a,(MLM_playback_control)
 	or a,a ; cp a,0
 	jr z,MLM_update_loop_next
@@ -32,11 +32,11 @@ MLM_update_loop:
 
 	; hl = &MLM_playback_timings[channel]
 	; de = *hl
-	;ld h,0
-	;ld l,c
-	;ld de,MLM_playback_timings
-	;add hl,hl
-	;add hl,de
+	ld h,0
+	ld l,c
+	ld de,MLM_playback_timings
+	add hl,hl
+	add hl,de
 	ld hl,MLM_playback_timings
 	ld e,(hl)
 	inc hl
@@ -281,18 +281,17 @@ MLM_play_song_loop_skip:
 	ret
 
 ; c: channel
-; 225 t-states at worst, excluding function calls inside it.
 MLM_update_events:
 	push hl
 	push de
 	push af
 	push ix
 		; de = MLM_playback_pointers[ch]
-		;ld h,0
-		;ld l,c
-		;add hl,hl
-		;ld de,MLM_playback_pointers
-		;add hl,de
+		ld h,0
+		ld l,c
+		add hl,hl
+		ld de,MLM_playback_pointers
+		add hl,de
 		ld hl,MLM_playback_pointers
 		ld e,(hl)
 		inc hl
@@ -310,13 +309,10 @@ MLM_update_events:
 		; parse it and evaluate it as a note, else parse 
 		; and evaluate it as a command
 		ex de,hl
-		;ld a,(hl)
-		;bit 7,a
-		;call z,MLM_parse_command
-		;call nz,MLM_parse_note
-
 		ld a,(hl)
-		call MLM_parse_command
+		bit 7,a
+		call z,MLM_parse_command
+		call nz,MLM_parse_note
 
 MLM_update_events_skip:
 	pop ix
@@ -1267,292 +1263,7 @@ MLMCOM_wait_ticks_nibble:
 	pop hl
 	jp MLM_parse_command_end
 
-; c: channel
-MLMCOM_nop:
-	push af
-	push bc
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
-	jp MLM_parse_command_end
-
-; c:  channel
-; ix: &MLM_playback_pointers[channel]+1
-; Arguments:
-;	1. %AAAAAAAA (Address LSB) 
-;   2. %---AAAAA (Address MSB)
-MLMCOM_jump_in_current_zone:
-	push af
-	push bc
-	push iy
-	push hl
-		ld iy,MLM_event_arg_buffer
-
-		ld a,(MLM_current_block)  ; - Store current block in b
-		ld b,a                    ; /
-		call MLM_get_current_zone ; Store current zone in a
-		ld l,(iy+0)               ; - Store relative addr. in hl
-		ld h,(iy+1)               ; /
-		call MLM_zone_relative_addr_to_ptr
-
-		ld (ix-1),l
-		ld (ix-0),h
-
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop hl
-	pop iy
-	pop bc
-	pop af
-	jp MLM_parse_command_end_skip_playback_pointer_set
-
-; c:  channel
-; ix: &MLM_playback_pointers[channel]+1
-; Arguments:
-;   1. %AAAAAAAA (Address LSB) 
-;   2. %-----AAA (Address MSB)
-;   3. %BBBBBBBB (Bank)
-MLMCOM_bankswitch_current_zone_and_jump_to_unused_zone:
-	push iy
-	push af
-	push bc
-	push hl
-		ld a,&39
-		ld (breakpoint),a
-		
-		ld iy,MLM_event_arg_buffer
-
-		; Convert relative addr. inbetween 
-		; $0000 and $07FF to actual pointer
-		ld a,(MLM_unused_block)
-		ld b,a                    ; backup precedent unused block
-		ld (MLM_current_block),a  ; The currently unused block will soon be the current block
-		call MLM_get_current_zone ; - Get unused zone by negating current zone's bit 0.
-		xor a,1                   ; / 
-		ld l,(iy+0)               ; - Load relative address from argument buffer
-		ld h,(iy+1)               ; /
-		call MLM_zone_relative_addr_to_ptr
-
-		; MLM_playback_pointers[channel] = hl
-		ld (ix-1),l
-		ld (ix-0),h
-
-		ld a,(iy+2)
-		call MLM_bankswitch_unused_zone
-
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop hl
-	pop bc
-	pop af
-	pop iy
-	jp MLM_parse_command_end_skip_playback_pointer_set
-
-; [input]
-; 	ix: &playback_ptr + 1
-; [output]
-;   a: current zone (0: Zone 3; 1: Zone 2)
-; Changes flags!! (WORKS CORRECTLY)
-MLM_get_current_zone:
-	; Assert that playback ptr is in valid bounds,
-	; ($8000~$DFFF) if it isn't, crash the driver.
-	ld a,(ix-0)
-	cp a,&80
-	call c,softlock  ; if a < &80  then...
-	cp a,&E0
-	call nc,softlock ; if a >= &E0 then...
-
-	; If playback ptr is inbetween $8000~$BFFF,
-	; it's in Zone 3, thus return 0. If that isn't
-	; the case, then it must be in Zone 2 (inbetween)
-	cp a,&C0
-	ld a,0 
-	ret c  ; if a < &C0 then...
-
-	ld a,1
-	ret    ; else...
-
-; [input]
-;   a: zone (0: Zone 3; 1: Zone 2)
-;   b: bank
-;   hl: relative address
-; [output]
-;   hl: pointer
-; Changes flags!!!
-MLM_zone_relative_addr_to_ptr:
-	; Make sure relative addr. is inbetween $0000 and $07FF
-	push af
-		ld a,h
-		and a,%00011111
-		ld h,a
-	pop af
-
-	cp a,0
-	jr z,MLM_zone_zone3_addr_to_ptr ; if a == ZONE3 then...
-
-	; else... (a == ZONE2)
-	push bc
-		ld bc,BANK2
-		add hl,bc
-	pop bc
-	ret
-
-MLM_zone_zone3_addr_to_ptr:
-	push bc
-	push af
-		; if bank is even, then return relative addr. + $8000
-		; else, return relative addr. + $A000.
-		;   It does this branchless by multiplying bit 0 by 32
-		;   and then by 256 and then add it to the relative addr+$8000.
-		;   if the bit was 0, then nothing else will be added, if the bit
-		;   was 1 then $2000 will also be added. a+$8000+$2000 = a+$A000.
-		ld a,b
-		and a,1
-		sla a ; \
-		sla a ;  \
-		sla a ;  | a *= 32
-		sla a ;  /
-		sla a ; /
-		ld b,a
-		ld c,0
-
-		add hl,bc
-		ld bc,$8000
-		add hl,bc
-	pop af
-	pop bc
-	ret
-
-; ix: &playback_ptr + 1
-; a: bank
-MLM_bankswitch_unused_zone:
-	push af
-	push bc
-		ld (MLM_unused_block),a
-		ld b,a ; backup bank in b
-
-		; Store current zone into a
-		call MLM_get_current_zone
-		
-		; If current zone is Zone 3 (a=0),
-		; then bankswitch Zone 2. Else, the
-		; current zone is Zone 2, proceed
-		; to bankswitch Zone 3.
-		or a,a ; cp a,0
-		jr z,MLM_bankswitch_zone2
-
-		ld a,b ; load bank in a
-		srl a  ; a /= 2
-		in a,($0B)
-	pop bc
-	pop af
-	ret
-
-MLM_bankswitch_zone2:
-		ld a,b ; load bank in a
-		in a,($0A)
-	pop bc
-	pop af
-	ret
-
 ; invalid command, plays a noisy beep
 ; and softlocks the driver
 MLMCOM_invalid:
 	call softlock
-
-; c: channel
-; de: playback pointer
-; iyl: first command byte
-; Arguments:
-;   1. %AAAAAAAA (Address)
-;   2. %DDDDDDDD (Data)
-;   ...
-MLMCOM_multi_porta_write:
-	push de
-	push ix
-	push af
-	push bc
-		ld a,iyl
-		and a,&0F
-		ld b,a
-		inc b
-		inc b
-
-		ld ix,MLM_event_arg_buffer
-
-MLMCOM_multi_porta_write_loop:
-		; Write to the YM2610
-		ld d,(ix+0)
-		ld e,(ix+1)
-		rst RST_YM_WRITEA
-
-		; If address isn't equal to 
-		; REG_TIMER_CNT return
-		ld a,d
-		cp a,REG_TIMER_CNT
-		jr nz,MLMCOM_porta_write_continue
-
-		; If address is equal to &27, then
-		; store the data's 7th bit in WRAM
-		ld a,e
-		and a,%01000000 ; bit 6 enables 2CH mode
-		ld (EXT_2CH_mode),a
-		
-MLMCOM_porta_write_continue:
-		inc ix
-		inc ix
-		djnz MLMCOM_multi_porta_write_loop
-
-		; Set timing to 0
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
-	pop ix
-	pop de
-	jp MLM_parse_command_end
-
-; c: channel
-; de: playback pointer
-; iyl: first command byte
-; Arguments:
-;   1. %AAAAAAAA (Address)
-;   2. %DDDDDDDD (Data)
-;   ...
-MLMCOM_multi_portb_write:
-	push de
-	push ix
-	push af
-	push bc
-		ld a,iyl
-		and a,&0F
-		ld b,a
-		inc b
-		inc b
-
-		ld ix,MLM_event_arg_buffer
-
-MLMCOM_multi_portb_write_loop:
-		; Write to the YM2610
-		ld d,(ix+0)
-		ld e,(ix+1)
-		rst RST_YM_WRITEB
-		
-		inc ix
-		inc ix
-		djnz MLMCOM_multi_portb_write_loop
-
-		; Set timing to 0
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
-	pop ix
-	pop de
-	jp MLM_parse_command_end
