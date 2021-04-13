@@ -123,15 +123,9 @@ MLM_stop:
 		xor a,a
 		ld (EXT_2CH_mode),a
 
-		; Reset the banking to its
-		; starting state (ZONE3 
-		; mapped to $4000~7FFF)
-		ld a,1
-		in a,($0B)
-
 		call ssg_stop
 		call fm_stop
-		call pa_stop
+		call PA_reset
 		call pb_stop
 	pop af
 	pop bc
@@ -165,26 +159,26 @@ MLM_play_song_set_timing_loop:
 		pop bc
 		djnz MLM_play_song_set_timing_loop
 
-		; Load MLM song header (hl = &MLM_START[song])
+		; Load MLM song header (hl = &MLM_HEADER[song])
 		ld h,0
 		ld l,a
 		add hl,hl
-		ld de,MLM_START
+		ld de,MLM_HEADER
 		add hl,de
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
-		ld hl,MLM_START
+		ld hl,MLM_HEADER
 		add hl,de
 
 		; Load MLM playback pointers
 		;
-		; u16* src = MLM_START[song];
+		; u16* src = MLM_HEADER[song];
 		; u16* dst = MLM_playback_pointers;
 		;
 		; for (int i = 13; i > 0; i--)
 		; { 
-		;     *dst = *src + MLM_START; 
+		;     *dst = *src + MLM_HEADER; 
 		;     
 		;	  u8 playback_cnt = 0;
 		; 
@@ -207,7 +201,7 @@ MLM_play_song_loop:
 			inc hl
 			ld b,(hl)
 
-			ld hl,MLM_START
+			ld hl,MLM_HEADER
 			add hl,bc
 
 			ex de,hl
@@ -260,12 +254,6 @@ MLM_play_song_loop_skip:
 		inc hl
 		ld a,(hl)
 		ld (MLM_base_time),a
-
-		; Set other WRAM variables
-		ld a,2
-		ld (MLM_unused_block),a
-		dec a ; ld a,1
-		ld (MLM_current_block),a
 		
 		; Copy MLM_playback_pointers
 		; to MLM_playback_start_pointers
@@ -329,8 +317,10 @@ MLM_parse_note:
 	push bc
 	push hl
 	push de
+		ld a,(hl)
+		and a,&7F ; Clear bit 7 of the note's first byte
+		ld b,a
 		ld a,c
-		ld b,(hl)
 		inc hl
 		ld c,(hl)
 		inc hl
@@ -356,30 +346,58 @@ MLM_parse_note_end:
 
 ; [INPUT]
 ;   a:  channel
-;   bc: source   (-TTTTTTS SSSSSSSS (Timing; Sample))
+;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
 MLM_play_sample_pa:
 	push de
 	push bc
 	push hl
-		; Set sample
+	push ix
 		push af
-			ld a,b
-			and a,%00000001
-			ld d,a
-			ld e,c
-		pop af
+			ld a,&39
+			ld (breakpoint),a
+		pop af 
+		
+		; Load current instrument index into hl
+		ld h,0
+		ld l,a 
+		ld de,MLM_channel_instruments
+		add hl,de
+		ld l,(hl)
+		ld h,0
+
+		; Calculate pointer to the current
+		; instrument's data and store it in hl
+		ld de,INSTRUMENTS
+		add hl,hl ; \
+		add hl,hl ;  \
+		add hl,hl ;   | hl *= 32
+		add hl,hl ;  /
+		add hl,hl ; /
+		add hl,de
+
+		; Store pointer to ADPCM 
+		; sample table in hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+
+		; ix = &ADPCM_sample_table[sample_idx]
+		ld h,0
+		ld l,c
+		add hl,hl ; - hl *= 4
+		add hl,hl ; /
+		add hl,de
+		ex de,hl
+		ld ixl,e
+		ld ixh,d
+
 		call PA_set_sample_addr
 
 		; Set timing
-		push af
-			ld a,b
-			srl a
-			and a,%00111111
-			ld c,a
-			ld b,0
-		pop af
+		ld c,b
+		ld b,0
 		call MLM_set_timing
-
+		
 		; play sample
 		ld h,0
 		ld l,a
@@ -388,6 +406,7 @@ MLM_play_sample_pa:
 		ld d,REG_PA_CTRL
 		ld e,(hl) 
 		rst RST_YM_WRITEB
+	pop ix
 	pop hl
 	pop bc
 	pop de

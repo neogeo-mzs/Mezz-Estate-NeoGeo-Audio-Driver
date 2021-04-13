@@ -33,7 +33,7 @@ void Z80_send_user_command(u8 command, u8 parameter)
     	FIX_PrintNibble(tmp & 0x0F);*/
 	};
 
-	wait_loop(16);
+	wait_loop(64);
 
 	/*FIX_SetCursor(0, 1);
 	tmp = *REG_SOUND;
@@ -55,7 +55,7 @@ void Z80_send_user_command(u8 command, u8 parameter)
     	FIX_PrintNibble(tmp & 0x0F);*/
 	}
 
-	wait_loop(16);
+	wait_loop(64);
 
 	/*FIX_SetCursor(0, 3);
 	tmp = *REG_SOUND;

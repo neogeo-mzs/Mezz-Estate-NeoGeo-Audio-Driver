@@ -50,6 +50,7 @@ FM_wram_start:
 FM_base_total_levels:     ds 4*(FM_CHANNEL_COUNT+2) ; u8[6][4]
 FM_channel_fnums:         ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]
 FM_channel_fblocks:       ds FM_CHANNEL_COUNT+2     ; u8[6]
+FM_portamento_slide:      ds 2*(FM_CHANNEL_COUNT+2) ; u16[4]
 FM_wram_end:
 
 ; ======== IRQ ========

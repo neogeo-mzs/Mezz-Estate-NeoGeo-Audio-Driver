@@ -66,7 +66,7 @@ Notes are events that, like the name implies, play a note from the current instr
 
 ```
 ADPCM-A:
-	-TTTTTTS SSSSSSSS (Sample; Timing)
+	-TTTTTTT SSSSSSSS (Sample; Timing)
 
 SSG:
 	-TTTTTTT NNNNNNNN (Timing; Note*)
@@ -149,13 +149,15 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * z80/68k communication doesn't work on real hardware
 
 ## TODO
+* Update ADPCM-A playback
+	1. Update note parsing
+	2. Instead than parsing notes from only bank
+* Check if FM playback works
+* Check if SSG playback works correctly
+* Implement ADPCM-B
 * Update MLM header parsing to allow banking
 	1. Implement Zone 3 banking using the bank stored in the MLM header (REMEMBER TO DELAY THIS SOMEHOW)
 	2. Implement Zone 2, 1 and 0 banking using the banks stored in the song headers (ALSO ADD A DELAY HERE)
-* Check if ADPCM-A playback works correctly
-* Check if FM playback works
-* Check if SSG playback works corretly
-* Implement ADPCM-B
 
 ## IDEAS
 * Add support for jingles (songs that can play while another song is playing)

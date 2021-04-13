@@ -2,55 +2,63 @@
 ;;                 ADPCM-A                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-pa_stop:
+PA_stop:
 	push de
 		ld de,(REG_PA_CTRL<<8) | &9F
 		rst RST_YM_WRITEB
 	pop de
 	ret
 
-; a:  channel
-; de: sample id (-------SSSSSSSSS; Sample)
-PA_set_sample_addr:
-	push hl
+PA_reset:
 	push de
-	push af
 	push bc
-		ex de,hl
+	push af
+		call PA_stop
 
-		add hl,hl   ; sample_addr_ofs = sample_id*4
-		add hl,hl
-		ld de,ADPCMA_SMPS
-		add hl,de   ; sample_addr_ptr = sample_addr_ofs + pa_sample_LUT
+		; Set volumes to &1F and panning
+		; to center for every channel
+		ld b,6
+		ld d,REG_PA_CVOL
+		ld e,PANNING_CENTER | &1F
+PA_reset_loop:
+		rst RST_YM_WRITEB
+		inc d
+		djnz PA_reset_loop
 
-		add a,REG_PA_STARTL
-
-		ld d,a     ; Register address
-		ld e,(hl)  ; Source
-		rst RST_YM_WRITEB ; Write start addr LSB
+		; Set master volume to &3F
+		ld de,(REG_PA_MVOL<<8) | &3F
+		rst RST_YM_WRITEB
+	pop af
+	pop bc
+	pop de
+	ret
+; a:  channel (0: ADPCM-A 1, ..., 5: ADPCM-A 6)
+; ix: source (smp start LSB; smp start MSB; smp end LSB; smp start MSB)
+PA_set_sample_addr:
+	push af
+	push de
+		ld d,REG_PA_STARTL
+		add a,d
+		ld d,a
+		ld e,(ix+0)
+		rst RST_YM_WRITEB
 
 		add a,REG_PA_STARTH-REG_PA_STARTL
-		inc hl
-		ld d,a     ; Register address
-		ld e,(hl)  ; Source
-		rst RST_YM_WRITEB ; Write start addr MSB
+		ld d,a
+		ld e,(ix+1)
+		rst RST_YM_WRITEB
 
 		add a,REG_PA_ENDL-REG_PA_STARTH
-
-		inc hl
-		ld d,a    ; Register address
-		ld e,(hl) ; Source
-		rst RST_YM_WRITEB ; Write end addr LSB
+		ld d,a
+		ld e,(ix+2)
+		rst RST_YM_WRITEB
 
 		add a,REG_PA_ENDH-REG_PA_ENDL
-		inc hl
-		ld d,a    ; Register address
-		ld e,(hl) ; Source
-		rst RST_YM_WRITEB ; Write end addr MSB
-	pop bc
-	pop af
+		ld d,a
+		ld e,(ix+3)
+		rst RST_YM_WRITEB
 	pop de
-	pop hl
+	pop af
 	ret
 
 ; c: channel
