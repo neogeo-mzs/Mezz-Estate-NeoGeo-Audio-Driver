@@ -42,14 +42,15 @@ each song should start with this header
 
 
 offsets | description       | bytes
---------|-------------------|------ 
-$0000   | channel 0 offset  | 2
+--------|-------------------|------
+$0000   | Song count        | 1
+$0001   | Channel 0 offset  | 2
 ...     | ...               |
-$001A   | channel 12 offset | 2
-$001C   | Timer A counter   | 2
-$001E   | Zone 2 bank       | 1
-$001F   | Zone 1 bank       | 1
-$0020   | Zone 0 bank       | 1
+$001B   | Channel 12 offset | 2
+$001D   | Timer A counter   | 2
+$001F   | Zone 2 bank       | 1
+$0020   | Zone 1 bank       | 1
+$0021   | Zone 0 bank       | 1
 
 each channel is an array of events. The driver executes the event, and then waits the amount of time specifies in the event.
 Events can be split in two categories, depending on the most significant bit. 
@@ -149,11 +150,8 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * z80/68k communication doesn't work on real hardware
 
 ## TODO
-* Update ADPCM-A playback
-	1. Update note parsing
-	2. Instead than parsing notes from only bank
-* Check if FM playback works
 * Check if SSG playback works correctly
+* Check if FM playback works
 * Implement ADPCM-B
 * Update MLM header parsing to allow banking
 	1. Implement Zone 3 banking using the bank stored in the MLM header (REMEMBER TO DELAY THIS SOMEHOW)
