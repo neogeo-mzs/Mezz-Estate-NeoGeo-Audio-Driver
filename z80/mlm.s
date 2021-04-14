@@ -141,10 +141,36 @@ MLM_default_channel_volumes:
 ; a: song
 MLM_play_song:
 	push hl
+	push bc
+		; First song index validity check
+		;	If the song is bigger or equal to 128
+		;   (thus bit 7 is set), the index is invalid.
+		bit 7,a
+		call z,softlock ; if a's bit 7 is set then ..
+
+		; Second song index validity check
+		;	If the song is bigger or equal to the
+		;   song count, the index is invalid.
+		ld hl,MLM_HEADER
+		ld c,(hl)
+		cp a,c
+		call nc,softlock ; if a >= c then ...
+	pop bc
+	pop hl
+	ret
+
+; a: song
+_MLM_play_song:
+	push hl
 	push de
 	push af
 	push bc
 	push ix
+		push af
+			ld a,&39
+			ld (breakpoint),a
+		pop af 
+
 		call MLM_stop
 		call set_default_banks
 
@@ -152,10 +178,12 @@ MLM_play_song:
 		ld b,13
 MLM_play_song_set_timing_loop:
 		push bc
+		push af
 			ld a,b
 			dec a
 			ld bc,0
 			call MLM_set_timing
+		pop af
 		pop bc
 		djnz MLM_play_song_set_timing_loop
 
@@ -201,7 +229,7 @@ MLM_play_song_loop:
 			inc hl
 			ld b,(hl)
 
-			ld hl,MLM_HEADER
+			ld hl,MLM_SONGS
 			add hl,bc
 
 			ex de,hl
@@ -210,7 +238,7 @@ MLM_play_song_loop:
 			ld (hl),d
 
 			
-			; if bc is zero jump to...
+			; if bc is 0 jump to...
 			push hl
 				ld hl,0
 				or a,a ; reset carry flag
@@ -219,12 +247,12 @@ MLM_play_song_loop:
 			ld a,0
 			jr z,MLM_play_song_loop_skip
 
-			;xor a,a ; clear a
-			;add a,c
-			;add a,b
-			;ld a,0
-			;jr c,MLM_play_song_loop_dont_skip
-			;jr z,MLM_play_song_loop_skip
+			xor a,a ; clear a
+			add a,c
+			add a,b
+			ld a,0
+			jr c,MLM_play_song_loop_dont_skip
+			jr z,MLM_play_song_loop_skip
 
 MLM_play_song_loop_dont_skip:
 			inc a
@@ -352,11 +380,6 @@ MLM_play_sample_pa:
 	push bc
 	push hl
 	push ix
-		push af
-			ld a,&39
-			ld (breakpoint),a
-		pop af 
-		
 		; Load current instrument index into hl
 		ld h,0
 		ld l,a 
