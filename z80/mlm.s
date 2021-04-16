@@ -11,16 +11,10 @@ MLM_irq:
 	ld (MLM_base_time_counter),a
 	jr nz,MLM_update_skip
 
-	push af
-		ld a,&39
-		ld (breakpoint),a
-	pop af
-
-	ld b,13 
+	ld b,CHANNEL_COUNT
 MLM_update_loop:
 	ld c,b
 	dec c
-	ld c,0
 
 	; if MLM_playback_control[ch] == 0 then
 	; do not update this channel
@@ -29,9 +23,10 @@ MLM_update_loop:
 	ld de,MLM_playback_control
 	add hl,de
 	ld a,(hl)
-	ld a,(MLM_playback_control)
 	or a,a ; cp a,0
 	jr z,MLM_update_loop_next
+
+	brk
 
 	inc iyl ; increment active mlm channel counter
 
@@ -42,7 +37,6 @@ MLM_update_loop:
 	ld de,MLM_playback_timings
 	add hl,hl
 	add hl,de
-	ld hl,MLM_playback_timings
 	ld e,(hl)
 	inc hl
 	ld d,(hl)
@@ -60,7 +54,6 @@ MLM_update_loop:
 		ld hl,0
 		sbc hl,de
 	pop hl
-
 MLM_update_check_execute_events:
 	call z,MLM_update_events
 
@@ -151,7 +144,7 @@ MLM_play_song:
 	push ix
 	push af
 		call MLM_stop
-		call set_default_banks
+		call set_default_banks 
 
 		; First song index validity check
 		;	If the song is bigger or equal to 128
@@ -188,10 +181,10 @@ MLM_play_song:
 		ld b,CHANNEL_COUNT
 MLM_play_song_loop:
 		push bc
-			; Set channel timing to 0
+			; Set all channel timings to 1
 			ld a,b
 			dec a
-			ld bc,0
+			ld bc,1
 			call MLM_set_timing
 
 			; Load channel's playback offset
@@ -406,7 +399,6 @@ MLM_update_events:
 		add hl,hl
 		ld de,MLM_playback_pointers
 		add hl,de
-		ld hl,MLM_playback_pointers
 		ld e,(hl)
 		inc hl
 		ld d,(hl)

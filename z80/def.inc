@@ -200,3 +200,10 @@ UCOM_MASK         equ %01111111
 		srl h
 		rr l
 	endm
+
+	macro brk
+		push af
+		ld a,&39
+		ld (breakpoint),a
+		pop af
+	endm
