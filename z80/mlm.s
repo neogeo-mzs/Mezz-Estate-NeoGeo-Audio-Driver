@@ -11,6 +11,11 @@ MLM_irq:
 	ld (MLM_base_time_counter),a
 	jr nz,MLM_update_skip
 
+	push af
+		ld a,&39
+		ld (breakpoint),a
+	pop af
+
 	ld b,13 
 MLM_update_loop:
 	ld c,b
@@ -79,7 +84,7 @@ MLM_update_check_execute_events:
 	jr z,MLM_update_check_execute_events
 
 MLM_update_loop_next:
-	;djnz MLM_update_loop ;; only one channel is used for deflemask mlm export, no need for this loop :)
+	djnz MLM_update_loop 
 
 	; Clear MLM_base_time_counter
 	xor a,a
@@ -142,11 +147,17 @@ MLM_default_channel_volumes:
 MLM_play_song:
 	push hl
 	push bc
+	push de
+	push ix
+	push af
+		call MLM_stop
+		call set_default_banks
+
 		; First song index validity check
 		;	If the song is bigger or equal to 128
 		;   (thus bit 7 is set), the index is invalid.
 		bit 7,a
-		call z,softlock ; if a's bit 7 is set then ..
+		call nz,softlock ; if a's bit 7 is set then ..
 
 		; Second song index validity check
 		;	If the song is bigger or equal to the
@@ -155,6 +166,98 @@ MLM_play_song:
 		ld c,(hl)
 		cp a,c
 		call nc,softlock ; if a >= c then ...
+
+		; Load song header offset 
+		; from MLM header into de,
+		; then add MLM_songs to it
+		; to obtain a pointer.
+		inc hl
+		sla a
+		ld d,0
+		ld e,a
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ld hl,MLM_SONGS
+		add hl,de
+
+		;     For each channel...
+		ld de,MLM_playback_pointers
+		ld ix,MLM_playback_control
+		ld b,CHANNEL_COUNT
+MLM_play_song_loop:
+		push bc
+			; Set channel timing to 0
+			ld a,b
+			dec a
+			ld bc,0
+			call MLM_set_timing
+
+			; Load channel's playback offset
+			; into bc
+			ld c,(hl)
+			inc hl
+			ld b,(hl)
+			inc hl
+
+			; Obtain ptr to channel's playback
+			; data by adding MLM_SONGS to its
+			; playback offset.
+			;	Only the due words' MSB need
+			;	to be added together, since
+			;	the LSB is always equal to &00.
+			ld a,>MLM_SONGS
+			add a,b
+
+			; store said pointer into
+			; MLM_playback_pointers[ch]
+			ex de,hl
+				ld (hl),c
+				inc hl
+				ld (hl),a
+				inc hl
+			ex de,hl
+
+			; If the playback pointer isn't
+			; equal to 0, set the channel's
+			; playback control to &FF
+			push hl
+				ld hl,0
+				or a,a ; Clear carry flag
+				sbc hl,bc
+				jr z,MLM_play_song_loop_no_playback
+				ld (ix+0),&FF
+MLM_play_song_loop_no_playback:
+				inc ix
+			pop hl
+		pop bc
+		djnz MLM_play_song_loop
+
+		; Load timer a counter load
+		; from song header and set it
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		call ta_counter_load_set
+		ex de,hl
+
+		; Load base time from song
+		; header and store it into WRAM
+		inc hl
+		ld a,(hl)
+		ld (MLM_base_time),a
+		
+		; Copy MLM_playback_pointers
+		; to MLM_playback_start_pointers
+		ld hl,MLM_playback_pointers
+		ld de,MLM_playback_start_pointers
+		ld bc,2*CHANNEL_COUNT
+		ldir
+	pop af
+	pop ix
+	pop de
 	pop bc
 	pop hl
 	ret
@@ -166,17 +269,12 @@ _MLM_play_song:
 	push af
 	push bc
 	push ix
-		push af
-			ld a,&39
-			ld (breakpoint),a
-		pop af 
-
 		call MLM_stop
 		call set_default_banks
 
 		; set all channel timings to 0
 		ld b,13
-MLM_play_song_set_timing_loop:
+_MLM_play_song_set_timing_loop:
 		push bc
 		push af
 			ld a,b
@@ -185,7 +283,7 @@ MLM_play_song_set_timing_loop:
 			call MLM_set_timing
 		pop af
 		pop bc
-		djnz MLM_play_song_set_timing_loop
+		djnz _MLM_play_song_set_timing_loop
 
 		; Load MLM song header (hl = &MLM_HEADER[song])
 		ld h,0
@@ -221,7 +319,7 @@ MLM_play_song_set_timing_loop:
 		ld ix,MLM_playback_control		
 		ld b,13
 
-MLM_play_song_loop:
+_MLM_play_song_loop:
 		push bc
 		push hl
 		push de
@@ -245,19 +343,19 @@ MLM_play_song_loop:
 				sbc hl,bc
 			pop hl
 			ld a,0
-			jr z,MLM_play_song_loop_skip
+			jr z,_MLM_play_song_loop_skip
 
 			xor a,a ; clear a
 			add a,c
 			add a,b
 			ld a,0
-			jr c,MLM_play_song_loop_dont_skip
-			jr z,MLM_play_song_loop_skip
+			jr c,_MLM_play_song_loop_dont_skip
+			jr z,_MLM_play_song_loop_skip
 
-MLM_play_song_loop_dont_skip:
+_MLM_play_song_loop_dont_skip:
 			inc a
 
-MLM_play_song_loop_skip:
+_MLM_play_song_loop_skip:
 			ld (ix+0),a
 		pop de
 		pop hl
@@ -268,7 +366,7 @@ MLM_play_song_loop_skip:
 		inc de
 		inc de
 		inc ix
-		djnz MLM_play_song_loop
+		djnz _MLM_play_song_loop
 
 		; Load and set timer a
 		ld e,(hl)
