@@ -1,6 +1,6 @@
 	org &4000 ; block 1
 MLM_header:
-	db 9 ; Song count
+	db 13 ; Song count
 	dw MLM_song_pa1-MLM_header
 	dw MLM_song_pa2-MLM_header
 	dw MLM_song_pa3-MLM_header

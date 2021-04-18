@@ -35,7 +35,7 @@ SSG_update_loop:
 	
 ; a:  SSG channel
 ; bc: pitch (----CCCCFFFFFFFF; Coarse tune, Fine tune)
-SSG_set_pitch:
+SSG_set_tune:
 	; Set YM SSG registers
 	push af
 	push bc
@@ -252,7 +252,7 @@ SSG_set_note:
 		ld c,(hl) ; fine tune
 		inc hl
 		ld b,(hl) ; coarse tune
-		call SSG_set_pitch
+		call SSG_set_tune
 
 		; Set noise tune
 		ld d,REG_SSG_CHN_NOISE_TUNE
