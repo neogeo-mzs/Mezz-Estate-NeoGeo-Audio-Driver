@@ -27,7 +27,6 @@ MLM_update_loop:
 	jr z,MLM_update_loop_next
 
 	brk
-
 	inc iyl ; increment active mlm channel counter
 
 	; hl = &MLM_playback_timings[channel]
@@ -252,138 +251,6 @@ MLM_play_song_loop_no_playback:
 	pop ix
 	pop de
 	pop bc
-	pop hl
-	ret
-
-; a: song
-_MLM_play_song:
-	push hl
-	push de
-	push af
-	push bc
-	push ix
-		call MLM_stop
-		call set_default_banks
-
-		; set all channel timings to 0
-		ld b,13
-_MLM_play_song_set_timing_loop:
-		push bc
-		push af
-			ld a,b
-			dec a
-			ld bc,0
-			call MLM_set_timing
-		pop af
-		pop bc
-		djnz _MLM_play_song_set_timing_loop
-
-		; Load MLM song header (hl = &MLM_HEADER[song])
-		ld h,0
-		ld l,a
-		add hl,hl
-		ld de,MLM_HEADER
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ld hl,MLM_HEADER
-		add hl,de
-
-		; Load MLM playback pointers
-		;
-		; u16* src = MLM_HEADER[song];
-		; u16* dst = MLM_playback_pointers;
-		;
-		; for (int i = 13; i > 0; i--)
-		; { 
-		;     *dst = *src + MLM_HEADER; 
-		;     
-		;	  u8 playback_cnt = 0;
-		; 
-		;     if (*src != NULL)
-		;        playback_cnt++;
-		;	  MLM_playback_control[ch] = playback_cnt;
-		;
-		;     dst++; 
-		;     src++; 
-	    ; }
-		ld de,MLM_playback_pointers
-		ld ix,MLM_playback_control		
-		ld b,13
-
-_MLM_play_song_loop:
-		push bc
-		push hl
-		push de
-			ld c,(hl)
-			inc hl
-			ld b,(hl)
-
-			ld hl,MLM_SONGS
-			add hl,bc
-
-			ex de,hl
-			ld (hl),e
-			inc hl
-			ld (hl),d
-
-			
-			; if bc is 0 jump to...
-			push hl
-				ld hl,0
-				or a,a ; reset carry flag
-				sbc hl,bc
-			pop hl
-			ld a,0
-			jr z,_MLM_play_song_loop_skip
-
-			xor a,a ; clear a
-			add a,c
-			add a,b
-			ld a,0
-			jr c,_MLM_play_song_loop_dont_skip
-			jr z,_MLM_play_song_loop_skip
-
-_MLM_play_song_loop_dont_skip:
-			inc a
-
-_MLM_play_song_loop_skip:
-			ld (ix+0),a
-		pop de
-		pop hl
-		pop bc
-
-		inc hl
-		inc hl
-		inc de
-		inc de
-		inc ix
-		djnz _MLM_play_song_loop
-
-		; Load and set timer a
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		call ta_counter_load_set
-
-		; Load and set base time
-		ex de,hl
-		inc hl
-		ld a,(hl)
-		ld (MLM_base_time),a
-		
-		; Copy MLM_playback_pointers
-		; to MLM_playback_start_pointers
-		ld hl,MLM_playback_pointers
-		ld de,MLM_playback_start_pointers
-		ld bc,2*CHANNEL_COUNT
-		ldir
-	pop ix
-	pop bc
-	pop af
-	pop de
 	pop hl
 	ret
 
@@ -627,22 +494,21 @@ MLM_play_note_ssg:
 			call MLM_set_timing
 		pop bc
 
-		ld b,a   ; backup MLM channel into b
 		sub a,10 ; MLM channel to SSG channel (0~2)
 		call SSG_set_note
 
 		; Set attenuator
 		ld h,0
-		ld l,b
-		ld de,MLM_channel_volumes
+		ld l,a
+		ld de,MLM_channel_volumes+10
 		add hl,de
 		ld c,(hl)
 		call SSG_set_attenuator
 
 		; Set instrument
 		ld h,0
-		ld l,b
-		ld de,MLM_channel_instruments
+		ld l,a
+		ld de,MLM_channel_instruments+10
 		add hl,de
 		ld c,(hl)
 		call SSG_set_instrument
