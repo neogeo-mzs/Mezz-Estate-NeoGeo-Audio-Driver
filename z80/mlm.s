@@ -26,7 +26,6 @@ MLM_update_loop:
 	or a,a ; cp a,0
 	jr z,MLM_update_loop_next
 
-	brk
 	inc iyl ; increment active mlm channel counter
 
 	; hl = &MLM_playback_timings[channel]
@@ -482,6 +481,8 @@ MLM_play_note_ssg:
 	push hl
 	push bc
 	push de
+		brk 
+		
 		; Set timing
 		push bc
 			push af
