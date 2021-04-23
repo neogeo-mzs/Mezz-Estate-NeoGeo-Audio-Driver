@@ -97,6 +97,9 @@ MLM_stop:
 	push de
 	push bc
 	push af
+		; Stop SSG Controller
+		call SSGCNT_init
+
 		; clear MLM WRAM
 		ld hl,MLM_wram_start
 		ld de,MLM_wram_start+1
@@ -473,51 +476,99 @@ MLM_play_note_fm:
 	pop af
 	jp MLM_parse_note_end
 
-; [INPUT]
-;   a:  channel+10
+;   a:  channel
 ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
 MLM_play_note_ssg:
 	push af
+		sub a,MLM_CH_SSG1
+		call SSGCNT_set_note
+
+		call SSGCNT_enable_channel
+		
+		add a,MLM_CH_SSG1
+		ld c,b
+		ld b,0
+		call MLM_set_timing
+	pop af
+	ret
+
+; a: instrument
+; c: channel
+MLM_set_instrument:
+	push bc
+	push hl
+	push af
+		; Store instrument in MLM_channel_instruments
+		ld b,0
+		ld hl,MLM_channel_instruments
+		add hl,bc
+		ld (hl),a
+
+		; if the channel is ADPCM-A nothing
+		; else needs to be done: return
+		ld a,c
+		cp a,MLM_CH_FM1                ; if a < MLM_CH_FM1 
+		jr c,MLM_set_instrument_return ; then ...
+
+		; If the channel is FM, for now
+		; do nothing. TODO make it do something
+		cp a,MLM_CH_SSG1               ; if a < MLM_CH_SSG1
+		jr c,MLM_set_instrument_return ; then ...
+
+		; Else the channel is SSG, branch
+		jr MLM_set_instrument_ssg
+MLM_set_instrument_return:
+	pop af
+	pop hl
+	pop bc
+	ret
+
+; a:  channel
+; hl: &MLM_channel_instruments[channel]
+MLM_set_instrument_ssg:
+	push de
 	push hl
 	push bc
-	push de
-		brk 
-		
-		; Set timing
-		push bc
-			push af
-				ld a,b
-				and a,%01111111
-				ld c,a
-			pop af
-
-			ld b,0
-			call MLM_set_timing
-		pop bc
-
-		sub a,10 ; MLM channel to SSG channel (0~2)
-		call SSG_set_note
-
-		; Set attenuator
+	push af
+		; Calculate pointer to instrument
+		ld l,(hl)
 		ld h,0
-		ld l,a
-		ld de,MLM_channel_volumes+10
+		ld de,INSTRUMENTS
+		add hl,hl ; \
+		add hl,hl ;  \
+		add hl,hl ;  | hl *= 32
+		add hl,hl ;  /
+		add hl,hl ; /
 		add hl,de
-		ld c,(hl)
-		call SSG_set_attenuator
 
-		; Set instrument
-		ld h,0
-		ld l,a
-		ld de,MLM_channel_instruments+10
-		add hl,de
-		ld c,(hl)
-		call SSG_set_instrument
-	pop de
+		; Calculate SSG channel
+		; in 0~2 range
+		sub a,MLM_CH_SSG1
+		ld d,a                    ; Channel parameter
+
+		; Enable tone if the mixing's byte
+		; bit 0 is 1, else disable it
+		ld a,(hl)
+		and a,%00000001 ; Get tone enable bit
+		ld c,a                    ; Enable/Disable parameter
+		ld e,SSGCNT_MIX_EN_TUNE   ; Tune/Noise select parameter
+		call SSGCNT_set_mixing
+
+		; Enable noise if the mixing's byte
+		; bit 1 is 1, else disable it
+		ld a,(hl)
+		and a,%00000010 ; Get noise enable bit
+		srl a
+		ld c,a                   ; Enable/Disable parameter
+		ld e,SSGCNT_MIX_EN_NOISE ; Tune/Noise select parameter
+		call SSGCNT_set_mixing
+
+		; TODO: EG and Macro parsing
+	pop af
 	pop bc
 	pop hl
-	pop af
-	jp MLM_parse_note_end
+	pop de
+	jr MLM_set_instrument_return
 
 ;   c:  channel
 ;   hl: source (playback pointer)
@@ -741,7 +792,7 @@ MLMCOM_note_off:
 
 		cp a,10
 		sub a,10
-		call nc,SSG_stop_note
+		;call nc,SSG_stop_note
 		jr nc,MLMCOM_note_off_break
 
 		ld a,c
@@ -857,7 +908,7 @@ MLMCOM_set_channel_volume:
 		; else (channel is ssg)...
 		push af
 			sub a,10
-			call SSG_set_attenuator
+			call SSGCNT_set_vol
 		pop af
 
 MLMCOM_set_channel_volume_set_timing:

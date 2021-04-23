@@ -26,24 +26,24 @@ MLM_base_time:                ds 1                   ; u8
 MLM_base_time_counter:        ds 1                   ; u8
 MLM_wram_end:
 
-; ======== SSG variables ========
-; DO NOT CHANGE THE ORDER OF THESE FOUR ARRAYS
-; if you add/remove anything from here, you might want to
-; edit command_stop_ssg
-ssg_vol_macros:          ds 6 ; vol_macro*[3]
-ssg_vol_macro_sizes:     ds 3 ; u8[3]
-ssg_vol_macro_counters:  ds 3 ; u8[3]
-ssg_vol_macro_loop_pos:  ds 3 ; u8[3]
-ssg_vol_attenuators:     ds 3 ; u8[3]
-ssg_mix_enable_flags:    ds 1 ; u8
+; ======== SSG Controller variables ========
+SSGCNT_wram_start:
+SSGCNT_volumes:			ds 3 ; u8[3]
+SSGCNT_mix_flags:    	ds 1 ; u8 (Buffer for the YM2610's $07 Port A register)
+SSGCNT_noise_tune:		ds 1 ; u8
+SSGCNT_channel_enable:	ds 3 ; bool[3]
 
-;ssg_base_notes: ds 3         ; u8[3] Current note, without arpeggio applied
+SSGCNT_nibble_macros:
+SSGCNT_vol_macro_A: 	SSGCNT_macro 
+SSGCNT_vol_macro_B: 	SSGCNT_macro
+SSGCNT_vol_macro_C:		SSGCNT_macro
+SSGCNT_mix_macro_A:		SSGCNT_macro
+SSGCNT_mix_macro_B:		SSGCNT_macro
+SSGCNT_mix_macro_C:		SSGCNT_macro
+SSGCNT_noise_macro:		SSGCNT_macro
 
-; DO NOT CHANGE THE ORDER OF THESE FOUR ARRAYS
-;ssg_arp_macros:         ds 6 ; arp_macro*[3]
-;ssg_arp_macro_sizes:    ds 3 ; u8[3]
-;ssg_arp_macro_counters: ds 3 ; u8[3]
-;ssg_arp_macro_loop_pos: ds 3 ; u8[3]
+SSGCNT_notes:			ds 3 ; u8[3]
+SSGCNT_wram_end:
 
 ; ======== FM ========
 FM_wram_start:
