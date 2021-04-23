@@ -167,9 +167,9 @@ PANNING_L      equ %10000000
 PANNING_CENTER equ %11000000
 
 CHANNEL_COUNT     equ 13
+PA_CHANNEL_COUNT  equ 6
 FM_CHANNEL_COUNT  equ 4
 SSG_CHANNEL_COUNT equ 3
-PA_CHANNEL_COUNT  equ 6
 
 MLM_CH_PA1  equ 0
 MLM_CH_PA2  equ 1
@@ -192,6 +192,11 @@ IRQ_BUFFER_LENGTH equ 16
 
 UCOM_MASK         equ %01111111
 
+; SSG driver definitions (driver into 
+; the driver??? change name later)
+SSGCNT_MIX_EN_TUNE	equ 0
+SSGCNT_MIX_EN_NOISE	equ 3
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    MACROS                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -207,3 +212,15 @@ UCOM_MASK         equ %01111111
 		ld (breakpoint),a
 		pop af
 	endm
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                    STRUCT                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	struct SSGCNT_macro
+enable 	ds 1 ; u8
+length 	ds 1 ; u8
+data 	ds 2 ; void*
+loop_pt	ds 1 ; u8
+pad 	ds 3 ; u8[3] 
+	endstruct

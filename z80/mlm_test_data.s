@@ -116,6 +116,7 @@ MLM_song_ssg3:
 	db 1  ; base time (0 is invalid)
 
 MLM_el_ssg:
+	db &02,1             ; Set instrument to 1
 	db &80 | 60,4*12 + 0 ; Play SSG note C4
 	db &80 | 60,4*12 + 2 ; Play SSG note D4
 	db &00 ; End of song
@@ -127,6 +128,11 @@ MLM_el_ssg:
 	dw &E000 ; Point to ADPCM-A sample LUT (in Zone 1)
 	dsb 30,0 ; padding
 
+	; Instrument 1 (SSG)
+	db 1  ; Mixing: Tone ON; Noise OFF
+	ds 10 ; Data that will be used later
+	ds 21 ; Padding
+	
 	; Other data
 	org &A000
 	incbin "adpcma_sample_lut.bin"

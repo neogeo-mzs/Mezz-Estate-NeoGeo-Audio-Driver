@@ -27,7 +27,7 @@ j_IRQ:
 	di
 	jp IRQ
 
-	ascii "MZS Deflemask VGM driver by GbaCretin"
+	asciiz "MZS Deflemask VGM driver by GbaCretin"
 
 	org &0066
 NMI:

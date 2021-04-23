@@ -171,7 +171,7 @@ UCOM_run_command_return:
 
 UCOM_command_vectors:
     dw UCOM_CMD_nop,       UCOM_CMD_play_song
-    dw UCOM_CMD_stop_song, UCOM_CMD_bank_test_z3
+    dw UCOM_CMD_stop_song, UCOM_CMD_ssg_test
     dsw 128-4,UCOM_CMD_invalid
 
 UCOM_CMD_nop:
@@ -189,17 +189,9 @@ UCOM_CMD_stop_song:
     call IRQ_write2buffer
     jp UCOM_run_command_return
 
-; b: bank
+; b: &00
 ; c: &03
-UCOM_CMD_bank_test_z3:
-    push af
-    push bc 
-        ld a,b
-        in a,(&0B)
-        ld a,(BANK3)
-        ld (tmp),a
-    pop bc 
-    pop af
+UCOM_CMD_ssg_test:
     jp UCOM_run_command_return
 
 UCOM_CMD_invalid:
