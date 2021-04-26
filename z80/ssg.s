@@ -16,6 +16,7 @@ SSGCNT_init:
 	push bc
 	push af
 	push de
+	push hl
 		; clear SSGCNT WRAM
 		ld hl,SSGCNT_wram_start
 		ld de,SSGCNT_wram_start+1
@@ -33,6 +34,7 @@ SSGCNT_init_loop:
 		call SSGCNT_set_vol
 
 		djnz SSGCNT_init_loop
+	pop hl
 	pop de
 	pop af
 	pop bc
@@ -58,6 +60,7 @@ SSGCNT_update_volume:
 	push hl
 	push de
 	push af
+	push bc
 		; Load SSGCNT_channel_enable[ch]
 		; in a
 		ld hl,SSGCNT_channel_enable
@@ -69,23 +72,25 @@ SSGCNT_update_volume:
 		; If channel enable is 1, set volume
 		; to SSGCNT_volumes[channel]; else
 		; set it to 0
-		ld e,0
+		ld c,0
 		or a,a ; cp a,0
 		jr z,SSGCNT_update_volume_ch_disabled
 
 		; Load SSGCNT_volumes[channel]
-		; in e
+		; in c
 		ld hl,SSGCNT_volumes
 		add hl,de
-		ld e,(hl)
+		ld c,(hl)
 
 SSGCNT_update_volume_ch_disabled:
 		; Calculate the register address
 		ld a,REG_SSG_CHA_VOL
 		add a,b
 		ld d,a
+		ld e,c
 
 		rst RST_YM_WRITEA
+	pop bc
 	pop af
 	pop de
 	pop hl
@@ -136,6 +141,7 @@ SSGCNT_update_mixing:
 	push af
 		ld d,REG_SSG_MIX_ENABLE
 		ld a,(SSGCNT_mix_flags)
+		xor a,&3F ; Flip all flags, since the SSG mixing register uses negative enable flags
 		ld e,a
 		rst RST_YM_WRITEA
 	pop af

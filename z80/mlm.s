@@ -1,4 +1,5 @@
 ; DOESN'T BACKUP REGISTERS
+; THERE COULD BE A PROBLEM HERE
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
@@ -262,6 +263,8 @@ MLM_update_events:
 	push de
 	push af
 	push ix
+		brk
+
 		; de = MLM_playback_pointers[ch]
 		ld h,0
 		ld l,c
@@ -271,14 +274,6 @@ MLM_update_events:
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
-
-		; if MLM_playback_pointers[ch] == NULL then return
-		push hl
-			ld hl,0
-			or a,a    ; clear carry flag
-			sbc hl,de ; compare
-		pop hl
-		jr z,MLM_update_events_skip
 
 		; If the first byte's most significant bit is 0, then
 		; parse it and evaluate it as a note, else parse 
@@ -303,7 +298,7 @@ MLM_parse_note:
 	push af
 	push bc
 	push hl
-	push de
+	push de		
 		ld a,(hl)
 		and a,&7F ; Clear bit 7 of the note's first byte
 		ld b,a
@@ -480,15 +475,16 @@ MLM_play_note_fm:
 ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
 MLM_play_note_ssg:
 	push af
+	push bc
 		sub a,MLM_CH_SSG1
 		call SSGCNT_set_note
-
 		call SSGCNT_enable_channel
-		
+
 		add a,MLM_CH_SSG1
 		ld c,b
 		ld b,0
 		call MLM_set_timing
+	pop bc
 	pop af
 	ret
 
@@ -821,20 +817,14 @@ MLMCOM_note_off_break:
 ;   1. instrument
 MLMCOM_set_instrument:
 	push af
-	push hl
 	push bc
-		ld hl,MLM_event_arg_buffer
-		ld a,(hl)
-		ld b,0
-		ld hl,MLM_channel_instruments
-		add hl,bc
-		ld (hl),a
+		ld a,(MLM_event_arg_buffer)
+		call MLM_set_instrument
 
 		ld a,c
 		ld bc,0
 		call MLM_set_timing
 	pop bc
-	pop hl
 	pop af
 	jp MLM_parse_command_end
 

@@ -213,6 +213,13 @@ SSGCNT_MIX_EN_NOISE	equ 3
 		pop af
 	endm
 
+	macro brk2
+		push af
+		ld a,&3A
+		ld (breakpoint),a
+		pop af
+	endm
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    STRUCT                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
