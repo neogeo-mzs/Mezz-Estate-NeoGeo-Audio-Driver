@@ -71,6 +71,7 @@ MLM_update_check_execute_events:
 	; compare de to 0
 	push hl
 		ld hl,0
+		or a,a ; clear carry flag
 		sbc hl,de
 	pop hl
 	jr z,MLM_update_check_execute_events
@@ -302,7 +303,7 @@ MLM_parse_note:
 		ld a,(hl)
 		and a,&7F ; Clear bit 7 of the note's first byte
 		ld b,a
-		ld a,c
+		ld a,c    ; move channel in a
 		inc hl
 		ld c,(hl)
 		inc hl
@@ -486,7 +487,7 @@ MLM_play_note_ssg:
 		call MLM_set_timing
 	pop bc
 	pop af
-	ret
+	jp MLM_parse_note_end
 
 ; a: instrument
 ; c: channel
