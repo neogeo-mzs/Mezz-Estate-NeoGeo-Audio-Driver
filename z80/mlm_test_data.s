@@ -132,7 +132,7 @@ MLM_el_ssg:
 	db 1  ; Mixing: Tone ON; Noise OFF
 	ds 10 ; Data that will be used later
 	ds 21 ; Padding
-	
+	 
 	; Other data
 	org &A000
 	incbin "adpcma_sample_lut.bin"
