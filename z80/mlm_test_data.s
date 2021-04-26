@@ -117,8 +117,8 @@ MLM_song_ssg3:
 
 MLM_el_ssg:
 	db &02,1             ; Set instrument to 1
-	db &80 | 60,4*12 + 0 ; Play SSG note C4
-	db &80 | 60,4*12 + 2 ; Play SSG note D4
+	db &80 | 60,2*12 + 0 ; Play SSG note C4
+	db &80 | 60,2*12 + 2 ; Play SSG note D4
 	db &00 ; End of song
 
 	; Instruments
