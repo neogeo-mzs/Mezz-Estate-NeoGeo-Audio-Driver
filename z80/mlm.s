@@ -527,6 +527,7 @@ MLM_set_instrument_ssg:
 	push hl
 	push bc
 	push af
+	push ix
 		; Calculate pointer to instrument
 		ld l,(hl)
 		ld h,0
@@ -560,7 +561,38 @@ MLM_set_instrument_ssg:
 		ld e,SSGCNT_MIX_EN_NOISE ; Tune/Noise select parameter
 		call SSGCNT_set_mixing
 
-		; TODO: EG and Macro parsing
+		; Skip EG parsing (TODO: parse EG information)
+		inc hl
+		inc hl
+		inc hl
+		inc hl
+
+		; Calculate pointer to channel's mix macro
+		ld ixh,0
+		ld ixl,d 
+		add ix,ix ; \
+		add ix,ix ; | ix *= 8
+		add ix,ix ; /
+		ld bc,SSGCNT_mix_macro_A
+		add ix,bc
+
+		; If macro pointer is set to &0000,
+		; then disable the macro, else set the 
+		; mix macro's parameters accordingly.
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+		inc hl
+		push hl
+			ld hl,0
+			or a,a    ; Clear the carry flag
+			sbc hl,bc ; Compare bc to 0
+		pop hl
+		ld (ix+SSGCNT_macro.enable),&00 ; Disable macro, if the set mix macro subroutine is called it'll be enabled again
+		ld l,c ; - Load pointer to macro data in hl
+		ld h,b ; /
+		call z,SSGCNT_MACRO_set
+	pop ix
 	pop af
 	pop bc
 	pop hl

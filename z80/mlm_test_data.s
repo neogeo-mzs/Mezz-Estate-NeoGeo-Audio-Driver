@@ -118,7 +118,7 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db &02,1             ; Set instrument to 1
 	db &80 | 60,2*12 + 0 ; Play SSG note C4
-	db &80 | 60,2*12 + 2 ; Play SSG note D4
+	db &04,&FF,&FF       ; Wait ~1100 seconds
 	db &00 ; End of song
 
 	; Instruments
@@ -130,9 +130,18 @@ MLM_el_ssg:
 
 	; Instrument 1 (SSG)
 	db 1  ; Mixing: Tone ON; Noise OFF
-	ds 10 ; Data that will be used later
+	db 0  ; EG enable: OFF
+	ds 3  ; Skip EG information since EG is disabled
+	dw MLM_odata_mix_macro-&A000 + OTHER_DATA
+	ds 4 ; Data that will be used later
 	ds 21 ; Padding
 	 
 	; Other data
 	org &A000
 	incbin "adpcma_sample_lut.bin"
+MLM_odata_mix_macro:
+	db (30*3)-1 ; Macro length
+	db 30       ; Set loop point to 30
+	dsb 15,&11  ; 30 frames with tone enabled and noise disabled
+	dsb 15,&22  ; 30 frames with tone disabled and noise enabled
+	dsb 15,&33  ; 30 frames with tone and noise enabled

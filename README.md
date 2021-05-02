@@ -178,16 +178,30 @@ $0001  | EG Enable                          | 1
 $0002  | Volume envelope period fine tune   | 1
 $0003  | Volume envelope period coarse tune | 1
 $0004  | Volume envelope shape              | 1
-$0005  | Pointer to volume macro            | 2
+$0005  | Pointer to mix macro               | 2
 $0007  | Pointer to arpeggio macro          | 2
-$0009  | Pointer to mix macro               | 2
+$0009  | Pointer to volume macro            | 2
 $000A  | Padding                            | 21
 
 \* 0: None; 1: Tone; 2: Noise; 3: Tone & Noise; Will be ignored if mix macros are enabled
 
+If any macro pointer is set to $0000, then that macro won't be enabled.
+
 #### SSG macro structure
 
-TODO Design Macro structure
+offset | description                        | bytes
+-------|------------------------------------|------
+$0000  | Macro length - 1                   | 1
+$0001  | Macro loop point                   | 1
+$0002  | Macro data                         | 1..128/256
+
+There are two kinds of macros, nibble macros and byte macros.
+Nibble macros store two values per byte, they're used for mixing, noise tune and volume macros.
+Byte macros store one value per byte, they're used for arpeggios.
+Nibble macros can be up to 128 bytes big, Byte macros can instead reach 256 bytes.
+The length of a macro is the count of how many values it contains.
+Values in nibble macros are ordered in such a way that the sequence {0; 1; 2; 3} would be encoded
+to {$10; $32}.
 
 ## Driver Documentation
 
