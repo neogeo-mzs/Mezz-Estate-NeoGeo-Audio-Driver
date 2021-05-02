@@ -259,6 +259,114 @@ SSGCNT_disable_channel:
 	pop hl
 	ret
 
+; [INPUT]
+; 	ix: pointer to macro
+; [OUTPUT]
+;	a:  Current macro value
+; CHANGES FLAGS!!
+SSGCNT_BMACRO_read:
+	push hl
+	push de
+		; a = macro.data[macro.curr_pt]
+		ld l,(ix+SSGCNT_macro.data)
+		ld h,(ix+SSGCNT_macro.data+1)
+		ld e,(ix+SSGCNT_macro.curr_pt)
+		ld d,0
+		add hl,de
+		ld a,(hl)
+	pop de
+	pop hl
+	ret
+
+; [INPUT]
+; 	ix: pointer to macro
+; [OUTPUT]
+;	a:  Current macro value
+; CHANGES FLAGS!!
+SSGCNT_NMACRO_read:
+	push hl
+	push de
+		; Load byte containing the value
+		; by adding to the macro data 
+		; pointer curr_pt divided by two
+		ld l,(ix+SSGCNT_macro.data)
+		ld h,(ix+SSGCNT_macro.data+1)
+		ld e,(ix+SSGCNT_macro.curr_pt)
+		ld d,0
+		add hl,de
+		ld a,(hl)
+
+		; If macro.curr_pt is even, then
+		; return the least significant nibble,
+		; else return the most significant one.
+		bit 0,e
+		jr z,SSGCNT_NMACRO_read_even_pt
+
+		srl a ; \
+		srl a ;  | a >>= 4
+		srl a ;  | (VVVV---- => 0000VVVV)
+		srl a ; /
+
+SSGCNT_NMACRO_read_even_pt:
+		and a,&0F
+	pop de
+	pop hl
+	ret
+
+; ix: pointer to macro
+SSGCNT_MACRO_update:
+	push af
+		; If macro.loop_pt is bigger or equal 
+		; than the actual length, set it to
+		; the length minus 1 (remember that
+		; the length is always stored 
+		; decremented by one)
+		ld a,(ix+SSGCNT_macro.length)
+		cp a,(ix+SSGCNT_macro.loop_pt)
+		jr nc,SSGCNT_MACRO_update_valid_loop_pt ; if macro.length >= macro.loop_pt ...
+
+		ld (ix+SSGCNT_macro.loop_pt),a ; macro.loop_pt = macro.length (length is stored decremented by 1)
+SSGCNT_MACRO_update_valid_loop_pt:
+
+		; increment macro.curr_pt, if it
+		; overflows set it to macro.loop_pt
+		inc (ix+SSGCNT_macro.curr_pt)
+		cp a,(ix+SSGCNT_macro.curr_pt)
+		jr nc,SSGCNT_MACRO_update_return ; if macro.length >= macro.curr_pt
+
+		ld a,(ix+SSGCNT_macro.loop_pt)
+		ld (ix+SSGCNT_macro.curr_pt),a
+
+SSGCNT_MACRO_update_return:
+	pop af
+	ret
+
+; ix: pointer to macro
+; hl: pointer to macro initialization data
+SSGCNT_MACRO_set:
+	push af
+	push hl
+		; Set macro's length
+		ld a,(hl)
+		ld (ix+SSGCNT_macro.length),a
+
+		; Set macro's loop point
+		inc hl
+		ld a,(hl)
+		ld (ix+SSGCNT_macro.loop_pt),a
+
+		; Set macro's data pointer
+		inc hl
+		ld (ix+SSGCNT_macro.data),l
+		ld (ix+SSGCNT_macro.data+1),h
+
+		; Set other variables
+		ld (ix+SSGCNT_macro.enable),&FF
+		ld (ix+SSGCNT_macro.curr_pt),0
+	pop hl
+	pop af
+	ret
+
 ; ==== LOOKUP TABLES ====
 SSGCNT_note_LUT:
 	incbin "ssg_pitch_lut.bin"

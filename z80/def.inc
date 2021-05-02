@@ -229,5 +229,6 @@ enable 	ds 1 ; u8
 length 	ds 1 ; u8
 data 	ds 2 ; void*
 loop_pt	ds 1 ; u8
-pad 	ds 3 ; u8[3] 
+curr_pt	ds 1 ; u8 (Current point)
+pad 	ds 2 ; u8[2] 
 	endstruct
