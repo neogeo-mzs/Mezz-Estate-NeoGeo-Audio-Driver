@@ -48,11 +48,22 @@ SSGCNT_irq_vol_loop:
 	dec b
 	call SSGCNT_update_volume
 	call SSGCNT_update_note
+	call SSGCNT_update_channels_mix
 	inc b
 	djnz SSGCNT_irq_vol_loop
 
 	call SSGCNT_update_mixing
 	call SSGCNT_update_noise_tune
+
+	; Update all macros
+	ld b,7              ; total amount of macros
+	ld de,SSGCNT_macro  ; de = sizeof(SSGCNT_macro)
+	ld ix,SSGCNT_macros
+SSGCNT_irq_vol_macro_loop:
+	call SSGCNT_MACRO_update
+	add ix,de
+	djnz SSGCNT_irq_vol_macro_loop
+
 	ret
 
 ; b: channel (0~2)
@@ -136,6 +147,62 @@ SSGCNT_update_note:
 	pop hl
 	ret
 
+; b: channel (0~2)
+;	Updates the channel's mixing according to the macros,
+;   if the channel's mix macros are disabled this won't
+;   do anything, and the mixing values set manually won't
+;   be overwritten.
+SSGCNT_update_channels_mix:
+	push ix
+	push de
+	push af
+	push bc
+		; Load channel's mix macro enable in a
+		ld ixl,b
+		ld ixh,0
+		ld de,SSGCNT_mix_macro_A
+		add ix,ix ; \
+		add ix,ix ; | hl *= 8
+		add ix,ix ; /
+		add ix,de
+		ld a,(ix+SSGCNT_macro.enable)
+
+		; If the selected channel's mix macro is
+		; disabled (enable == $00) then return
+		or a,a ; cp a,0
+		jr z,SSGCNT_update_mixing_macros_return
+
+		call SSGCNT_NMACRO_read ; Stores macro value in a
+		brk
+
+		ld ixl,a ; backup macro value in ixl
+		ld d,b   ; backup channel in d (channel parameter)
+
+		; Enable tone if the mixing's byte
+		; bit 0 is 1, else disable it
+		and a,%00000001 ; Get tone enable bit
+		ld c,a                    ; Enable/Disable parameter
+		ld e,SSGCNT_MIX_EN_TUNE   ; Tune/Noise select parameter
+		call SSGCNT_set_mixing
+
+		; Enable noise if the mixing's byte
+		; bit 1 is 1, else disable it
+		ld a,ixl
+		and a,%00000010 ; Get noise enable bit
+		srl a
+		ld c,a                   ; Enable/Disable parameter
+		ld e,SSGCNT_MIX_EN_NOISE ; Tune/Noise select parameter
+		call SSGCNT_set_mixing
+
+SSGCNT_update_mixing_macros_return:
+	pop bc
+	pop af
+	pop de
+	pop ix
+	ret
+
+; This just flips the SSGCNT_mix_flags byte and
+; sets the YM2610's registers accordingly
 SSGCNT_update_mixing:
 	push de
 	push af
@@ -208,26 +275,37 @@ SSGCNT_set_note:
 ; e: flag type to set/clear (SSGCNT_MIX_EN_TUNE = 0; SSGCNT_MIX_EN_NOISE = 3)
 ; d: SSG channel (0~2)
 ; c: 0 if the flag needs to be cleared, 1 if the flag needs to be set
-; NEGATIVE ENABLE!
+; POSITIVE ENABLE!
 SSGCNT_set_mixing:
 	push af
 	push bc
 	push hl
+	push de
 		; bit <<= ssg_channel + flag_type
 		ld a,e
 		add a,d
 		ld b,a
+		call shift_left_c_by_b_bits ; Clears b
+		ld a,e   ; \
+		add a,d  ; | Calculate b again
+		ld b,a   ; /
+		ld e,c ; backup bit in e
+
+		; Calculate mask
+		;	mask = 1 << (ssg_channel + flag_type)
+		ld c,1
 		call shift_left_c_by_b_bits
 
-		; mix_flags = ~bit & SSGCNT_mix_flags
+		; mix_flags = ~mask & SSGCNT_mix_flags
 		ld hl,SSGCNT_mix_flags
 		ld a,c
 		xor a,&FF
 		and a,(hl)
 
 		; mix_flags |= bit
-		or a,c
+		or a,e
 		ld (hl),a
+	pop de
 	pop hl
 	pop bc
 	pop af
@@ -291,7 +369,9 @@ SSGCNT_NMACRO_read:
 		; pointer curr_pt divided by two
 		ld l,(ix+SSGCNT_macro.data)
 		ld h,(ix+SSGCNT_macro.data+1)
-		ld e,(ix+SSGCNT_macro.curr_pt)
+		ld a,(ix+SSGCNT_macro.curr_pt)
+		srl a
+		ld e,a ; e = macro.curr_pt / 2
 		ld d,0
 		add hl,de
 		ld a,(hl)
@@ -346,6 +426,18 @@ SSGCNT_MACRO_update_return:
 SSGCNT_MACRO_set:
 	push af
 	push hl
+	push de
+		; Disable macro, if needed it'll be 
+		; enabled later in the function
+		ld (ix+SSGCNT_macro.enable),&00
+
+		; If the pointer to the macro initialization 
+		; data is &0000, then return from the subroutine
+		ld de,0
+		or a,a    ; Clear carry flag
+		sbc hl,de ; cp hl,de
+		jr z,SSGCNT_MACRO_set_return
+
 		; Set macro's length
 		ld a,(hl)
 		ld (ix+SSGCNT_macro.length),a
@@ -363,10 +455,37 @@ SSGCNT_MACRO_set:
 		; Set other variables
 		ld (ix+SSGCNT_macro.enable),&FF
 		ld (ix+SSGCNT_macro.curr_pt),0
+SSGCNT_MACRO_set_return:
+	pop de
 	pop hl
 	pop af
+	ret
+
+; a: channel
+;  Set's all channel's macros
+SSGCNT_start_channel_macros:
+	push ix
+	push de
+		; Calculate address to channel's mix macro,
+		; and set macro.curr_pt to 0
+		ld ixl,a
+		ld ixh,0
+		ld de,SSGCNT_mix_macro_A
+		add ix,ix ; \
+		add ix,ix ; | ix *= 8
+		add ix,ix ; /
+		add ix,de
+		ld (ix+SSGCNT_macro.curr_pt),0
+
+		; TODO: other macros
+	pop de
+	pop ix
 	ret
 
 ; ==== LOOKUP TABLES ====
 SSGCNT_note_LUT:
 	incbin "ssg_pitch_lut.bin"
+
+SSGCNT_vol_LUT:
+	incbin "ssg_vol_lut.bin"
+	
