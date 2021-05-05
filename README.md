@@ -179,8 +179,8 @@ $0002  | Volume envelope period fine tune   | 1
 $0003  | Volume envelope period coarse tune | 1
 $0004  | Volume envelope shape              | 1
 $0005  | Pointer to mix macro               | 2
-$0007  | Pointer to arpeggio macro          | 2
-$0009  | Pointer to volume macro            | 2
+$0007  | Pointer to volume macro            | 2
+$0009  | Pointer to arpeggio macro          | 2
 $000A  | Padding                            | 21
 
 \* 0: None; 1: Tone; 2: Noise; 3: Tone & Noise; Will be ignored if mix macros are enabled

@@ -33,7 +33,7 @@ SSGCNT_mix_flags:    	ds 1 ; u8 (Buffer for the YM2610's $07 Port A register)
 SSGCNT_noise_tune:		ds 1 ; u8
 SSGCNT_channel_enable:	ds 3 ; bool[3]
 
-SSGCNT_nibble_macros:
+SSGCNT_macros:
 SSGCNT_mix_macro_A:		SSGCNT_macro
 SSGCNT_mix_macro_B:		SSGCNT_macro
 SSGCNT_mix_macro_C:		SSGCNT_macro

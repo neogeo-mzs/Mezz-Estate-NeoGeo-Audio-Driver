@@ -264,8 +264,6 @@ MLM_update_events:
 	push de
 	push af
 	push ix
-		brk
-
 		; de = MLM_playback_pointers[ch]
 		ld h,0
 		ld l,c
@@ -480,6 +478,7 @@ MLM_play_note_ssg:
 		sub a,MLM_CH_SSG1
 		call SSGCNT_set_note
 		call SSGCNT_enable_channel
+		call SSGCNT_start_channel_macros
 
 		add a,MLM_CH_SSG1
 		ld c,b
@@ -566,6 +565,7 @@ MLM_set_instrument_ssg:
 		inc hl
 		inc hl
 		inc hl
+		inc hl
 
 		; Calculate pointer to channel's mix macro
 		ld ixh,0
@@ -576,22 +576,11 @@ MLM_set_instrument_ssg:
 		ld bc,SSGCNT_mix_macro_A
 		add ix,bc
 
-		; If macro pointer is set to &0000,
-		; then disable the macro, else set the 
-		; mix macro's parameters accordingly.
-		ld c,(hl)
-		inc hl
-		ld b,(hl)
-		inc hl
-		push hl
-			ld hl,0
-			or a,a    ; Clear the carry flag
-			sbc hl,bc ; Compare bc to 0
-		pop hl
-		ld (ix+SSGCNT_macro.enable),&00 ; Disable macro, if the set mix macro subroutine is called it'll be enabled again
-		ld l,c ; - Load pointer to macro data in hl
-		ld h,b ; /
-		call z,SSGCNT_MACRO_set
+		ld e,(hl) ; \
+		inc hl    ; | Store macro initialization 
+		ld d,(hl) ; | data pointer in hl
+		ex de,hl  ; /
+		call SSGCNT_MACRO_set
 	pop ix
 	pop af
 	pop bc
@@ -821,7 +810,7 @@ MLMCOM_note_off:
 
 		cp a,10
 		sub a,10
-		;call nc,SSG_stop_note
+		call nc,SSGCNT_disable_channel
 		jr nc,MLMCOM_note_off_break
 
 		ld a,c
