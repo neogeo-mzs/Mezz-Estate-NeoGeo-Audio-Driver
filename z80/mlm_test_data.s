@@ -116,11 +116,10 @@ MLM_song_ssg3:
 	db 1  ; base time (0 is invalid)
 
 MLM_el_ssg:
-	db &02,1             ; Set instrument to 1
-	db &80 | 127,2*12 + 0 ; Play SSG note C4
-	db &01, 15           ; Note off and wait 30 ticks
-	db &80 | 15,2*12 + 2 ; Play SSG note D4
-	db &00 ; End of song
+	db &02,1              ; Set instrument to 1
+	db &80 | 127,2*12 + 0 ; Play SSG note C4 and wait 127 ticks
+	db &04, &FF, &FF      ; Wait 65535 ticks
+ 	db &00 ; End of song
 
 	; Instruments
 	org &8000
@@ -133,8 +132,10 @@ MLM_el_ssg:
 	db 1  ; Mixing: Tone ON; Noise OFF
 	db 0  ; EG enable: OFF
 	ds 3  ; Skip EG information since EG is disabled
-	dw MLM_odata_mix_macro1-&A000 + OTHER_DATA
-	ds 4 ; Data that will be used later
+	;dw MLM_odata_mix_macro1-&A000 + OTHER_DATA
+	dw &0000
+	dw MLM_odata_vol_macro1-&A000 + OTHER_DATA
+	ds 2 ; Data that will be used later
 	ds 21 ; Padding
 	 
 	; Other data
@@ -153,6 +154,9 @@ MLM_odata_mix_macro2:
 	db &02 ; 1 frame with tone disabled and noise enabled
 
 MLM_odata_vol_macro1:
-	db 22-1 ; Macro length
-	db 13   ; Loop point
-	db &21, &43, &65, &87, &A9, &CB, &ED, &FF, &EF, &DD, &DD
+	db 24-1 ; Macro length
+	db 16   ; Loop point
+	;  F E  D C  B A  9 8  7 6  5 4  3 2  1 0
+	db &EF, &CD, &AB, &89, &67, &45, &23, &01
+	;  2 4  6 8  A C  E F 
+	db &42, &86, &CA, &FE

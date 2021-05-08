@@ -576,10 +576,26 @@ MLM_set_instrument_ssg:
 		ld bc,SSGCNT_mix_macro_A
 		add ix,bc
 
+		; Set mix macro
 		ld e,(hl) ; \
 		inc hl    ; | Store macro initialization 
 		ld d,(hl) ; | data pointer in hl
 		ex de,hl  ; /
+		call SSGCNT_MACRO_set
+		
+		; Calculate pointer to volume macro
+		; initialization data (hl) and pointer
+		; to the volume macro in WRAM (ix)
+		ex de,hl
+		inc hl
+		ld bc,SSGCNT_macro*3
+		add ix,bc
+
+		; Set volume macro
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
 		call SSGCNT_MACRO_set
 	pop ix
 	pop af

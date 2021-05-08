@@ -80,29 +80,88 @@ SSGCNT_update_volume:
 		add hl,de
 		ld a,(hl)
 
-		; If channel enable is 1, set volume
-		; to SSGCNT_volumes[channel]; else
-		; set it to 0
+		; If channel enable is 0 (off) set 
+		; volume to 0, else calculate the 
+		; volume based on the channel volume
+		; and the channel's volume macro, if enabled.
 		ld c,0
 		or a,a ; cp a,0
-		jr z,SSGCNT_update_volume_ch_disabled
+		call nz,SSGCNT_get_ym2610_ch_volume
 
-		; Load SSGCNT_volumes[channel]
-		; in c
-		ld hl,SSGCNT_volumes
-		add hl,de
-		ld c,(hl)
-
-SSGCNT_update_volume_ch_disabled:
 		; Calculate the register address
 		ld a,REG_SSG_CHA_VOL
 		add a,b
 		ld d,a
 		ld e,c
-
 		rst RST_YM_WRITEA
 	pop bc
 	pop af
+	pop de
+	pop hl
+	ret
+
+; [INPUT]
+; 	b: channel (0~2)
+; [OUTPUT]
+;	c: volume
+; Calculates the volume, based on the set 
+; channel volume and also the channel's
+; volume macro, if it's enabled
+SSGCNT_get_ym2610_ch_volume:
+	push hl
+	push de
+	push ix
+	push af
+		brk 
+
+		; Load SSGCNT_volumes[channel]
+		; in c
+		ld hl,SSGCNT_volumes
+		ld e,b
+		ld d,0
+		add hl,de
+		ld c,(hl)
+
+		; Calculate pointer to the
+		; channel's volume macro (ix)
+		ld ixl,b
+		ld ixh,0
+		ld de,SSGCNT_vol_macro_A
+		add ix,ix ; \
+		add ix,ix ; | ix *= 8
+		add ix,ix ; /
+		add ix,de
+
+		; If the macro is disabled (enable = $00)
+		; then return, else calculate the volume
+		; using the macro's data
+		ld a,(ix+SSGCNT_macro.enable)
+		or a,a ; cp a,0
+		jr z,SSGCNT_get_ym2610_ch_volume_return
+
+		; Calculate pointer to current
+		; volume array (a LUT is used to 
+		; correctly set the volume of macros)
+		ld l,c
+		ld h,0
+		add hl,hl ; -\
+		add hl,hl ;   | hl *= 16
+		add hl,hl ;  /
+		add hl,hl ; /
+		ld de,SSGCNT_vol_LUT
+		add hl,de
+
+		; Index said array to get the
+		; desired volume
+		call SSGCNT_NMACRO_read ; Load macro value in a
+		ld e,a
+		ld d,0
+		add hl,de
+		ld c,(hl)
+
+SSGCNT_get_ym2610_ch_volume_return:
+	pop af
+	pop ix
 	pop de
 	pop hl
 	ret
@@ -173,8 +232,6 @@ SSGCNT_update_channels_mix:
 		jr z,SSGCNT_update_mixing_macros_return
 
 		call SSGCNT_NMACRO_read ; Stores macro value in a
-		brk
-
 		ld ixl,a ; backup macro value in ixl
 		ld d,b   ; backup channel in d (channel parameter)
 
@@ -379,7 +436,7 @@ SSGCNT_NMACRO_read:
 		; If macro.curr_pt is even, then
 		; return the least significant nibble,
 		; else return the most significant one.
-		bit 0,e
+		bit 0,(ix+SSGCNT_macro.curr_pt)
 		jr z,SSGCNT_NMACRO_read_even_pt
 
 		srl a ; \
