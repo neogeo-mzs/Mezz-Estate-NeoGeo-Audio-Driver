@@ -48,10 +48,12 @@ $0001   | Channel 0 offset  | 2
 ...     | ...               |
 $001B   | Channel 12 offset | 2
 $001D   | Timer A counter   | 2
-$001F   | Zone 2 bank       | 1
-$0020   | Zone 1 bank       | 1
-$0021   | Zone 0 bank       | 1
+$001F   | Mode              | 1
+$0020   | Zone 2 bank       | 1
+$0021   | Zone 1 bank       | 1
+$0022   | Zone 0 bank       | 1
 
+Mode should be used to enable or disable deflemask compatibility, it currently does nothing but I'm putting it in the specs just in case.
 each channel is an array of events. The driver executes the event, and then waits the amount of time specifies in the event.
 Events can be split in two categories, depending on the most significant bit. 
 

@@ -597,6 +597,16 @@ MLM_set_instrument_ssg:
 		ld d,(hl)
 		ex de,hl
 		call SSGCNT_MACRO_set
+
+		; Set arpeggio macro
+		ex de,hl
+		inc hl
+		add ix,bc
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		call SSGCNT_MACRO_set
 	pop ix
 	pop af
 	pop bc

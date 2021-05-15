@@ -129,13 +129,12 @@ MLM_el_ssg:
 	dsb 30,0 ; padding
 
 	; Instrument 1 (SSG)
-	db 1  ; Mixing: Tone ON; Noise OFF
-	db 0  ; EG enable: OFF
-	ds 3  ; Skip EG information since EG is disabled
-	;dw MLM_odata_mix_macro1-&A000 + OTHER_DATA
-	dw &0000
-	dw MLM_odata_vol_macro1-&A000 + OTHER_DATA
-	ds 2 ; Data that will be used later
+	db 1                                       ; Mixing: Tone ON; Noise OFF
+	db 0                                       ; EG enable: OFF
+	ds 3                                       ; Skip EG information since EG is disabled
+	dw &0000                                   ; Mix macro      | MLM_odata_mix_macro1-&A000 + OTHER_DATA
+	dw &0000                                   ; Volume macro   | MLM_odata_vol_macro1-&A000 + OTHER_DATA
+	dw MLM_odata_arp_macro1-&A000 + OTHER_DATA ; Arpeggio macro
 	ds 21 ; Padding
 	 
 	; Other data
@@ -148,11 +147,6 @@ MLM_odata_mix_macro1:
 	dsb 15,&22  ; 30 frames with tone disabled and noise enabled
 	dsb 15,&33  ; 30 frames with tone and noise enabled
 
-MLM_odata_mix_macro2:
-	db 1-1 ; Macro length
-	db &FF ; Disable looping
-	db &02 ; 1 frame with tone disabled and noise enabled
-
 MLM_odata_vol_macro1:
 	db 24-1 ; Macro length
 	db 16   ; Loop point
@@ -160,3 +154,8 @@ MLM_odata_vol_macro1:
 	db &EF, &CD, &AB, &89, &67, &45, &23, &01
 	;  2 4  6 8  A C  E F 
 	db &42, &86, &CA, &FE
+
+MLM_odata_arp_macro1:
+	db 10-1 ; Macro length
+	db 2    ; Loop point
+	db -2,-2,-1,-1, 0, 0, 1, 1, 2, 2
