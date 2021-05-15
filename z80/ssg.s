@@ -56,7 +56,7 @@ SSGCNT_irq_vol_loop:
 	call SSGCNT_update_noise_tune
 
 	; Update all macros
-	ld b,7              ; total amount of macros
+	ld b,9              ; total amount of macros
 	ld de,SSGCNT_macro  ; de = sizeof(SSGCNT_macro)
 	ld ix,SSGCNT_macros
 SSGCNT_irq_vol_macro_loop:
@@ -171,6 +171,7 @@ SSGCNT_update_note:
 	push hl
 	push de
 	push af
+	push ix
 		; Load SSGCNT_notes[channel]
 		; into l
 		ld hl,SSGCNT_notes
@@ -179,6 +180,35 @@ SSGCNT_update_note:
 		add hl,de
 		ld l,(hl)
 
+		; Wrap l inbetween 0 and 127
+		ld a,l
+		and a,&7F
+		ld l,a
+
+		; Calculate pointer to
+		; arpeggio macro
+		ld ixl,b
+		ld ixh,0
+		ld de,SSGCNT_arp_macro_A
+		add ix,ix ; \
+		add ix,ix ; | ix *= 8
+		add ix,ix ; /
+		add ix,de
+
+		; If the macro is disabled (enable = $00), 
+		; just use the value in SSGCNT_notes[channel]
+		xor a,a ; ld a,0
+		cp a,(ix+SSGCNT_macro.enable)
+		jr z,SSGCNT_update_note_macro_disabled
+		
+		; Else (the macro is enabled) add to
+		; the value in SSGCNT_notes[channel]
+		; the macro's current value (signed addition)
+		call SSGCNT_BMACRO_read ; Load macro value in a
+		add a,l
+		ld l,a
+
+SSGCNT_update_note_macro_disabled:
 		; Calculate pointer to
 		; SSGCNT_note_LUT[note]
 		ld h,0
@@ -201,6 +231,7 @@ SSGCNT_update_note:
 		inc hl
 		ld e,(hl)
 		rst RST_YM_WRITEA
+	pop ix
 	pop af
 	pop de
 	pop hl
@@ -519,12 +550,12 @@ SSGCNT_MACRO_set_return:
 	ret
 
 ; a: channel
-;  Set's all channel's macros
+;  Starts's all channel's macros
 SSGCNT_start_channel_macros:
 	push ix
 	push de
 		; Calculate address to channel's mix macro,
-		; and set macro.curr_pt to 0
+		; and set mix_macro.curr_pt to 0
 		ld ixl,a
 		ld ixh,0
 		ld de,SSGCNT_mix_macro_A
@@ -534,7 +565,14 @@ SSGCNT_start_channel_macros:
 		add ix,de
 		ld (ix+SSGCNT_macro.curr_pt),0
 
-		; TODO: other macros
+		; Set channel's volume macro.curr_pt to 0
+		ld de,SSGCNT_macro*3
+		add ix,de
+		ld (ix+SSGCNT_macro.curr_pt),0
+		
+		; Set channel's arpeggio macro.curr_pt to 0
+		add ix,de
+		ld (ix+SSGCNT_macro.curr_pt),0
 	pop de
 	pop ix
 	ret
