@@ -1,3 +1,4 @@
+; TODO: check if checking the timer flags fixes the interrupt issue
 IRQ: ; MLM_2CH_mode
 	push af
 	push bc
@@ -5,27 +6,33 @@ IRQ: ; MLM_2CH_mode
 	push hl
 	push ix
 	push iy
+        in a,(4)
+        bit 0,a
+        jr z,IRQ_end
+
+        ;jp softlock
+
 		call IRQ_handle_commands
 		call MLM_irq
         call SSGCNT_irq
-        
+
         ; data = TM_CNT_LOAD_TA | TM_CNT_ENABLE_TA_IRQ | TM_CNT_TA_FLG_RESET
         ; data |= *EXT_2CH_mode
         ld e,TM_CNT_LOAD_TA | TM_CNT_ENABLE_TA_IRQ | TM_CNT_TA_FLG_RESET
-        ld a,(EXT_2CH_mode)
-        or a,e
-        ld e,a
-
+        ;ld a,(EXT_2CH_mode)
+        ;or a,e
+        ;ld e,a
         ld d,REG_TIMER_CNT
 		rst RST_YM_WRITEA
+
+IRQ_end:
 	pop iy
 	pop ix
 	pop hl
 	pop de
 	pop bc
 	pop af
-	ei
-	ret
+	reti
 
 ; bc: word
 IRQ_write2buffer:

@@ -136,6 +136,7 @@ RST_YM_DELAY1 equ &08
 RST_YM_DELAY2 equ &10
 RST_YM_WRITEA equ &18
 RST_YM_WRITEB equ &20
+RST_YM_READA equ &28
 
 ; Timer control
 TM_CNT_LOAD_TA       equ %00000001

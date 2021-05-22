@@ -7,6 +7,7 @@ MAME  := mame
 GNGEO := ngdevkit-gngeo
 ZIP   := zip
 LN    := ln 
+NEOSDCONV := neosdconv
 
 PROM_PATH  := 68k
 M1ROM_PATH := z80
@@ -81,3 +82,13 @@ gngeo_debug: build
 	$(ZIP) -r -j $(BUILD_PATH)/puzzledp.zip $(BUILD_PATH)/*.bin
 	$(CP) neogeo.zip $(BUILD_PATH)/neogeo.zip 
 	$(GNGEO) -i$(BUILD_PATH) --scale=2 --screen320 -D puzzledp
+
+neosdconv: build
+	rm $(BUILD_PATH)/*.bin
+	$(NEOSDCONV) -i $(BUILD_PATH) -o $(BUILD_PATH)/build.neo -n homebrew -y 2021 -m "Mezz'Estate"
+	
+ifneq ($(strip $(NEOSD_ROM_PATH)),)
+	echo "Moving neo rom to SD card"
+	rm -f $(NEOSD_ROM_PATH)/build.neo
+	$(CP) $(BUILD_PATH)/build.neo $(NEOSD_ROM_PATH)/build.neo
+endif
