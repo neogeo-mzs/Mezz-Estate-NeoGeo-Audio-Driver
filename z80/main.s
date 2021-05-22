@@ -22,12 +22,16 @@ j_port_write_a:
 j_port_write_b:
 	jp port_write_b
 
+	org &0028
+j_port_read_a:
+	jp port_read_a
+
 	org &0038
 j_IRQ:
 	di
 	jp IRQ
 
-	asciiz "MZS Deflemask VGM driver by GbaCretin"
+	asciiz "MZS driver by GbaCretin"
 
 	org &0066
 NMI:
@@ -85,12 +89,12 @@ startup:
 
 	ld hl,98
 	call ta_counter_load_set
-	ld de,(REG_TIMER_CNT<<8) | %10101
+	ld de,(REG_TIMER_CNT<<8) | TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ
 	rst RST_YM_WRITEA
 	
 	call set_default_banks
 
-	out (ENABLE_NMI),a
+	out (ENABLE_NMI),a ; This does NOT crash or stop execution
 
 main_loop:
 	ei
@@ -154,9 +158,56 @@ set_default_banks:
 	pop af
 	ret
 
-; Plays a noisy beep on the SSG channel C
+; Plays a noisy beep on the first FM channel
 ; and then enters an infinite loop
 softlock:
+	di              
+	call fm_stop
+
+	; Set FM channel 1 registers
+	ld d,REG_FM_CH13_FBLOCK
+	ld e,&10
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH13_FNUM
+	ld e,&FF
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH13_FBALGO
+	ld e,&3F
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH13_LRAMSPMS
+	ld e,%11000000
+	rst RST_YM_WRITEA
+
+	; Set operator 1
+	ld d,REG_FM_CH1_OP1_DTMUL
+	ld e,&00
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH1_OP1_TVOL
+	ld e,&00
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH1_OP1_KSAR
+	ld e,31
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH1_OP1_AMDR
+	ld e,&00
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH1_OP1_SUSR
+	ld e,&00
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH1_OP1_SLRR
+	ld e,15
+	rst RST_YM_WRITEA
+	ld d,REG_FM_CH1_OP1_ENVGN
+	ld e,0
+	rst RST_YM_WRITEA
+
+	ld d,REG_FM_KEY_ON
+	ld e,&11
+	rst RST_YM_WRITEA
+
+	jp $
+
+ssg_softlock:
 	call ssg_stop
 
 	ld d,REG_SSG_CHC_FINE_TUNE

@@ -59,7 +59,8 @@ int main()
     print_gui();
 
     const int SONG_COUNT = 128;
-    int selected_song = 10;
+    //int selected_song = 10;
+    int selected_song = 0;
 
     while(1)
     {
