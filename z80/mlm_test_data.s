@@ -58,6 +58,7 @@ MLM_song_pa6:
 
 MLM_el_pa: ; Start in Zone 3
 	db &80 | 60, 0 ; Play ADPCM-A sample 0 (C)
+	db &01, 60
 	db &80 | 60, 2 ; Play ADPCM-A sample 2 (D)
 	db &00 ; End of song
 
@@ -117,8 +118,9 @@ MLM_song_ssg3:
 
 MLM_el_ssg:
 	db &02,1              ; Set instrument to 1
-	db &80 | 127,2*12 + 0 ; Play SSG note C4 and wait 127 ticks
-	db &04, &FF, &FF      ; Wait 65535 ticks
+	db &80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
+	db &01, 30
+	db &80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db &00 ; End of song
 
 	; Instruments
@@ -134,7 +136,7 @@ MLM_el_ssg:
 	ds 3                                       ; Skip EG information since EG is disabled
 	dw &0000                                   ; Mix macro      | MLM_odata_mix_macro1-&A000 + OTHER_DATA
 	dw &0000                                   ; Volume macro   | MLM_odata_vol_macro1-&A000 + OTHER_DATA
-	dw MLM_odata_arp_macro1-&A000 + OTHER_DATA ; Arpeggio macro
+	dw MLM_odata_arp_macro1-&A000 + OTHER_DATA ; Arpeggio macro | 
 	ds 21 ; Padding
 	 
 	; Other data

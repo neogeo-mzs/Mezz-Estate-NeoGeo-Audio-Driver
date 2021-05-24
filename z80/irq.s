@@ -1,4 +1,3 @@
-; TODO: check if checking the timer flags fixes the interrupt issue
 IRQ: ; MLM_2CH_mode
 	push af
 	push bc
@@ -24,7 +23,6 @@ IRQ: ; MLM_2CH_mode
         ;ld e,a
         ld d,REG_TIMER_CNT
 		rst RST_YM_WRITEA
-
 IRQ_end:
 	pop iy
 	pop ix

@@ -17,66 +17,9 @@ MLM_update_loop:
 	ld c,b
 	dec c
 
-	; if MLM_playback_control[ch] == 0 then
-	; do not update this channel
-	ld h,0
-	ld l,c
-	ld de,MLM_playback_control
-	add hl,de
-	ld a,(hl)
-	or a,a ; cp a,0
-	jr z,MLM_update_loop_next
+	call MLM_update_channel_playback
+	call MLM_update_channel_volume
 
-	inc iyl ; increment active mlm channel counter
-
-	; hl = &MLM_playback_timings[channel]
-	; de = *hl
-	ld h,0
-	ld l,c
-	ld de,MLM_playback_timings
-	add hl,hl
-	add hl,de
-	ld e,(hl)
-	inc hl
-	ld d,(hl)
-
-	; Decrement the timing and 
-	; store it back into WRAM
-	dec de 
-	ld (hl),d
-	dec hl
-	ld (hl),e
-
-	; if timing==0 update events
-	; else save decremented timing
-	push hl
-		ld hl,0
-		sbc hl,de
-	pop hl
-MLM_update_check_execute_events:
-	call z,MLM_update_events
-
-	; if MLM_playback_set_timings[ch] is 0
-	; (thus the timing was set to 0 during this loop)
-	; then execute the next event immediately
-	ld h,0
-	ld l,c
-	ld de,MLM_playback_set_timings
-	add hl,hl
-	add hl,de
-	ld e,(hl)
-	inc hl
-	ld d,(hl)
-
-	; compare de to 0
-	push hl
-		ld hl,0
-		or a,a ; clear carry flag
-		sbc hl,de
-	pop hl
-	jr z,MLM_update_check_execute_events
-
-MLM_update_loop_next:
 	djnz MLM_update_loop 
 
 	; Clear MLM_base_time_counter
@@ -92,6 +35,156 @@ MLM_update_loop_next:
 	
 MLM_update_skip:
 	ret
+
+; [INPUT]
+; 	c: channel
+; [OUTPUT]
+;	iyl: active channel count 
+MLM_update_channel_playback:
+	push hl
+	push de
+	push af
+		; if MLM_playback_control[ch] == 0 then
+		; do not update this channel
+		ld h,0
+		ld l,c
+		ld de,MLM_playback_control
+		add hl,de
+		ld a,(hl)
+		or a,a ; cp a,0
+		jr z,MLM_update_channel_playback_ret
+
+		inc iyl ; increment active mlm channel counter
+
+		; hl = &MLM_playback_timings[channel]
+		; de = *hl
+		ld h,0
+		ld l,c
+		ld de,MLM_playback_timings
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+
+		; Decrement the timing and 
+		; store it back into WRAM
+		dec de 
+		ld (hl),d
+		dec hl
+		ld (hl),e
+
+		; if timing==0 update events
+		; else save decremented timing
+		push hl
+			ld hl,0
+			sbc hl,de
+		pop hl
+MLM_update_channel_playback_execute_events:
+		call z,MLM_update_events
+
+		; if MLM_playback_set_timings[ch] is 0
+		; (thus the timing was set to 0 during this loop)
+		; then execute the next event immediately
+		ld h,0
+		ld l,c
+		ld de,MLM_playback_set_timings
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+
+		; compare de to 0
+		push hl
+			ld hl,0
+			or a,a ; clear carry flag
+			sbc hl,de
+		pop hl
+		jr z,MLM_update_channel_playback_execute_events
+MLM_update_channel_playback_ret:
+	pop af
+	pop de
+	pop hl
+	ret
+
+; c: channel
+MLM_update_channel_volume:
+	push bc
+	push hl
+	push af
+	push de
+		brk
+		
+		ld b,0
+		ld hl,MLM_channel_volumes
+		add hl,bc
+		ld a,(hl)
+
+		ld h,0
+		ld l,c
+		ld de,MLM_update_ch_vol_vectors
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		jp (hl)
+MLM_update_ch_vol_return:
+	pop de
+	pop af
+	pop hl
+	pop bc
+	ret
+
+MLM_update_ch_vol_vectors:
+	dsw 6, MLM_update_ch_vol_PA
+	dsw 4, MLM_update_ch_vol_FM
+	dsw 3, MLM_update_ch_vol_SSG
+
+MLM_update_ch_vol_PA:
+	push af
+	push bc
+		; Scale down volume
+		; ($00~$FF -> $00~$1F)
+		srl a
+		srl a
+		srl a
+
+		; swap a and c
+		ld b,c
+		ld c,a
+		ld a,b
+
+		call PA_set_channel_volume
+	pop bc
+	pop af
+	jr MLM_update_ch_vol_return
+
+MLM_update_ch_vol_FM:
+	jr MLM_update_ch_vol_return
+
+MLM_update_ch_vol_SSG:
+	push af
+	push bc
+		; Scale down volume
+		; ($00~$FF -> $00~$0F)
+		srl a
+		srl a
+		srl a
+		srl a
+
+		; swap a and c
+		ld b,c
+		ld c,a
+		ld a,b
+
+		sub a,MLM_CH_SSG1
+		call SSGCNT_set_vol
+	pop bc
+	pop af
+	jr MLM_update_ch_vol_return
 
 ; stop song
 MLM_stop:
@@ -133,11 +226,6 @@ MLM_stop:
 	pop de
 	pop hl
 	ret
-
-MLM_default_channel_volumes:
-	db &1F, &1F, &1F, &1F, &1F, &1F ; ADPCM-A channels
-	db &00, &00, &00, &00           ; FM channels
-	db &0F, &0F, &0F                ; SSG channels
 
 ; a: song
 MLM_play_song:
@@ -183,51 +271,8 @@ MLM_play_song:
 		ld ix,MLM_playback_control
 		ld b,CHANNEL_COUNT
 MLM_play_song_loop:
-		push bc
-			; Set all channel timings to 1
-			ld a,b
-			dec a
-			ld bc,1
-			call MLM_set_timing
-
-			; Load channel's playback offset
-			; into bc
-			ld c,(hl)
-			inc hl
-			ld b,(hl)
-			inc hl
-
-			; Obtain ptr to channel's playback
-			; data by adding MLM_SONGS to its
-			; playback offset.
-			;	Only the due words' MSB need
-			;	to be added together, since
-			;	the LSB is always equal to &00.
-			ld a,>MLM_SONGS
-			add a,b
-
-			; store said pointer into
-			; MLM_playback_pointers[ch]
-			ex de,hl
-				ld (hl),c
-				inc hl
-				ld (hl),a
-				inc hl
-			ex de,hl
-
-			; If the playback pointer isn't
-			; equal to 0, set the channel's
-			; playback control to &FF
-			push hl
-				ld hl,0
-				or a,a ; Clear carry flag
-				sbc hl,bc
-				jr z,MLM_play_song_loop_no_playback
-				ld (ix+0),&FF
-MLM_play_song_loop_no_playback:
-				inc ix
-			pop hl
-		pop bc
+		call MLM_playback_init
+		call MLM_ch_parameters_init
 		djnz MLM_play_song_loop
 
 		; Load timer a counter load
@@ -251,11 +296,93 @@ MLM_play_song_loop_no_playback:
 		ld de,MLM_playback_start_pointers
 		ld bc,2*CHANNEL_COUNT
 		ldir
+
+		; Set all the channel's
+		; volumes to &FF
+		ld hl,MLM_channel_volumes
+		ld de,MLM_channel_volumes+1
+		ld bc,CHANNEL_COUNT-1
+		ld (hl),&FF
+		ldir
+
+		; Set ADPCM-A master volume
+		ld de,(REG_PA_MVOL<<8) | &3F
+		rst RST_YM_WRITEB
 	pop af
 	pop ix
 	pop de
 	pop bc
 	pop hl
+	ret
+
+; [INPUT]
+;	b:	channel+1
+;	de:	&MLM_playback_pointers[ch]
+;	ix:	&MLM_playback_control[ch]
+; [OUTPUT]
+;	de:	&MLM_playback_pointers[ch+1]
+;	ix:	&MLM_playback_control[ch+1]
+MLM_playback_init:
+	push bc
+	push af
+		; Set all channel timings to 1
+		ld a,b
+		dec a
+		ld bc,1
+		call MLM_set_timing
+
+		; Load channel's playback offset
+		; into bc
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+		inc hl
+
+		; Obtain ptr to channel's playback
+		; data by adding MLM_SONGS to its
+		; playback offset.
+		;	Only the due words' MSB need
+		;	to be added together, since
+		;	the LSB is always equal to &00.
+		ld a,>MLM_SONGS
+		add a,b
+
+		; store said pointer into
+		; MLM_playback_pointers[ch]
+		ex de,hl
+			ld (hl),c
+			inc hl
+			ld (hl),a
+			inc hl
+		ex de,hl
+
+		; If the playback pointer isn't
+		; equal to 0, set the channel's
+		; playback control to &FF
+		push hl
+			ld hl,0
+			or a,a ; Clear carry flag
+			sbc hl,bc
+			jr z,MLM_playback_init_no_playback
+			ld (ix+0),&FF
+MLM_playback_init_no_playback:
+			inc ix
+		pop hl
+	pop af
+	pop bc
+	ret
+
+; b: channel+1
+;	Initializes channel parameters
+MLM_ch_parameters_init:
+	push af
+	push bc
+		ld a,b
+		dec a
+		ld c,PANNING_CENTER
+		call MLM_set_channel_panning
+	pop bc
+	pop af
 	ret
 
 ; c: channel
@@ -392,82 +519,6 @@ MLM_play_sample_pa:
 ;   a:  channel+6
 ;   bc: source
 MLM_play_note_fm:
-	; Set Timing
-	push bc
-		; Mask timing
-		push af
-			ld a,b
-			and a,%01111111
-			ld c,a
-			ld b,0
-		pop af
-
-		call MLM_set_timing
-	pop bc
-
-	; Play note
-	push af
-	push hl
-	push de
-	push bc
-		; backup MLM channel number into b
-		ld b,a
-
-		; Lookup correct FM channel number
-		sub a,6
-		ld h,0
-		ld l,a
-		ld de,FM_channel_LUT
-		add hl,de
-		ld a,(hl)
-
-		call FM_stop_channel
-
-		; Set panning
-		push bc
-		push af
-			ld h,0
-			ld l,b
-			ld de,MLM_channel_pannings
-			add hl,de
-			ld c,(hl)
-			ld a,b
-			call FM_set_panning
-		pop af
-		pop bc
-
-		; Load instrument
-		push bc
-			ld h,0
-			ld l,b
-			ld de,MLM_channel_instruments
-			add hl,de
-			ld b,a
-			ld c,(hl)
-			call FM_load_instrument
-		pop bc
-
-		; Set attenuator
-		push bc
-			ld l,b
-			ld h,0
-			ld de,MLM_channel_volumes
-			add hl,de
-			ld c,(hl)
-			call FM_set_attenuator
-		pop bc
-
-		ld b,a
-		call FM_set_note
-
-		ld d,REG_FM_KEY_ON
-		or a,%11110000
-		ld e,a
-		rst RST_YM_WRITEA
-	pop bc
-	pop de
-	pop hl
-	pop af
 	jp MLM_parse_note_end
 
 ;   a:  channel
@@ -518,7 +569,7 @@ MLM_set_instrument_return:
 	pop hl
 	pop bc
 	ret
-
+	
 ; a:  channel
 ; hl: &MLM_channel_instruments[channel]
 MLM_set_instrument_ssg:
@@ -613,6 +664,124 @@ MLM_set_instrument_ssg:
 	pop hl
 	pop de
 	jr MLM_set_instrument_return
+
+; a:  channel
+; bc: timing
+MLM_set_timing:
+	push hl
+	push de
+		ld h,0
+		ld l,a
+		ld de,MLM_playback_timings
+		add hl,hl
+		add hl,de
+		ld (hl),c
+		inc hl
+		ld (hl),b
+
+		ld de,MLM_playback_set_timings-MLM_playback_timings
+		add hl,de
+		ld (hl),b
+		dec hl
+		ld (hl),c
+	pop de
+	pop hl
+	ret
+
+; a: channel (MLM)
+MLM_stop_channel:
+	push hl
+	push de
+	push af
+		ld h,0
+		ld l,a
+		ld de,MLM_stop_channel_vectors
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		jp (hl)
+MLM_stop_channel_return:
+	pop af
+	pop de
+	pop hl
+	ret
+
+MLM_stop_channel_vectors:
+	dsw 6, MLM_stop_channel_PA
+	dsw 4, MLM_stop_channel_FM
+	dsw 3, MLM_stop_channel_SSG
+
+; a: channel
+MLM_stop_channel_PA:
+	call PA_stop_sample
+	jp MLM_stop_channel_return
+
+; a: channel
+MLM_stop_channel_FM:
+	jp MLM_stop_channel_return
+
+; a: channel
+MLM_stop_channel_SSG:
+	sub a,MLM_CH_SSG1
+	call SSGCNT_disable_channel
+	jp MLM_stop_channel_return
+
+; a: volume
+; c: channel
+;	This sets MLM_channel_volumes,
+;   the register writes are done in
+;   the IRQ
+MLM_set_channel_volume:
+	push hl
+	push bc
+	push af
+		ld hl,MLM_channel_volumes
+		ld b,0
+		add hl,bc
+		ld (hl),a
+MLM_set_channel_volume_return:
+	pop af
+	pop bc
+	pop hl
+	ret
+
+; a: channel
+; c: panning (LR------)
+MLM_set_channel_panning:
+	push hl
+	push de
+	push af
+		ld h,0
+		ld l,a
+		ld de,MLM_set_ch_pan_vectors
+		add hl,hl
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex de,hl
+		jp (hl)
+MLM_set_ch_pan_ret:
+	pop af
+	pop de
+	pop hl
+	ret
+
+MLM_set_ch_pan_vectors:
+	dsw 6, MLM_set_ch_pan_PA
+	dsw 4, MLM_set_ch_pan_FM
+	dsw 3, MLM_set_ch_pan_ret ; SSG is mono
+
+MLM_set_ch_pan_PA:
+	call PA_set_channel_panning
+	jr MLM_set_ch_pan_ret
+
+MLM_set_ch_pan_FM:
+	; Call something
+	jr MLM_set_ch_pan_ret
 
 ;   c:  channel
 ;   hl: source (playback pointer)
@@ -718,70 +887,6 @@ MLM_command_argc:
 	dsb 16, &00 ; Wait ticks nibble
 	dsb 96, 0   ; Invalid commands all have no arguments
 
-; a:  channel
-; bc: timing
-MLM_set_timing:
-	push hl
-	push de
-		ld h,0
-		ld l,a
-		ld de,MLM_playback_timings
-		add hl,hl
-		add hl,de
-		ld (hl),c
-		inc hl
-		ld (hl),b
-
-		ld de,MLM_playback_set_timings-MLM_playback_timings
-		add hl,de
-		ld (hl),b
-		dec hl
-		ld (hl),c
-	pop de
-	pop hl
-	ret
-
-; c: channel
-MLM_stop_channel:
-	push hl
-	push de
-	push af
-		ld h,0
-		ld l,c
-		ld de,MLM_stop_channel_LUT
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		jp (hl)
-MLM_stop_channel_return:
-	pop af
-	pop de
-	pop hl
-	ret
-
-MLM_stop_channel_LUT:
-	dsw 6, MLM_stop_channel_return
-	dsw 4, MLM_stop_channel_FM
-	dsw 3, MLM_stop_channel_return
-
-; c: channel
-MLM_stop_channel_FM:
-	push bc
-	push hl
-	push af
-		ld hl,FM_channel_LUT
-		ld b,0
-		add hl,bc
-		ld a,(hl)
-		call FM_stop_channel
-	pop af
-	pop hl
-	pop bc
-	jp MLM_stop_channel_return
-
 ; c: channel
 MLMCOM_end_of_list:
 	push hl
@@ -816,39 +921,8 @@ MLMCOM_note_off:
 	push af
 	push de
 	push bc
-		; switch (channel) {
-		; case is_adpcma:
-		;   PA_stop_sample(channel);
-		;   break;
-		;
-		; case is_ssg:
-		;   SSG_stop_channel(channel-10);
-		;   break;
-		;
-		; default: // is fm
-		;   FM_stop_channel(FM_channel_LUT[channel-6]);
-		;   break;
-		; }
 		ld a,c
-		cp a,6
-		call c,PA_stop_sample
-		jr c,MLMCOM_note_off_break
-
-		cp a,10
-		sub a,10
-		call nc,SSGCNT_disable_channel
-		jr nc,MLMCOM_note_off_break
-
-		ld a,c
-		sub a,6
-		ld h,0
-		ld l,a 
-		ld de,FM_channel_LUT
-		add hl,de
-		ld a,(hl)
-		call FM_stop_channel
-
-MLMCOM_note_off_break:
+		call MLM_stop_channel
 		ld hl,MLM_event_arg_buffer
 		ld a,c
 		ld b,0
@@ -868,7 +942,6 @@ MLMCOM_set_instrument:
 	push bc
 		ld a,(MLM_event_arg_buffer)
 		call MLM_set_instrument
-
 		ld a,c
 		ld bc,0
 		call MLM_set_timing
@@ -934,22 +1007,7 @@ MLMCOM_set_channel_volume:
 		ld c,(ix+0)
 		ld (hl),c
 
-		; if channel is adpcma...
-		cp a,6
-		call c,PA_set_channel_volume
-		jr c,MLMCOM_set_channel_volume_set_timing
-
-		; elseif channel is fm...
-		cp a,10
-		jr c,MLMCOM_set_channel_volume_fm
-
-		; else (channel is ssg)...
-		push af
-			sub a,10
-			call SSGCNT_set_vol
-		pop af
-
-MLMCOM_set_channel_volume_set_timing:
+		; Set timing
 		ld c,(ix+1)
 		ld b,0
 		call MLM_set_timing
@@ -958,25 +1016,6 @@ MLMCOM_set_channel_volume_set_timing:
 	pop af
 	pop ix
 	jp MLM_parse_command_end
-
-MLMCOM_set_channel_volume_fm:
-	push af
-	push hl
-	push de
-		; Load actual FM channel number
-		; from LUT into a
-		sub a,6
-		ld h,0
-		ld l,a
-		ld de,FM_channel_LUT
-		add hl,de
-		ld a,(hl)
-
-		call FM_set_attenuator
-	pop de
-	pop hl
-	pop af
-	jr MLMCOM_set_channel_volume_set_timing
 
 ; c: channel
 ; Arguments:
@@ -993,25 +1032,7 @@ MLMCOM_set_channel_panning:
 		ld a,c ;  |- Swap a and c sacrificing b
 		ld c,b ; /
 
-		; Store panning into 
-		; MLM_channel_pannings[channel]
-		ld h,0
-		ld l,a
-		ld de,MLM_channel_pannings
-		add hl,de
-		ld (hl),c
-
-		; if channel is adpcma...
-		cp a,6
-		call c,PA_set_channel_panning
-		jr c,MLMCOM_set_channel_panning_set_timing
-
-		; elseif channel is FM...
-		cp a,10
-		call c,FM_set_panning
-
-		; else channel is SSG, the panning will be
-		; ignored since the SSG channels are mono
+		call MLM_set_channel_panning
 
 MLMCOM_set_channel_panning_set_timing:
 		ld b,a ; backup channel in b
@@ -1183,52 +1204,6 @@ MLMCOM_big_position_jump:
 ;   1. %SSSSSSSS (Signed pitch offset per tick)
 ;   2. %TTTTTTTT (Timing)
 MLMCOM_portamento_slide:
-	jp MLM_parse_command_end
-	push hl
-	push de
-	push ix
-	push bc
-	push af
-		ld ixl,c ; Backup MLM channel into ixl
-
-		; Jump to the end of the subroutine
-		; if the channel isn't FM
-		ld a,c
-		cp a,MLM_CH_FM1   ; if a < MLM_CH_FM1
-		jr c,MLMCOM_portamento_slide_skip
-		cp a,MLM_CH_FM4+1 ; if a > MLM_CH_FM4
-		jr nc,MLMCOM_portamento_slide_skip
-
-		; Load internal fm channel into l
-		ld h,0
-		ld l,c
-		ld de,FM_channel_LUT-MLM_CH_FM1
-		add hl,de
-		ld l,(hl)
-
-		; Load 8bit signed pitch offset, sign extend
-		; it to 16bit, then store it into WRAM
-		ld a,(MLM_event_arg_buffer)
-		;call AtoBCextendendsign
-		ld h,0
-		;ld de,FM_portamento_slide
-		add hl,hl
-		add hl,de
-		ld (hl),c
-		inc hl
-		ld (hl),b
-		
-MLMCOM_portamento_slide_skip:
-		ld a,(MLM_event_arg_buffer+1)
-		ld c,a
-		ld a,ixl
-		ld b,0
-		call MLM_set_timing
-	pop af
-	pop bc
-	pop ix
-	pop de
-	pop hl
 	jp MLM_parse_command_end
 
 ; c: channel
