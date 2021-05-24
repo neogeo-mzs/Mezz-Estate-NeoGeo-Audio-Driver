@@ -86,13 +86,21 @@ PA_stop_sample:
 PA_set_channel_volume:
 	push de
 	push hl
+		; Store volume in 
+		; PA_channel_volumes[channel]
+		ld h,0
+		ld l,a
+		ld de,PA_channel_volumes
+		add hl,de
+		ld (hl),c
+
 		; Load panning from 
-		; MLM_channel_pannings[channel]
+		; PA_channel_pannings[channel]
 		; and OR it with the volume
 		push af
 			ld h,0
 			ld l,a
-			ld de,MLM_channel_pannings
+			ld de,PA_channel_pannings
 			add hl,de
 			ld e,(hl)
 			ld a,c
@@ -116,13 +124,21 @@ PA_set_channel_panning:
 	push hl
 	push de
 	push bc
+		; Store panning in 
+		; PA_channel_pannings[channel]
+		ld h,0
+		ld l,a
+		ld de,PA_channel_pannings
+		add hl,de
+		ld (hl),c
+
 		; Load volume from
 		; MLM_channel_volumes[channel]
 		; and OR it with the panning
 		push af
 			ld h,0
 			ld l,a
-			ld de,MLM_channel_volumes
+			ld de,PA_channel_volumes
 			add hl,de
 			ld a,(hl)
 			or a,c
