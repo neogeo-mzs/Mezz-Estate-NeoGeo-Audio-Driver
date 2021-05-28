@@ -169,7 +169,25 @@ $03FE  | Sample 255 end address / 256   | 2
 
 #### FM instrument structure
 
-TODO
+offset | description                              | bytes
+-------|------------------------------------------|------
+$0000  | Feedback (FB) and Algorithm (ALGO)       | 1
+$0001  | AM Sense (AMS), and PM Sense (PMS)       | 1
+$0002  | Detune (DT) and Multiple (MUL)           | 1
+$0003  | Total Level (Volume)                     | 1
+$0004  | Key Scale (KS) and Attack Rate (AR)      | 1
+$0005  | AM On (AM) and Decay Rate (DR)           | 1
+$0006  | Sustain Rate (SR)                        | 1
+$0007  | Sustain Level (SL) and Release Rate (RR) | 1
+$0008  | Envelope generator                       | 1
+$0009  | OP enable                                | 1
+$000A  | Padding                                  | 22
+
+Check the neogeodev wiki (or any YM2610 document) to see
+how the FM channel/operator data is arranged, they're
+arranged in the same way they are in the register. Except for
+"AM Sense (AMS), and PM Sense (PMS)", which excludes the panning,
+that is set by the song.
 
 #### SSG instrument structure
 
@@ -239,40 +257,6 @@ this case all 16 bits are used.
 
 ##### Command 2: MLM Stop song
 **format: %00000000'00000010**
-
-### Internal SSG commands
-Used to easily control the 3 SSG channels, they aren't buffered, since
-they should only be used in the IRQ interrupt.
-
-##### Command 0: NOP
-**format: %00000000'00000000**
-
-##### Command 1: Set note
-**format: %CC000001'NNNNNNNN (Channel; Note)**
-
-##### Command 2: Set mixing
-**format: %CC000010'------NT (Channel; Noise enable; Tone enable)**
-
-##### Command 3: Set volume
-**format: %CC000011'----VVVV (Channel; Volume)**
-
-##### Command 4: Set noise tone
-**format: %00000100'---NNNNN (Channel; Noise tone)**
-
-##### Command 5: Set mode
-**format: %CC000101'MMMMMMMM (Channel; Mode)**
-
-If mode is 0, the channel won't use the EG for volume. Else, the EG will be used
-
-##### Command 6: Set volume envelope period fine tune
-**format: %CC000110'TTTTTTTT (Channel; volume envelope fine Tune)**
-
-##### Command 7: Set volume envelope period coarse tune
-**format: %CC000111'TTTTTTTT (Channel; volume envelope coarse Tune)**
-
-##### Command 8: Set volume envelope shape
-**format: %CC001000'----SSSS (Channel; volume envelope Shape)**
-
 
 #### Bankswitching
 Each song is divided in 8kb blocks. The driver has access to two of these blocks at a time, and they can be switched freely allowing up to 512 KiB of data. The blocks are switched when the other starts playing.
