@@ -54,9 +54,11 @@ SSGCNT_wram_end:
 
 ; ======== FM ========
 FM_wram_start:
-FM_base_total_levels:     ds 4*(FM_CHANNEL_COUNT+2) ; u8[6][4]
-FM_channel_fnums:         ds 2*(FM_CHANNEL_COUNT+2) ; u16[6]
-FM_channel_fblocks:       ds FM_CHANNEL_COUNT+2     ; u8[6]
+FM_channel_lramspms:	ds FM_CHANNEL_COUNT             ; u8[4] (LRAA-PPP; Left & Right, Ams, Pms)
+FM_channel_op_enable:	ds FM_CHANNEL_COUNT             ; u8[4] (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
+FM_channel_frequencies: ds FM_CHANNEL_COUNT*2           ; u16[4] (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
+FM_operator_TLs:		ds FM_CHANNEL_COUNT*FM_OP_COUNT ; u8[FM_CH_COUNT][FM_OP_COUNT] (0~127; 127 is lowest, 0 is highest)
+FM_channel_volumes:		ds FM_CHANNEL_COUNT             ; u8[4] (0 is lowest, 127 is highest)
 FM_wram_end:
 
 ; ======== PA ========

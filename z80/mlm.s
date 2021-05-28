@@ -114,8 +114,6 @@ MLM_update_channel_volume:
 	push hl
 	push af
 	push de
-		brk
-		
 		ld b,0
 		ld hl,MLM_channel_volumes
 		add hl,bc

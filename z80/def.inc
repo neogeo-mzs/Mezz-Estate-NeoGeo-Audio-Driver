@@ -105,10 +105,11 @@ FM_CH2 equ %010
 FM_CH3 equ %101
 FM_CH4 equ %110
 
-FM_OP1 equ 0
-FM_OP2 equ 1
-FM_OP3 equ 2
-FM_OP4 equ 3
+FM_OP1      equ 0
+FM_OP2      equ 1
+FM_OP3      equ 2
+FM_OP4      equ 3
+FM_OP_COUNT equ 4
 
 ; ADPCM-A defines
 REG_PA_CTRL		equ &00
