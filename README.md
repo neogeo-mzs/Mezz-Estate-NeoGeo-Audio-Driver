@@ -173,6 +173,17 @@ offset | description                              | bytes
 -------|------------------------------------------|------
 $0000  | Feedback (FB) and Algorithm (ALGO)       | 1
 $0001  | AM Sense (AMS), and PM Sense (PMS)       | 1
+$0002  | OP enable                                | 1
+$0003  | FM operator 1 data                       | 7
+$000A  | FM operator 2 data                       | 7
+$0011  | FM operator 3 data                       | 7
+$0018  | FM operator 4 data                       | 7
+$001F  | Padding                                  | 1
+
+##### FM operator data
+
+offset | description                              | bytes
+-------|------------------------------------------|------
 $0002  | Detune (DT) and Multiple (MUL)           | 1
 $0003  | Total Level (Volume)                     | 1
 $0004  | Key Scale (KS) and Attack Rate (AR)      | 1
@@ -180,8 +191,6 @@ $0005  | AM On (AM) and Decay Rate (DR)           | 1
 $0006  | Sustain Rate (SR)                        | 1
 $0007  | Sustain Level (SL) and Release Rate (RR) | 1
 $0008  | Envelope generator                       | 1
-$0009  | OP enable                                | 1
-$000A  | Padding                                  | 22
 
 Check the neogeodev wiki (or any YM2610 document) to see
 how the FM channel/operator data is arranged, they're
@@ -271,8 +280,6 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 * z80/68k communication doesn't work on real hardware
 
 ## TODO
-* Check if SSG playback works correctly
-* Check if FM playback works
 * Implement ADPCM-B
 * Update MLM header parsing to allow banking
 	1. Implement Zone 3 banking using the bank stored in the MLM header (REMEMBER TO DELAY THIS SOMEHOW)

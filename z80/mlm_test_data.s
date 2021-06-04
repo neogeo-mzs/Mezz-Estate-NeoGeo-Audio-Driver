@@ -92,7 +92,12 @@ MLM_song_fm4:
 	db 1  ; base time (0 is invalid)
 
 MLM_el_fm:
-	db &76 ; Invalid command
+	db &02,2 ; Set instrument to 2
+	db &80 | 21, 0 | (4 << 4) ; Play FM note C4 and wait 21 ticks
+	db &01,3                  ; Stop note and wait 3 ticks
+	db &80 | 127, 0 | (4 << 4) ; Play FM note C4 and wait 127 ticks
+ 	db &00 ; End of song
+ 	
 	db &00 ; End of song
 
 
@@ -117,7 +122,7 @@ MLM_song_ssg3:
 	db 1  ; base time (0 is invalid)
 
 MLM_el_ssg:
-	db &02,1              ; Set instrument to 1
+	db &02,1                  ; Set instrument to 1
 	db &80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
 	db &01, 30
 	db &80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
@@ -138,7 +143,16 @@ MLM_el_ssg:
 	dw &0000                                   ; Volume macro   | MLM_odata_vol_macro1-&A000 + OTHER_DATA
 	dw MLM_odata_arp_macro1-&A000 + OTHER_DATA ; Arpeggio macro | 
 	ds 21 ; Padding
-	 
+	
+	; Instrument 2 (FM)
+	fm_ch_data 2,0,0,0                 ; feedback, algorithm, pms, ams
+	db &F0                             ; Enable all 4 operators
+	fm_op_data 3,1,38,2,31,0,4,6,1,7,0 ; dt,mul,tl,rs,a,am,d,d2,s,r,eg
+	fm_op_data 3,0,40,2,31,0,4,5,1,7,0
+	fm_op_data 3,0,13,0,31,0,9,5,1,7,0
+	fm_op_data 3,1,10,0,31,0,4,3,1,7,0
+	dsb 1,0 ; Padding
+
 	; Other data
 	org &A000
 	incbin "adpcma_sample_lut.bin"

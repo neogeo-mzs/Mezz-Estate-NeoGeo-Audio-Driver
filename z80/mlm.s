@@ -1,5 +1,4 @@
 ; DOESN'T BACKUP REGISTERS
-; THERE COULD BE A PROBLEM HERE
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
@@ -161,6 +160,18 @@ MLM_update_ch_vol_PA:
 	jr MLM_update_ch_vol_return
 
 MLM_update_ch_vol_FM:
+	push af
+		; Scale down volume ($00~$FF -> $00 $7F)
+		srl a
+
+		; Calculate Fm channel (0~3)
+		push af
+			ld a,c
+			sub a,MLM_CH_FM1
+			ld c,a
+		pop af
+		call FMCNT_set_volume
+	pop af
 	jr MLM_update_ch_vol_return
 
 MLM_update_ch_vol_SSG:
@@ -192,18 +203,12 @@ MLM_stop:
 	push af
 		; Stop SSG Controller
 		call SSGCNT_init
+		call FMCNT_init
 
 		; clear MLM WRAM
 		ld hl,MLM_wram_start
 		ld de,MLM_wram_start+1
 		ld bc,MLM_wram_end-MLM_wram_start-1
-		ld (hl),0
-		ldir
-
-		; clear FM WRAM
-		ld hl,FM_wram_start
-		ld de,FM_wram_start+1
-		ld bc,FM_wram_end-FM_wram_start-1
 		ld (hl),0
 		ldir
 
@@ -232,6 +237,8 @@ MLM_play_song:
 	push de
 	push ix
 	push af
+		brk 
+		
 		call MLM_stop
 		call set_default_banks 
 
@@ -515,11 +522,28 @@ MLM_play_sample_pa:
 
 ; [INPUT]
 ;   a:  channel+6
-;   bc: source
+;   bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
 MLM_play_note_fm:
+	push af
+	push ix
+	push bc
+		sub a,MLM_CH_FM1
+		ld ixh,c
+		ld ixl,a
+		call FMCNT_set_note
+		ld c,a
+		call FMCNT_play_channel
+
+		add a,MLM_CH_FM1
+		ld c,b
+		ld b,0
+		call MLM_set_timing
+	pop bc
+	pop ix
+	pop af
 	jp MLM_parse_note_end
 
-;   a:  channel
+;   a:  channel+10
 ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
 MLM_play_note_ssg:
 	push af
@@ -558,7 +582,7 @@ MLM_set_instrument:
 		; If the channel is FM, for now
 		; do nothing. TODO make it do something
 		cp a,MLM_CH_SSG1               ; if a < MLM_CH_SSG1
-		jr c,MLM_set_instrument_return ; then ...
+		jr c,MLM_set_instrument_fm     ; then ...
 
 		; Else the channel is SSG, branch
 		jr MLM_set_instrument_ssg
@@ -567,7 +591,70 @@ MLM_set_instrument_return:
 	pop hl
 	pop bc
 	ret
-	
+
+; a:  channel
+; hl: &MLM_channel_instruments[channel]
+MLM_set_instrument_fm:
+	push hl
+	push de
+	push bc
+	push af
+		; Calculate pointer to instrument
+		ld l,(hl)
+		ld h,0
+		ld de,INSTRUMENTS
+		add hl,hl ; \
+		add hl,hl ;  \
+		add hl,hl ;  | hl *= 32
+		add hl,hl ;  /
+		add hl,hl ; /
+		add hl,de
+
+		; Set feedback & algorithm
+		sub a,MLM_CH_FM1
+		ld c,a
+		ld a,(hl)
+		call FMCNT_set_fbalgo
+
+		; Set AMS and PMS
+		inc hl
+		ld a,(hl)
+		call FMCNT_set_amspms
+
+		; Set OP enable
+		inc hl
+		ld a,(hl)
+		call FMCNT_set_op_enable
+
+		; Set operators
+		ld b,0
+		inc hl
+		ld de,7 ; operator data size
+
+		; Set OP 1
+		call FMCNT_set_operator
+		add hl,de
+		inc b
+
+		; Set OP 2
+		call FMCNT_set_operator
+		add hl,de
+		inc b
+
+		; Set OP 3
+		call FMCNT_set_operator
+		add hl,de
+		inc b
+
+		; Set OP 4
+		call FMCNT_set_operator
+		add hl,de
+	pop af
+	pop bc
+	pop de
+	pop hl
+	jr MLM_set_instrument_return
+
 ; a:  channel
 ; hl: &MLM_channel_instruments[channel]
 MLM_set_instrument_ssg:
@@ -661,7 +748,7 @@ MLM_set_instrument_ssg:
 	pop bc
 	pop hl
 	pop de
-	jr MLM_set_instrument_return
+	jp MLM_set_instrument_return
 
 ; a:  channel
 ; bc: timing
@@ -719,6 +806,13 @@ MLM_stop_channel_PA:
 
 ; a: channel
 MLM_stop_channel_FM:
+	push bc
+	push af
+		sub a,MLM_CH_FM1
+		ld c,a
+		call FMCNT_stop_channel
+	pop af
+	pop bc
 	jp MLM_stop_channel_return
 
 ; a: channel
@@ -778,7 +872,15 @@ MLM_set_ch_pan_PA:
 	jr MLM_set_ch_pan_ret
 
 MLM_set_ch_pan_FM:
-	; Call something
+	push bc
+	push af
+		sub a,MLM_CH_FM1
+		ld b,c ; \
+		ld c,a ; | swap a and c
+		ld a,b ; /
+		call FMCNT_set_panning
+	pop af
+	pop bc
 	jr MLM_set_ch_pan_ret
 
 ;   c:  channel
