@@ -13,6 +13,7 @@ IRQ: ; MLM_2CH_mode
 
 		call IRQ_handle_commands
 		call MLM_irq
+        call FMCNT_irq
         call SSGCNT_irq
 
         ; data = TM_CNT_LOAD_TA | TM_CNT_ENABLE_TA_IRQ | TM_CNT_TA_FLG_RESET

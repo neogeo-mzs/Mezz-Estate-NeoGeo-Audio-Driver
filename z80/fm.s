@@ -11,6 +11,214 @@ fm_stop:
 	pop de
 	ret
 
+FMCNT_init:
+	push hl
+	push de
+	push bc
+	push af
+		; clear FM WRAM
+		ld hl,FM_wram_start
+		ld de,FM_wram_start+1
+		ld bc,FM_wram_end-FM_wram_start-1
+		ld (hl),0
+		ldir
+		ld b,4
+
+FMCNT_init_loop:
+		ld c,b
+		dec c
+		ld a,&7F ; default volume
+		call FMCNT_set_volume
+
+		ld a,PANNING_CENTER
+		call FMCNT_set_panning
+		djnz FMCNT_init_loop
+	pop af
+	pop bc
+	pop de
+	pop hl
+	ret
+
+; DOESN'T BACKUP REGISTERS !!!
+FMCNT_irq:
+	brk2
+	
+	ld b,FM_CHANNEL_COUNT
+FMCNT_irq_loop:
+	call FMCNT_update_frequencies
+	call FMCNT_update_total_levels
+	call FMCNT_update_key_on
+	djnz FMCNT_irq_loop
+	ret
+
+; b: channel (1~4)
+FMCNT_update_frequencies:
+	push de
+	push hl
+	push bc
+	push af
+		; Calculate address to
+		; FM_channel_frequencies[channel]+1
+		dec b
+		ld l,b
+		ld h,0
+		ld de,FM_channel_frequencies+1
+		add hl,hl
+		add hl,de
+
+		; Set Block and F-Num 2
+		ld e,(hl)
+		ld d,REG_FM_CH13_FBLOCK
+		bit 0,b
+		jr z,FMCNT_update_frequencies_even_ch
+		inc d
+FMCNT_update_frequencies_even_ch:
+		; If the channel is 0 and 1,
+		; use port A, else (channel
+		; is 2 and 3) use port B
+		bit 1,b
+		call z,port_write_a
+		call nz,port_write_b
+
+		; Set F-Num 1
+		dec hl
+		ld e,(hl)
+		dec d ; -\
+		dec d ;  | d -= 4
+		dec d ;  /
+		dec d ; /
+		bit 1,b
+		call z,port_write_a
+		call nz,port_write_b
+	pop af
+	pop bc
+	pop hl
+	pop de
+	ret
+
+; b: channel (1~4)
+FMCNT_update_total_levels:
+	push bc
+		ld c,b
+		dec c
+		ld b,FM_OP_COUNT
+FMCNT_update_total_levels_loop:
+		call FMCNT_update_op_tl
+		djnz FMCNT_update_total_levels_loop
+	pop bc
+	ret
+
+; b: operator (1~4)
+; c: channel (0~3)
+FMCNT_update_op_tl:
+	push hl
+	push de
+	push af
+		; Load current op's TL from WRAM
+		; into a, then invert its least
+		; significant 7 bits
+		ld h,0
+		ld l,c
+		ld de,FM_operator_TLs-1 ; Operator indexing starts from 1 instead than 0
+		add hl,hl               ; - hl *= 4
+		add hl,hl               ; /
+		add hl,de               ; calculate address to FM_operator_TLs[channel]-1
+		ld e,b
+		ld d,0
+		add hl,de               ; calculate address to FM_operator_TLs[channel][operator]
+		ld a,(hl)
+		xor a,&7F               ; lowest 127 highest 0 -> lowest 0 highest 127
+
+		; Load volume from WRAM into e
+		ld l,c
+		ld h,0
+		ld de,FM_channel_volumes
+		add hl,de
+		ld e,(hl)
+
+		; Multiply the op TL by the volume,
+		; store it into hl, then divide it by 127.
+		; The result will be stored in hl, but h
+		; should be always equal to zero. 
+		push bc
+			ld h,a
+			call H_Times_E
+			ld c,127
+			call RoundHL_Div_C
+		pop bc
+
+		; Invert the result's least significant
+		; 7 bits, then calculate the address to 
+		; and the port of the correct YM2610 register,
+		; then write to it the inverted result.
+		ld a,l
+		xor a,&7F
+		ld l,a ; backup TL in l
+		ld a,c
+		and a,1                   ; \
+		add a,b                   ;  \
+		add a,b                   ;   \
+		add a,b                   ;   | addr = is_odd(channel) + (operator-1)*4 + REG_FM_CH1_OP1_TVOL
+		add a,b                   ;   /
+		sub a,4                   ;  /
+		add a,REG_FM_CH1_OP1_TVOL ; /
+		ld d,a
+		ld e,l ; move TL in e
+		bit 1,c              ; \
+		call z,port_write_a  ; | If the channel is 0 and 1 use port a else use port b
+		call nz,port_write_b ; /
+	pop af
+	pop de
+	pop hl
+	ret
+
+; b: channel (1~4)
+FMCNT_update_key_on:
+	push hl
+	push de
+	push af
+		; Load channel's key on enable
+		; from WRAM, then clear it
+		ld hl,FM_channel_key_on-1
+		ld e,b
+		ld d,0
+		add hl,de
+		ld e,(hl)
+		xor a,a ; ld a,0
+		ld (hl),a
+
+		; If the value is 0, then don't
+		; write to the key on register
+		ld a,e
+		or a,a ; cp a,0
+		jr z,FMCNT_update_key_on_ret
+
+		; Else, do write to the key on register.
+		; Load OP enable from WRAM in a
+		ld hl,FM_channel_op_enable-1
+		ld e,b
+		add hl,de
+		ld a,(hl)
+		and a,&F0 ; Clear the lower nibble just in case
+
+		; Calculate address to correct FM channel id
+		ld hl,FM_channel_LUT-1
+		add hl,de
+
+		; OR the FM channel id and the OP enable 
+		; nibble, then store the result in e and
+		; write it to the FM Key On YM2610 register
+		or a,(hl)
+		ld e,a
+		ld d,REG_FM_KEY_ON
+		rst RST_YM_WRITEA
+
+FMCNT_update_key_on_ret:
+	pop af
+	pop de
+	pop hl
+	ret
+
 ; a: fbalgo (--FFFAAA; Feedback, Algorithm)
 ; c: channel (0~3)
 FMCNT_set_fbalgo:
@@ -37,7 +245,7 @@ FMCNT_set_fbalgo_even_ch:
 	pop de
 	ret
 
-; a: fbalgo (--AA-PPP; Ams, Pms)
+; a: amspms (--AA-PPP; Ams, Pms)
 ; c: channel (0~3)
 FMCNT_set_amspms:
 	push de
@@ -64,7 +272,7 @@ FMCNT_set_amspms:
 		; use register $B1, else use $B2
 		ld d,REG_FM_CH13_LRAMSPMS
 		bit 0,c
-		jr z,FMCNT_set_fbalgo_even_ch
+		jr z,FMCNT_set_amspms_even_ch
 		inc d
 
 FMCNT_set_amspms_even_ch:
@@ -79,7 +287,7 @@ FMCNT_set_amspms_even_ch:
 	pop de
 	ret
 
-; a: fbalgo (LR------; Left and Right)
+; a: panning (LR------; Left and Right)
 ; c: channel (0~3)
 FMCNT_set_panning:
 	push de
@@ -106,7 +314,7 @@ FMCNT_set_panning:
 		; use register $B1, else use $B2
 		ld d,REG_FM_CH13_LRAMSPMS
 		bit 0,c
-		jr z,FMCNT_set_fbalgo_even_ch
+		jr z,FMCNT_set_panning_even_ch
 		inc d
 
 FMCNT_set_panning_even_ch:
@@ -124,10 +332,11 @@ FMCNT_set_panning_even_ch:
 ; hl: pointer to operator data
 ; c:  channel (0~3)
 ; b:  operator (0~3)
-FMCNT_set_operators:
+FMCNT_set_operator:
 	push hl
 	push de
 	push af
+	push bc
 		call FMCNT_assert_channel
 		call FMCNT_assert_operator
 
@@ -166,7 +375,7 @@ FMCNT_set_operators:
 			ld d,0
 			ld a,(hl) ; Store TL in a
 			ld hl,FM_operator_TLs
-			add hl,de 
+			add hl,de
 
 			; Calculate address to 
 			; FM_operator_TLs[channel][operator],
@@ -184,7 +393,7 @@ FMCNT_set_operators:
 
 		; Set the operator registers
 		ld b,5 ; operator registers left count
-FMCNT_set_operators_loop:
+FMCNT_set_operator_loop:
 		ld e,(hl)
 		bit 1,c              ; \
 		call z,port_write_a  ; | If the channel is 0 and 1 use port a else use port b
@@ -196,7 +405,8 @@ FMCNT_set_operators_loop:
 		add a,d
 		ld d,a
 
-		djnz FMCNT_set_operators_loop
+		djnz FMCNT_set_operator_loop
+	pop bc
 	pop af
 	pop de
 	pop hl
@@ -226,15 +436,18 @@ FMCNT_set_note:
 	push hl
 	push de
 	push af
+	push bc
 		ld c,ixl
 		call FMCNT_assert_channel
 
 		; Load base pitch from FMCNT_pitch_LUT in bc
 		ld a,ixh
 		and a,&0F ; -OOONNNN -> 0000NNNN; Get note
-		ld e,a
-		ld d,0
-		ld hl,FMCNT_pitch_LUT
+		ld l,a
+		ld h,0
+		ld de,FMCNT_pitch_LUT
+		add hl,hl
+		add hl,de
 		ld c,(hl)
 		inc hl
 		ld b,(hl)
@@ -251,10 +464,12 @@ FMCNT_set_note:
 		ld e,ixl
 		ld l,e
 		ld de,FM_channel_frequencies
+		add hl,hl
 		add hl,de
 		ld (hl),c
 		inc hl
 		ld (hl),b
+	pop bc
 	pop af
 	pop de
 	pop hl
@@ -270,7 +485,7 @@ FMCNT_pitch_LUT:
  	dw 490, 519, 550, 583, 583, 583, 583, 583
 
 ; a: volume (0 is lowest, 127 is highest)
-; c: channel
+; c: channel (0~3)
 FMCNT_set_volume:
 	push hl
 	push bc
@@ -286,6 +501,56 @@ FMCNT_set_volume:
 	pop bc
 	pop hl
 	ret
+
+; c: channel
+FMCNT_play_channel:
+	push af
+	push bc
+	push hl
+		call FMCNT_assert_channel
+
+		ld hl,FM_channel_key_on
+		ld b,0
+		add hl,bc
+		ld a,&FF
+		ld (hl),a
+	pop hl
+	pop bc
+	pop af
+	ret
+
+; c: channel
+FMCNT_stop_channel:
+	push af
+	push de
+	push hl
+		call FMCNT_assert_channel
+
+		; Clear channel's key on value in WRAM
+		ld hl,FM_channel_key_on
+		ld e,c
+		ld d,0
+		add hl,de
+		xor a,a ; ld a,0
+		ld (hl),a
+
+		; Calculate address to correct FM channel id
+		ld hl,FM_channel_LUT
+		add hl,de
+
+		; Load the FM channel id in e and
+		; write it to the FM Key On YM2610 
+		; register (OP enable is all cleared)
+		ld e,(hl)
+		ld d,REG_FM_KEY_ON
+		rst RST_YM_WRITEA
+	pop hl
+	pop de
+	pop af
+	ret
+
+FM_channel_LUT:
+	db FM_CH1, FM_CH2, FM_CH3, FM_CH4
 
 ; c: channel
 ;	if the channel is invalid (> 3),

@@ -31,7 +31,7 @@ j_IRQ:
 	di
 	jp IRQ
 
-	asciiz "MZS driver by GbaCretin"
+	asciiz "MZS driver v. alpha by GbaCretin"
 
 	org &0066
 NMI:
@@ -160,7 +160,7 @@ set_default_banks:
 
 ; Plays a noisy beep on the first FM channel
 ; and then enters an infinite loop
-softlock:
+fm_softlock:
 	di              
 	call fm_stop
 
@@ -207,7 +207,7 @@ softlock:
 
 	jp $
 
-ssg_softlock:
+softlock:
 	call ssg_stop
 
 	ld d,REG_SSG_CHC_FINE_TUNE

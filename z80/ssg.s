@@ -112,8 +112,6 @@ SSGCNT_get_ym2610_ch_volume:
 	push de
 	push ix
 	push af
-		brk 
-
 		; Load SSGCNT_volumes[channel]
 		; in c
 		ld hl,SSGCNT_volumes
