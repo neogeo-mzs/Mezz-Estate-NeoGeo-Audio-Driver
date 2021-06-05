@@ -52,6 +52,7 @@ FMCNT_irq_loop:
 	ret
 
 ; b: channel (1~4)
+; WORKS FINE
 FMCNT_update_frequencies:
 	push de
 	push hl
@@ -110,6 +111,7 @@ FMCNT_update_total_levels_loop:
 
 ; b: operator (1~4)
 ; c: channel (0~3)
+; WORKS FINE
 FMCNT_update_op_tl:
 	push hl
 	push de
@@ -147,30 +149,41 @@ FMCNT_update_op_tl:
 			call RoundHL_Div_C
 		pop bc
 
-		; Invert the result's least significant
-		; 7 bits, then calculate the address to 
-		; and the port of the correct YM2610 register,
-		; then write to it the inverted result.
+		; Invert the result's least 
+		; significant 7 bits
 		ld a,l
 		xor a,&7F
-		ld l,a ; backup TL in l
+
+		; Load OP register offset in d
+		ld h,0
+		ld l,b
+		ld de,FM_op_register_offsets_LUT-1
+		add hl,de
+		ld d,(hl)
+
+		; If channel is odd (1 and 3) 
+		; add 1 to register offset.
+		; Finally, proceed to add
+		; TL register address ($41)
+		ld e,a ; Move TL in E
 		ld a,c
-		and a,1                   ; \
-		add a,b                   ;  \
-		add a,b                   ;   \
-		add a,b                   ;   | addr = is_odd(channel) + (operator-1)*4 + REG_FM_CH1_OP1_TVOL
-		add a,b                   ;   /
-		sub a,4                   ;  /
-		add a,REG_FM_CH1_OP1_TVOL ; /
+		and a,1
+		add a,d
+		add a,REG_FM_CH1_OP1_TVOL
 		ld d,a
-		ld e,l ; move TL in e
-		bit 1,c              ; \
-		call z,port_write_a  ; | If the channel is 0 and 1 use port a else use port b
-		call nz,port_write_b ; /
+
+		; If the channel is 0 and 1 write 
+		; to port a, else write to port b
+		bit 1,c              
+		call z,port_write_a  
+		call nz,port_write_b 
 	pop af
 	pop de
 	pop hl
 	ret
+
+FM_op_register_offsets_LUT:
+	db &00,&08,&04,&0C
 
 ; b: channel (1~4)
 FMCNT_update_key_on:
