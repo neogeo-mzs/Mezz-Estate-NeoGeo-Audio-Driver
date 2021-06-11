@@ -237,8 +237,6 @@ MLM_play_song:
 	push de
 	push ix
 	push af
-		brk 
-		
 		call MLM_stop
 		call set_default_banks 
 
@@ -429,7 +427,8 @@ MLM_parse_note:
 	push af
 	push bc
 	push hl
-	push de		
+	push de
+		brk
 		ld a,(hl)
 		and a,&7F ; Clear bit 7 of the note's first byte
 		ld b,a
