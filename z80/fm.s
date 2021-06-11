@@ -274,12 +274,14 @@ FMCNT_set_amspms:
 		add hl,de
 
 		; Clear channel's AMS and PMS,
-		; And OR the desired AMS and PMS
+		; And OR the desired AMS and PMS.
+		; then load OR result in e
 		ld e,a
 		ld a,(hl)
 		and a,%11001000 ; LR??-??? -> LR00-000
 		or a,e          ; LR00-000 -> LRAA-PPP
 		ld (hl),a       ; Store register value in WRAM
+		ld e,a
 
 		; If the channel is even then
 		; use register $B1, else use $B2
@@ -353,18 +355,24 @@ FMCNT_set_operator:
 		call FMCNT_assert_channel
 		call FMCNT_assert_operator
 
-		; Calculate the address to the
-		; DTMUL register based on channel
-		; and operator
-		;	d = operator*4 + is_odd(channel)
-		ld a,b
-		sla a ; - a *= 4
-		sla a ; /
-		ld e,a
+		; Load OP register offset in a, then 
+		; add said offset to DTMUL base address.
+		; After that, move result to d
+		push hl
+			ld h,0
+			ld l,b
+			ld de,FM_op_register_offsets_LUT
+			add hl,de
+			ld a,(hl)
+			add a,REG_FM_CH1_OP1_DTMUL
+			ld d,a
+		pop hl
+
+		; If channel is odd (1 and 3) 
+		; increment register address.
 		ld a,c
-		and a,1 ; ???????P -> 0000000P (Parity bit; 0 = Even, 1 = Odd)
-		add a,e
-		add a,REG_FM_CH1_OP1_DTMUL
+		and a,1
+		add a,d
 		ld d,a
 
 		; Set DT and MUL
