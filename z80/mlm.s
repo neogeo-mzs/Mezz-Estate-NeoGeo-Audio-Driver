@@ -237,6 +237,7 @@ MLM_play_song:
 	push de
 	push ix
 	push af
+		brk
 		call MLM_stop
 		call set_default_banks 
 
@@ -311,6 +312,16 @@ MLM_play_song_loop:
 		; Set ADPCM-A master volume
 		ld de,(REG_PA_MVOL<<8) | &3F
 		rst RST_YM_WRITEB
+
+		; Enable all FM channels
+		ld c,0
+		call FM_enable_channel
+		ld c,1
+		call FM_enable_channel
+		ld c,2
+		call FM_enable_channel
+		ld c,3
+		call FM_enable_channel
 	pop af
 	pop ix
 	pop de
@@ -428,7 +439,6 @@ MLM_parse_note:
 	push bc
 	push hl
 	push de
-		brk
 		ld a,(hl)
 		and a,&7F ; Clear bit 7 of the note's first byte
 		ld b,a

@@ -42,12 +42,24 @@ FMCNT_init_loop:
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
 	brk2
-	
+
 	ld b,FM_CHANNEL_COUNT
 FMCNT_irq_loop:
+	; If FM_channel_enable[channel] is 0,
+	; then continue to the next channel
+	ld hl,FM_channel_enable-1
+	ld e,b
+	ld d,0
+	add hl,de
+	ld a,(hl)
+	or a,a ; cp a,0
+	jr z,FMCNT_irq_loop_continue
+
 	call FMCNT_update_frequencies
 	call FMCNT_update_total_levels
 	call FMCNT_update_key_on
+
+FMCNT_irq_loop_continue:
 	djnz FMCNT_irq_loop
 	ret
 
@@ -57,7 +69,7 @@ FMCNT_update_frequencies:
 	push de
 	push hl
 	push bc
-	push af
+	push af		
 		; Calculate address to
 		; FM_channel_frequencies[channel]+1
 		dec b
@@ -567,6 +579,34 @@ FMCNT_stop_channel:
 		rst RST_YM_WRITEA
 	pop hl
 	pop de
+	pop af
+	ret
+
+; c: channel (0~3)
+FM_enable_channel:
+	push af
+	push bc
+	push hl
+		ld b,0
+		ld hl,FM_channel_enable
+		add hl,bc
+		ld (hl),&FF
+	pop hl
+	pop bc
+	pop af
+	ret
+
+; c: channel (0~3)
+FM_disable_channel:
+	push af
+	push bc
+	push hl
+		ld b,0
+		ld hl,FM_channel_enable
+		add hl,bc
+		ld (hl),&00
+	pop hl
+	pop bc
 	pop af
 	ret
 
