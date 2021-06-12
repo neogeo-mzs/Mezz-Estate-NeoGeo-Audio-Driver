@@ -95,7 +95,7 @@ MLM_el_fm:
 	db &02,2 ; Set instrument to 2
 	db &80 | 21, 0 | (4 << 4) ; Play FM note C4 and wait 21 ticks
 	db &01,3                  ; Stop note and wait 3 ticks
-	db &80 | 127, 0 | (4 << 4) ; Play FM note C4 and wait 127 ticks
+	db &80 | 127, 2 | (4 << 4) ; Play FM note D4 and wait 127 ticks
  	db &00 ; End of song
  	
 	db &00 ; End of song
