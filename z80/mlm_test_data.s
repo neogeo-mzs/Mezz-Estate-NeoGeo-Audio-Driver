@@ -1,4 +1,4 @@
-	org &4000 ; block 1
+	org MLM_HEADER ; block 1
 MLM_header:
 	db 13 ; Song count
 	dw MLM_song_pa1-MLM_header
@@ -129,19 +129,19 @@ MLM_el_ssg:
  	db &00 ; End of song
 
 	; Instruments
-	org &8000
+	org INSTRUMENTS
 
 	; Instrument 0 (ADPCM-A)
-	dw &E000 ; Point to ADPCM-A sample LUT (in Zone 1)
+	dw OTHER_DATA ; Point to ADPCM-A sample LUT (in Zone 1)
 	dsb 30,0 ; padding
 
 	; Instrument 1 (SSG)
-	db 1                                       ; Mixing: Tone ON; Noise OFF
-	db 0                                       ; EG enable: OFF
-	ds 3                                       ; Skip EG information since EG is disabled
-	dw &0000                                   ; Mix macro      | MLM_odata_mix_macro1-&A000 + OTHER_DATA
-	dw &0000                                   ; Volume macro   | MLM_odata_vol_macro1-&A000 + OTHER_DATA
-	dw MLM_odata_arp_macro1-&A000 + OTHER_DATA ; Arpeggio macro | 
+	db 1                    ; Mixing: Tone ON; Noise OFF
+	db 0                    ; EG enable: OFF
+	ds 3                    ; Skip EG information since EG is disabled
+	dw &0000                ; Mix macro      | MLM_odata_mix_macro1
+	dw &0000                ; Volume macro   | MLM_odata_vol_macro1
+	dw MLM_odata_arp_macro1 ; Arpeggio macro | 
 	ds 21 ; Padding
 	
 	; Instrument 2 (FM)
@@ -154,7 +154,7 @@ MLM_el_ssg:
 	dsb 1,0 ; Padding
 
 	; Other data
-	org &A000
+	org OTHER_DATA
 	incbin "adpcma_sample_lut.bin"
 MLM_odata_mix_macro1:
 	db (30*3)-1 ; Macro length

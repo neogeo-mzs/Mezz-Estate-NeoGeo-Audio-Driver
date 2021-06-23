@@ -16,7 +16,8 @@ R         | RR
 ## Z80 memory map
 Address space | Description           | Usage
 --------------|-----------------------|---------------------------------------------
-$0000 ~ $7FFF | Static main code bank | code
+$0000 ~ $3FFF | Static main code bank | code
+$4000 ~ $7FFF | Static main code bank | MLM header and songs
 $8000 ~ $BFFF | Switchable bank 3     | songs
 $C000 ~ $DFFF | Switchable bank 2     | instruments
 $E000 ~ $EFFF | Switchable bank 1     | Other data (macros, ADPCM addresses, etc...)
@@ -118,14 +119,18 @@ this command ends the playback for the current channel
 ###### Command 8: Set base time
 **format: `$08 %BBBBBBBB (Base Time) %TTTTTTTT (Timing)`**
 
-###### Command 9: Deprecated Command
+###### Command 9: Jump to sub-event list
+**format $09 %AAAAAAAA (Address LSB) %AAAAAAAA (Address MSB)**
+
+The address space starts from the MLM header.
+Does NOT allow nesting. Do not use this command in a sub event list.
 
 ###### Command 10: Small position jump
 **format: `$0A %OOOOOOOO (Offset; next event is executed immediately)`**
 
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
-###### Command 11: Big position jump
+###### Command 11: Big position jump (TO BE CHANGED SOON)
 **format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
@@ -141,9 +146,13 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 15: Set timer A frequency
 **format: `$0F %AAAAAAAA (timer A MSB) %TTTTTTAA (Timing; timer A LSB)`**
 
-###### Command 16~31: Wait ticks (nibble)
+###### Command 16\~31: Wait ticks (nibble)
 **format: `$1T (Timing)`**
 
+###### Command 32: Return from sub event list
+**format: `$20`**
+
+###### Command 
 ### BANK2, 1 and 0 - instruments and other data
 The driver can access up to 256 instruments at a time in BANK2, each instrument
 occupies 32 bytes, how those 32 bytes are used depends on the channel type (ADPCM, FM, SSG).

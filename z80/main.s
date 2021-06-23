@@ -143,17 +143,17 @@ play_sample:
 
 set_default_banks:
 	push af
-		; Set $F000-$F7FF bank to bank $16 (22 *  2K; $B000~$B7FF)
-		ld a,&16
+		; Set $F000-$F7FF bank to bank $16 (30 *  2K; $F000~$F7FF)
+		ld a,&1E
 		in a,(&08)
-		; Set $E000-$EFFF bank to bank $0A (10 *  4K; $A000~$AFFF)
-		ld a,&0A
+		; Set $E000-$EFFF bank to bank $0A (14 *  4K; $E000~$EFFF)
+		ld a,&0E
 		in a,(&09)
-		; Set $C000-$DFFF bank to bank $04 ( 4 *  8K; $8000~$9FFF)
-		ld a,&04
+		; Set $C000-$DFFF bank to bank $04 ( 6 *  8K; $C000~$DFFF)
+		ld a,&06
 		in a,(&0A)
-		; Set $8000-$BFFF bank to bank $01 ( 1 * 16K; $4000~$7FFF)
-		ld a,&01
+		; Set $8000-$BFFF bank to bank $02 ( 2 * 16K; $8000~$BFFF)
+		ld a,&02
 		in a,(&0B)
 	pop af
 	ret
