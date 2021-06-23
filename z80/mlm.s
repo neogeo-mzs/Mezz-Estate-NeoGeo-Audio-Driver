@@ -237,7 +237,6 @@ MLM_play_song:
 	push de
 	push ix
 	push af
-		brk
 		call MLM_stop
 		call set_default_banks 
 
@@ -267,7 +266,7 @@ MLM_play_song:
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
-		ld hl,MLM_SONGS
+		ld hl,MLM_HEADER
 		add hl,de
 
 		;     For each channel...
@@ -339,6 +338,7 @@ MLM_play_song_loop:
 MLM_playback_init:
 	push bc
 	push af
+		brk
 		; Set all channel timings to 1
 		ld a,b
 		dec a
@@ -353,12 +353,12 @@ MLM_playback_init:
 		inc hl
 
 		; Obtain ptr to channel's playback
-		; data by adding MLM_SONGS to its
+		; data by adding MLM_HEADER to its
 		; playback offset.
 		;	Only the due words' MSB need
 		;	to be added together, since
 		;	the LSB is always equal to &00.
-		ld a,>MLM_SONGS
+		ld a,>MLM_HEADER
 		add a,b
 
 		; store said pointer into
@@ -983,7 +983,7 @@ MLM_command_vectors:
 	dw MLMCOM_set_instrument,      MLMCOM_wait_ticks_byte
 	dw MLMCOM_wait_ticks_word,     MLMCOM_set_channel_volume
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
-	dw MLMCOM_set_base_time,       MLMCOM_set_timer_b
+	dw MLMCOM_set_base_time,       MLMCOM_jump_to_sub_el
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
@@ -1212,32 +1212,14 @@ MLMCOM_set_base_time:
 	jp MLM_parse_command_end
 
 ; c: channel
+; ix: &MLM_playback_pointers[channel]+1
+; de: source (playback pointer)
 ; Arguments:
-;   1. %BBBBBBBB (timer B)
-;   2. %TTTTTTTT (Timing)
-MLMCOM_set_timer_b:
-	jp MLM_parse_command_end
-	push ix
-	push de
-	push bc
-	push af
-		ld ix,MLM_event_arg_buffer
-
-		; Set Timer B (will be loaded later)
-		ld e,(ix+0)
-		ld d,REG_TMB_COUNTER 
-		rst RST_YM_WRITEA
-
-		; Set timing
-		ld a,c
-		ld c,(ix+1)
-		ld b,0
-		call MLM_set_timing
-	pop af
-	pop bc
-	pop de
-	pop ix
-	jp MLM_parse_command_end
+;	1. %AAAAAAAA (Address LSB)
+;	2. %AAAAAAAA (Address MSB)
+MLMCOM_jump_to_sub_el:
+	;=========================================================================================
+	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c:  channel
 ; ix: &MLM_playback_pointers[channel]+1
@@ -1278,7 +1260,8 @@ MLMCOM_small_position_jump:
 ; ix: &MLM_playback_pointers[channel]+1
 ; de: source (playback pointer)
 ; Arguments:
-;   1. %OOOOOOOO (Offset)
+;   1. %OOOOOOOO (Offset LSB)
+;   2. %OOOOOOOO (Offset MSB)
 MLMCOM_big_position_jump:
 	push hl
 	push de
