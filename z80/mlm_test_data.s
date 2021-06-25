@@ -132,16 +132,16 @@ MLM_el_ssg:
 	org INSTRUMENTS
 
 	; Instrument 0 (ADPCM-A)
-	dw OTHER_DATA ; Point to ADPCM-A sample LUT (in Zone 1)
+	dw OTHER_DATA-MLM_header ; Point to ADPCM-A sample LUT (in Zone 1)
 	dsb 30,0 ; padding
 
 	; Instrument 1 (SSG)
-	db 1                    ; Mixing: Tone ON; Noise OFF
-	db 0                    ; EG enable: OFF
-	ds 3                    ; Skip EG information since EG is disabled
-	dw &0000                ; Mix macro      | MLM_odata_mix_macro1
-	dw &0000                ; Volume macro   | MLM_odata_vol_macro1
-	dw MLM_odata_arp_macro1 ; Arpeggio macro | 
+	db 1                               ; Mixing: Tone ON; Noise OFF
+	db 0                               ; EG enable: OFF
+	ds 3                               ; Skip EG information since EG is disabled
+	dw &0000                           ; Mix macro      | MLM_odata_mix_macro1-MLM_header
+	dw &0000                           ; Volume macro   | MLM_odata_vol_macro1-MLM_header
+	dw MLM_odata_arp_macro1-MLM_header ; Arpeggio macro | 
 	ds 21 ; Padding
 	
 	; Instrument 2 (FM)
