@@ -43,6 +43,7 @@ SSGCNT_init_loop:
 ; DOESN'T BACKUP REGISTERS!!
 SSGCNT_irq:
 	ld b,3
+	brk2
 
 SSGCNT_irq_vol_loop:
 	dec b
@@ -509,6 +510,8 @@ SSGCNT_MACRO_update_return:
 
 ; ix: pointer to macro
 ; hl: pointer to macro initialization data
+;    if hl is equal to MLM_HEADER, 
+;    the macro will NOT be set
 SSGCNT_MACRO_set:
 	push af
 	push hl
@@ -517,11 +520,15 @@ SSGCNT_MACRO_set:
 		; enabled later in the function
 		ld (ix+SSGCNT_macro.enable),&00
 
-		; If the pointer to the macro initialization 
-		; data is &0000, then return from the subroutine
-		ld de,0
+		; If the address to the macro initialization data is
+		; equal to MLM_HEADER, then return from the subroutine
+		;   if address is equal to offset + MLM_HEADER; then
+		;   when the offset will be 0 the address will be MLM_HEADER
+		push hl
+		ld de,MLM_HEADER
 		or a,a    ; Clear carry flag
 		sbc hl,de ; cp hl,de
+		pop hl
 		jr z,SSGCNT_MACRO_set_return
 
 		; Set macro's length

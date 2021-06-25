@@ -237,6 +237,7 @@ MLM_play_song:
 	push de
 	push ix
 	push af
+		brk
 		call MLM_stop
 		call set_default_banks 
 
@@ -338,7 +339,6 @@ MLM_play_song_loop:
 MLM_playback_init:
 	push bc
 	push af
-		brk
 		; Set all channel timings to 1
 		ld a,b
 		dec a
@@ -492,11 +492,18 @@ MLM_play_sample_pa:
 		add hl,hl ; /
 		add hl,de
 
-		; Store pointer to ADPCM 
+		; Store offset to ADPCM 
 		; sample table in hl
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
+
+		; Add MLM_header offset to
+		; it to obtain the actual address.
+		ld hl,MLM_HEADER
+		add hl,de
+		ld e,l
+		ld d,h
 
 		; ix = &ADPCM_sample_table[sample_idx]
 		ld h,0
@@ -666,6 +673,7 @@ MLM_set_instrument_fm:
 
 ; a:  channel
 ; hl: &MLM_channel_instruments[channel]
+; TODO: FIX THIS; IT DOESN?T WORK
 MLM_set_instrument_ssg:
 	push de
 	push hl
@@ -723,9 +731,13 @@ MLM_set_instrument_ssg:
 
 		; Set mix macro
 		ld e,(hl) ; \
-		inc hl    ; | Store macro initialization 
-		ld d,(hl) ; | data pointer in hl
+		inc hl    ; | Store macro data
+		ld d,(hl) ; | offset in hl
 		ex de,hl  ; /
+		push de              ; \
+			ld de,MLM_HEADER ; | Add MLM header offset to
+			add hl,de        ; | obtain the actual address
+		pop de               ; /
 		call SSGCNT_MACRO_set
 		
 		; Calculate pointer to volume macro
@@ -741,6 +753,10 @@ MLM_set_instrument_ssg:
 		inc hl
 		ld d,(hl)
 		ex de,hl
+		push de              ; \
+			ld de,MLM_HEADER ; | Add MLM header offset to
+			add hl,de        ; | obtain the actual address
+		pop de               ; /
 		call SSGCNT_MACRO_set
 
 		; Set arpeggio macro
@@ -751,6 +767,10 @@ MLM_set_instrument_ssg:
 		inc hl
 		ld d,(hl)
 		ex de,hl
+		push de              ; \
+			ld de,MLM_HEADER ; | Add MLM header offset to
+			add hl,de        ; | obtain the actual address
+		pop de               ; /
 		call SSGCNT_MACRO_set
 	pop ix
 	pop af

@@ -26,15 +26,20 @@ $F800 ~ $FFFF | Work RAM              | Work RAM
 
 ## MLM format documentation
 
+**Any address is an offset from the start of the MLM Header ($4000),
+not the start of the Z80's address space**
+
+*For example, address $0010 in the MLM code would be treated as $4010 in the code*
+
 ### BANK3 - Song data
 BANK3 contains the song data. it must begin with this header:
 
 |offsets | description                              | bytes 
 |--------|------------------------------------------|-------
-|$0000   | song 0 bank (Zone3)                      | 1
+|$00     | song 0 bank (Zone3; SOON)                | 1
 |$0001   | song 0 offset                            | 2
 |...     | ...                                      |
-|...     | last song bank (Zone3)                   | 1
+|...     | last song bank (Zone3; SOON)             | 1
 |...     | last song offset (maximum of 256* songs) | 2
 
 * Only the first 128 songs can be played as of right now.
@@ -152,7 +157,6 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 32: Return from sub event list
 **format: `$20`**
 
-###### Command 
 ### BANK2, 1 and 0 - instruments and other data
 The driver can access up to 256 instruments at a time in BANK2, each instrument
 occupies 32 bytes, how those 32 bytes are used depends on the channel type (ADPCM, FM, SSG).
@@ -223,7 +227,7 @@ $000A  | Padding                            | 21
 
 \* 0: None; 1: Tone; 2: Noise; 3: Tone & Noise; Will be ignored if mix macros are enabled
 
-If any macro pointer is set to $0000, then that macro won't be enabled.
+If any macro pointer is set to $0000, then that macro will be disabled.
 
 #### SSG macro structure
 
