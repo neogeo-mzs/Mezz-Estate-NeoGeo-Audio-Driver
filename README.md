@@ -66,9 +66,9 @@ Events can be split in two categories, depending on the most significant bit.
 If the most significant bit is 1, then the event is a **note**, if the most significant bit is 0, then the event is a **command**. Both notes and events will be parsed and interpreted differently depending on the kind of channel (ADPCM-A, SSG, FM)
 
 #### Channels
-* Channels 0~5: ADPCM-A channels
-* Channels 6~9: FM channels
-* Channels 10~12: SSG channels
+* Channels 0\~5: ADPCM-A channels
+* Channels 6\~9: FM channels
+* Channels 10\~12: SSG channels
 
 #### Notes
 Notes are events that, like the name implies, play a note from the current instrument (defaults to 0).
@@ -135,9 +135,8 @@ Does NOT allow nesting. Do not use this command in a sub event list.
 
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
-###### Command 11: Big position jump (TO BE CHANGED SOON)
-**format: `$0B %OOOOOOOO (Offset LSB) %OOOOOOOO (Offset MSB)`**
-Offset = destination addr. - (current event addr. + 1 + current event argc)
+###### Command 11: Big position jump
+**format: `$0B %AAAAAAAA (Address LSB) %AAAAAAAA (Address MSB)`**
 
 ###### Command 12: Portamento slide (Still not implemented)
 **format: `$0C %SSSSSSSS (Signed pitch offset per tick) %TTTTTTTT (Timing)`**

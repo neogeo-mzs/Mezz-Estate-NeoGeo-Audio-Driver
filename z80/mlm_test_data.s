@@ -124,6 +124,10 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db &02,1                  ; Set instrument to 1
 	db &80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
+	db &0B
+	dw &1000
+
+	org MLM_HEADER+&1000
 	db &01, 30
 	db &80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db &00 ; End of song

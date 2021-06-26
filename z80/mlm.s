@@ -237,7 +237,6 @@ MLM_play_song:
 	push de
 	push ix
 	push af
-		brk
 		call MLM_stop
 		call set_default_banks 
 
@@ -1280,12 +1279,13 @@ MLMCOM_small_position_jump:
 ; ix: &MLM_playback_pointers[channel]+1
 ; de: source (playback pointer)
 ; Arguments:
-;   1. %OOOOOOOO (Offset LSB)
-;   2. %OOOOOOOO (Offset MSB)
+;   1. %AAAAAAAA (Address LSB)
+;   2. %AAAAAAAA (Address MSB)
 MLMCOM_big_position_jump:
 	push hl
-	push de
 	push ix
+	push af
+	push bc
 		ld hl,MLM_event_arg_buffer
 
 		; Load offset into bc
@@ -1294,11 +1294,9 @@ MLMCOM_big_position_jump:
 		inc hl
 		ld b,(hl)
 
-		; Add offset to playback 
-		; pointer and store it into 
-		; MLM_playback_pointers[channel]
-		ld l,e
-		ld h,d
+		; Add MLM header offset to 
+		; obtain the actual address
+		ld hl,MLM_HEADER
 		add hl,bc
 		ld (ix-1),l
 		ld (ix-0),h
@@ -1306,8 +1304,9 @@ MLMCOM_big_position_jump:
 		; Set timing to 0
 		ld bc,0
 		call MLM_set_timing
+	pop bc
+	pop af
 	pop ix
-	pop de
 	pop hl
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
