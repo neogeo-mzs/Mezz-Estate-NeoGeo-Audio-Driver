@@ -4,7 +4,7 @@
 
 PA_stop:
 	push de
-		ld de,(REG_PA_CTRL<<8) | &9F
+		ld de,(REG_PA_CTRL<<8) | &BF
 		rst RST_YM_WRITEB
 	pop de
 	ret
