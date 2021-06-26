@@ -127,7 +127,6 @@ this command ends the playback for the current channel
 ###### Command 9: Jump to sub-event list
 **format $09 %AAAAAAAA (Address LSB) %AAAAAAAA (Address MSB)**
 
-The address space starts from the MLM header.
 Does NOT allow nesting. Do not use this command in a sub event list.
 
 ###### Command 10: Small position jump

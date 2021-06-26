@@ -16,12 +16,22 @@ FMCNT_init:
 	push de
 	push bc
 	push af
+		call fm_stop
+
 		; clear FM WRAM
 		ld hl,FM_wram_start
 		ld de,FM_wram_start+1
 		ld bc,FM_wram_end-FM_wram_start-1
 		ld (hl),0
 		ldir
+
+		; set all operator TLs to &7F
+		ld hl,FM_operator_TLs
+		ld de,FM_operator_TLs+1
+		ld bc,(FM_CHANNEL_COUNT*FM_OP_COUNT)-1
+		ld (hl),&7F
+		ldir
+		
 		ld b,4
 
 FMCNT_init_loop:
@@ -62,7 +72,6 @@ FMCNT_irq_loop_continue:
 	ret
 
 ; b: channel (1~4)
-; WORKS FINE
 FMCNT_update_frequencies:
 	push de
 	push hl
@@ -121,7 +130,6 @@ FMCNT_update_total_levels_loop:
 
 ; b: operator (1~4)
 ; c: channel (0~3)
-; WORKS FINE
 FMCNT_update_op_tl:
 	push hl
 	push de

@@ -1237,7 +1237,49 @@ MLMCOM_set_base_time:
 ;	1. %AAAAAAAA (Address LSB)
 ;	2. %AAAAAAAA (Address MSB)
 MLMCOM_jump_to_sub_el:
-	;=========================================================================================
+	push hl
+	push af
+	push bc
+	push de
+		; Increment playback pointer to 
+		; make it point to the next command
+		inc de
+		inc de
+		inc de
+
+		; Store playback pointer in WRAM
+		ld b,0
+		ld hl,MLM_sub_el_return_pointers
+		add hl,bc
+		add hl,bc
+		ld (hl),e
+		inc hl
+		ld (hl),d
+
+		; Load address to jump to in de
+		ld hl,MLM_event_arg_buffer
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+
+		; Add MLM_HEADER (&4000) to it 
+		; to obtain the actual address
+		ld hl,MLM_HEADER
+		add hl,de
+
+		; Store the actual address in WRAM
+		ld (ix-1),l
+		ld (ix-0),h
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop de
+	pop bc
+	pop af
+	pop hl
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c:  channel
