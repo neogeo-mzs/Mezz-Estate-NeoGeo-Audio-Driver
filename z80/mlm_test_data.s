@@ -57,9 +57,9 @@ MLM_song_pa6:
 	db 1  ; base time (0 is invalid)
 
 MLM_el_pa: ; Start in Zone 3
-	db &80 | 60, 0 ; Play ADPCM-A sample 0 (C)
-	db &01, 60
-	db &80 | 60, 2 ; Play ADPCM-A sample 2 (D)
+	db &80 | 30, 0 ; Play ADPCM-A sample 0 (C)
+	db &01, 30
+	db &80 | 30, 2 ; Play ADPCM-A sample 2 (D)
 	db &00 ; End of song
 
 
@@ -93,9 +93,9 @@ MLM_song_fm4:
 
 MLM_el_fm:
 	db &02,2 ; Set instrument to 2
-	db &80 | 21, 0 | (4 << 4) ; Play FM note C4 and wait 21 ticks
-	db &01,3                  ; Stop note and wait 3 ticks
-	db &80 | 127, 2 | (4 << 4) ; Play FM note D4 and wait 127 ticks
+	db &80 | 30, 0 | (4 << 4) ; Play FM note C4 and wait 21 ticks
+	db &01,30                 ; Stop note and wait 3 ticks
+	db &80 | 30, 2 | (4 << 4) ; Play FM note D4 and wait 127 ticks
  	db &00 ; End of song
  	
 	db &00 ; End of song
@@ -124,10 +124,6 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db &02,1                  ; Set instrument to 1
 	db &80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
-	db &0B
-	dw &1000
-
-	org MLM_HEADER+&1000
 	db &01, 30
 	db &80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db &00 ; End of song
