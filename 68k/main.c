@@ -58,8 +58,8 @@ int main()
 	BIOS_FixClear();
     print_gui();
 
-    const int SONG_COUNT = 128;
-    int selected_song = 9;
+    const int SONG_COUNT = 13;
+    int selected_song = 0;
     
     while(1)
     {
