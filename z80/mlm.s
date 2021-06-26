@@ -1007,13 +1007,15 @@ MLM_command_vectors:
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
 	dsw 16,  MLMCOM_wait_ticks_nibble
-	dsw 96,  MLMCOM_invalid ; Invalid commands
+	dw MLMCOM_return_from_sub_el
+	dsw 95,  MLMCOM_invalid ; Invalid commands
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &02, &01, &02
 	db &02, &02, &01, &02, &02, &02, &02, &02
 	dsb 16, &00 ; Wait ticks nibble
-	dsb 96, 0   ; Invalid commands all have no arguments
+	db &00
+	dsb 95, 0   ; Invalid commands all have no arguments
 
 ; c: channel
 MLMCOM_end_of_list:
@@ -1232,7 +1234,7 @@ MLMCOM_set_base_time:
 
 ; c: channel
 ; ix: &MLM_playback_pointers[channel]+1
-; de: source (playback pointer)
+; de: source (playback pointer; points to next command)
 ; Arguments:
 ;	1. %AAAAAAAA (Address LSB)
 ;	2. %AAAAAAAA (Address MSB)
@@ -1241,12 +1243,6 @@ MLMCOM_jump_to_sub_el:
 	push af
 	push bc
 	push de
-		; Increment playback pointer to 
-		; make it point to the next command
-		inc de
-		inc de
-		inc de
-
 		; Store playback pointer in WRAM
 		ld b,0
 		ld hl,MLM_sub_el_return_pointers
@@ -1478,6 +1474,35 @@ MLMCOM_wait_ticks_nibble:
 	pop af
 	pop hl
 	jp MLM_parse_command_end
+
+; c: channel
+; ix: &MLM_playback_pointers[channel]+1
+; de: source (playback pointer)
+MLMCOM_return_from_sub_el:
+	push hl
+	push af
+	push bc
+		; Load playback pointer in WRAM
+		; and store it into MLM_playback_pointers[channel]
+		ld b,0
+		ld hl,MLM_sub_el_return_pointers
+		add hl,bc
+		add hl,bc
+		ld a,(hl)   ; - Load and store address LSB
+		ld (ix-1),a ; /
+		inc hl		; \
+		ld a,(hl)   ; | Load and store address MSB
+		ld (ix-0),a ; /
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	pop hl
+	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; invalid command, plays a noisy beep
 ; and softlocks the driver
