@@ -36,11 +36,12 @@ BANK3 contains the song data. it must begin with this header:
 
 |offsets | description                              | bytes 
 |--------|------------------------------------------|-------
-|$00     | song 0 bank (Zone3; SOON)                | 1
-|$0001   | song 0 offset                            | 2
+|$0000   | Song count                               | 1
+|$0001   | Song 0 bank (Zone3; SOON)                | 1
+|$0002   | Song 0 offset                            | 2
 |...     | ...                                      |
-|...     | last song bank (Zone3; SOON)             | 1
-|...     | last song offset (maximum of 256* songs) | 2
+|$01FD   | Last song bank (Zone3; SOON)             | 1
+|$01FE   | Last song offset (maximum of 256* songs) | 2
 
 * Only the first 128 songs can be played as of right now.
 
@@ -49,15 +50,14 @@ each song should start with this header
 
 offsets | description       | bytes
 --------|-------------------|------
-$0000   | Song count        | 1
-$0001   | Channel 0 offset  | 2
+$0000   | Channel 0 offset  | 2
 ...     | ...               |
-$001B   | Channel 12 offset | 2
-$001D   | Timer A counter   | 2
-$001F   | Mode              | 1
-$0020   | Zone 2 bank       | 1
-$0021   | Zone 1 bank       | 1
-$0022   | Zone 0 bank       | 1
+$001A   | Channel 12 offset | 2
+$001C   | Timer A counter   | 2
+$001E   | Mode              | 1
+$001F   | Zone 2 bank       | 1
+$0020   | Zone 1 bank       | 1
+$0021   | Zone 0 bank       | 1
 
 Mode should be used to enable or disable deflemask compatibility, it currently does nothing but I'm putting it in the specs just in case.
 each channel is an array of events. The driver executes the event, and then waits the amount of time specifies in the event.
