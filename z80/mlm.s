@@ -639,10 +639,18 @@ MLM_set_instrument_fm:
 	push de
 	push bc
 	push af
+		; Load pointer to instrument data
+		; from WRAM into de
+		push af
+			ld a,(MLM_instruments)
+			ld e,a
+			ld a,(MLM_instruments+1)
+			ld d,a
+		pop af
+
 		; Calculate pointer to instrument
 		ld l,(hl)
 		ld h,0
-		ld de,INSTRUMENTS
 		add hl,hl ; \
 		add hl,hl ;  \
 		add hl,hl ;  | hl *= 32
@@ -697,17 +705,24 @@ MLM_set_instrument_fm:
 
 ; a:  channel
 ; hl: &MLM_channel_instruments[channel]
-; TODO: FIX THIS; IT DOESN?T WORK
 MLM_set_instrument_ssg:
 	push de
 	push hl
 	push bc
 	push af
 	push ix
+		; Load pointer to instrument data
+		; from WRAM into de
+		push af
+			ld a,(MLM_instruments)
+			ld e,a
+			ld a,(MLM_instruments+1)
+			ld d,a
+		pop af
+
 		; Calculate pointer to instrument
 		ld l,(hl)
 		ld h,0
-		ld de,INSTRUMENTS
 		add hl,hl ; \
 		add hl,hl ;  \
 		add hl,hl ;  | hl *= 32
