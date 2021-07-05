@@ -20,6 +20,7 @@ MLM_song_pa1:
 	dsw 12, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa2
 	dw 0
@@ -27,6 +28,7 @@ MLM_song_pa2
 	dsw 11, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa3:
 	dsw 2,0
@@ -34,6 +36,7 @@ MLM_song_pa3:
 	dsw 10, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa4:
 	dsw 3,0
@@ -41,6 +44,7 @@ MLM_song_pa4:
 	dsw 9, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa5:
 	dsw 4,0
@@ -48,6 +52,7 @@ MLM_song_pa5:
 	dsw 8, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa6:
 	dsw 5,0
@@ -55,6 +60,7 @@ MLM_song_pa6:
 	dsw 7, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_el_pa: ; Start in Zone 3
 	db &80 | 30, 0 ; Play ADPCM-A sample 0 (C)
@@ -73,6 +79,7 @@ MLM_song_fm1:
 	dsw 6, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_fm2:
 	dsw 7,0
@@ -80,6 +87,7 @@ MLM_song_fm2:
 	dsw 5, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_fm3:
 	dsw 8,0
@@ -87,6 +95,7 @@ MLM_song_fm3:
 	dsw 4, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_fm4:
 	dsw 9,0
@@ -94,6 +103,7 @@ MLM_song_fm4:
 	dsw 3, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_el_fm:
 	db &02,2 ; Set instrument to 2
@@ -112,6 +122,7 @@ MLM_song_ssg1:
 	dsw 2, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_ssg2:
 	dsw 11,0
@@ -119,13 +130,15 @@ MLM_song_ssg2:
 	dw 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
+	dw MLM_song_instruments-MLM_header
 
 MLM_song_ssg3:
 	dsw 12,0
 	dw MLM_el_ssg-MLM_header
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
-
+	dw MLM_song_instruments-MLM_header
+	
 MLM_el_ssg:
 	db &02,1                  ; Set instrument to 1
 	db &80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
@@ -134,9 +147,7 @@ MLM_el_ssg:
 	db &80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db &00 ; End of song
 
-	; Instruments
-	org INSTRUMENTS
-
+MLM_song_instruments:
 	; Instrument 0 (ADPCM-A)
 	dw OTHER_DATA-MLM_header ; Point to ADPCM-A sample LUT (in Zone 1)
 	dsb 30,0 ; padding
