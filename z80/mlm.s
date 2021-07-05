@@ -292,7 +292,22 @@ MLM_play_song_loop:
 		inc hl
 		ld a,(hl)
 		ld (MLM_base_time),a
-		
+
+		; Load instrument offset into de
+		inc hl
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+
+		; Calculate actual address, then
+		; load said address into WRAM
+		ld hl,MLM_HEADER
+		add hl,de
+		ld a,l
+		ld (MLM_instruments),a
+		ld a,h
+		ld (MLM_instruments+1),a
+
 		; Copy MLM_playback_pointers
 		; to MLM_playback_start_pointers
 		ld hl,MLM_playback_pointers
@@ -473,6 +488,8 @@ MLM_play_sample_pa:
 	push bc
 	push hl
 	push ix
+		brk
+
 		; Load current instrument index into hl
 		ld h,0
 		ld l,a 
@@ -481,9 +498,17 @@ MLM_play_sample_pa:
 		ld l,(hl)
 		ld h,0
 
+		; Load pointer to instrument data
+		; from WRAM into de
+		push af
+			ld a,(MLM_instruments)
+			ld e,a
+			ld a,(MLM_instruments+1)
+			ld d,a
+		pop af
+
 		; Calculate pointer to the current
 		; instrument's data and store it in hl
-		ld de,INSTRUMENTS
 		add hl,hl ; \
 		add hl,hl ;  \
 		add hl,hl ;   | hl *= 32

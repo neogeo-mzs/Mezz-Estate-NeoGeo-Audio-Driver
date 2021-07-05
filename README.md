@@ -15,13 +15,10 @@ R         | RR
 
 ## Z80 memory map
 Address space | Description           | Usage
---------------|-----------------------|---------------------------------------------
-$0000 ~ $3FFF | Static main code bank | code
-$4000 ~ $7FFF | Static main code bank | MLM header and songs
-$8000 ~ $BFFF | Switchable bank 3     | songs
-$C000 ~ $DFFF | Switchable bank 2     | instruments
-$E000 ~ $EFFF | Switchable bank 1     | Other data (macros, ADPCM addresses, etc...)
-$F000 ~ $F7FF | Switchable bank 0     | Other data (macros, ADPCM addresses, etc...)
+--------------|-----------------------|--------------------------
+$0000 ~ $3FFF | Static main code bank | Code
+$4000 ~ $7FFF | Static main code bank | MLM header and song data
+$8000 ~ $F7FF | Switchable banks      | Song data
 $F800 ~ $FFFF | Work RAM              | Work RAM
 
 ## MLM format documentation
@@ -31,8 +28,8 @@ not the start of the Z80's address space**
 
 *For example, address $0010 in the MLM code would be treated as $4010 in the code*
 
-### BANK3 - Song data
-BANK3 contains the song data. it must begin with this header:
+### MLM Header
+This should be located at address $4000, in the static bank
 
 |offsets | description                              | bytes 
 |--------|------------------------------------------|-------
@@ -45,8 +42,9 @@ BANK3 contains the song data. it must begin with this header:
 
 * Only the first 128 songs can be played as of right now.
 
-each song should start with this header
+### Song Data
 
+Each song should start with this header
 
 offsets | description       | bytes
 --------|-------------------|------
@@ -54,12 +52,9 @@ $0000   | Channel 0 offset  | 2
 ...     | ...               |
 $001A   | Channel 12 offset | 2
 $001C   | Timer A counter   | 2
-$001E   | Mode              | 1
-$001F   | Zone 2 bank       | 1
-$0020   | Zone 1 bank       | 1
-$0021   | Zone 0 bank       | 1
+$001E   | Base time         | 1
+$001F   | Instrument offset | 2
 
-Mode should be used to enable or disable deflemask compatibility, it currently does nothing but I'm putting it in the specs just in case.
 each channel is an array of events. The driver executes the event, and then waits the amount of time specifies in the event.
 Events can be split in two categories, depending on the most significant bit. 
 
@@ -155,11 +150,9 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 ###### Command 32: Return from sub event list
 **format: `$20`**
 
-### BANK2, 1 and 0 - instruments and other data
-The driver can access up to 256 instruments at a time in BANK2, each instrument
-occupies 32 bytes, how those 32 bytes are used depends on the channel type (ADPCM, FM, SSG).
-Additionally, some data of the instrument might be stored in BANK1 and BANK0 (SSG macros for example).
-The use of BANK1 and BANK0 isn't obligatory, but not using said banks imposes several limitations.
+### Instruments and Other Data
+The driver can access up to 256 instruments. The pointer to said instrument is defined in the song header.
+Each instrument occupies 32 bytes, how those 32 bytes are used depends on the channel type (ADPCM, FM, SSG).
 
 #### ADPCM-A instrument structure
 
