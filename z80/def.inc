@@ -242,7 +242,7 @@ SSGCNT_MIX_EN_NOISE	equ 3
 ;;                    STRUCT                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	struct SSGCNT_macro
+	struct ControlMacro
 enable 	ds 1 ; u8
 length 	ds 1 ; u8
 data 	ds 2 ; void*

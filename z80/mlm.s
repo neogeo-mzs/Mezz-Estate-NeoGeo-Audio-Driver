@@ -784,7 +784,7 @@ MLM_set_instrument_ssg:
 		; to the volume macro in WRAM (ix)
 		ex de,hl
 		inc hl
-		ld bc,SSGCNT_macro*3
+		ld bc,ControlMacro*3
 		add ix,bc
 
 		; Set volume macro
