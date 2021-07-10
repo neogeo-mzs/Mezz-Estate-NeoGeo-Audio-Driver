@@ -86,6 +86,9 @@ command do pretty much anything else a song needs. Commands are formatted differ
 
 ##### Command list
 
+If the timing isn't specified, it means it'll be set to 0, thus the next
+event will be executed immediately.
+
 ###### Command 0: End of event list
 **format: `$00`**
 
@@ -95,7 +98,7 @@ this command ends the playback for the current channel
 **format: `$01 %TTTTTTTT (Timing)`**
 
 ###### Command 2: Change instrument
-**format: `$02 %IIIIIIII (Instrument; Next event is executed immediately)`**
+**format: `$02 %IIIIIIII (Instrument)`**
 
 ###### Command 3: Wait ticks (byte)
 **format: `$03 %TTTTTTTT (Timing)`**
@@ -104,7 +107,7 @@ this command ends the playback for the current channel
 **format: `$04 %TTTTTTTT (Timing LSB) %TTTTTTTT (Timing MSB)`**
 
 ###### Command 5: Set channel volume
-**format: `$05 %VVVVVVVV (Volume) %TTTTTTTT (Timing)`**
+**format: `$05 %VVVVVVVV (Volume)`**
 
 ###### Command 6: Set panning
 **format: `$06 %LRTTTTTT (Left on; Right on; Timing)`**
@@ -112,12 +115,12 @@ this command ends the playback for the current channel
 *ADPCM-A and FM only*
 
 ###### Command 7: Set master volume
-**format: `$07 %VVVVVVTT (Volume; Timing MSB) %TTTTTTTT (Timing LSB)`**
+**format: `$07 %VVVVVVTT (Volume; Timing)`**
 
 *ADPCM-A only*
 
 ###### Command 8: Set base time
-**format: `$08 %BBBBBBBB (Base Time) %TTTTTTTT (Timing)`**
+**format: `$08 %BBBBBBBB (Base Time)`**
 
 ###### Command 9: Jump to sub-event list
 **format $09 %AAAAAAAA (Address LSB) %AAAAAAAA (Address MSB)**
@@ -125,7 +128,7 @@ this command ends the playback for the current channel
 Does NOT allow nesting. Do not use this command in a sub event list.
 
 ###### Command 10: Small position jump
-**format: `$0A %OOOOOOOO (Offset; next event is executed immediately)`**
+**format: `$0A %OOOOOOOO (Offset)`**
 
 Offset = destination addr. - (current event addr. + 1 + current event argc)
 
@@ -136,10 +139,10 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 **format: `$0C %SSSSSSSS (Signed pitch offset per tick) %TTTTTTTT (Timing)`**
 
 ###### Command 13: YM2610 Port A write
-**format: `$0D %AAAAAAAA (Address) %DDDDDDDD (Data; next event is executed immediately)`**
+**format: `$0D %AAAAAAAA (Address) %DDDDDDDD (Data)`**
 
 ###### Command 14: YM2610 Port B write
-**format: `$0E %AAAAAAAA (Address) %DDDDDDDD (Data; next event is executed immediately)`**
+**format: `$0E %AAAAAAAA (Address) %DDDDDDDD (Data)`**
 
 ###### Command 15: Set timer A frequency
 **format: `$0F %AAAAAAAA (timer A MSB) %TTTTTTAA (Timing; timer A LSB)`**

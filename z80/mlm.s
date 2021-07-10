@@ -1051,8 +1051,8 @@ MLM_command_vectors:
 	dsw 95,  MLMCOM_invalid ; Invalid commands
 
 MLM_command_argc:
-	db &00, &01, &01, &01, &02, &02, &01, &02
-	db &02, &02, &01, &02, &02, &02, &02, &02
+	db &00, &01, &01, &01, &02, &01, &01, &01
+	db &01, &02, &01, &02, &01, &02, &02, &02
 	dsb 16, &00 ; Wait ticks nibble
 	db &00
 	dsb 95, 0   ; Invalid commands all have no arguments
@@ -1159,7 +1159,6 @@ MLMCOM_wait_ticks_word:
 ; c: channel
 ; Arguments:
 ;   1. Volume
-;   2. Timing
 MLMCOM_set_channel_volume:
 	push ix
 	push af
@@ -1178,8 +1177,7 @@ MLMCOM_set_channel_volume:
 		ld (hl),c
 
 		; Set timing
-		ld c,(ix+1)
-		ld b,0
+		ld bc,0
 		call MLM_set_timing
 	pop bc
 	pop hl
@@ -1221,7 +1219,6 @@ MLMCOM_set_channel_panning_set_timing:
 ; c: channel
 ; Arguments:
 ;   1. %VVVVVVTT (Volume; Timing MSB)
-;   2. %TTTTTTTT (Timing LSB)
 MLMCOM_set_master_volume:
 	push ix
 	push af
@@ -1242,7 +1239,8 @@ MLMCOM_set_master_volume:
 		and a,%00000011
 		ld b,a
 		ld a,c
-		ld c,(ix+1)
+		ld c,b
+		ld b,0
 		call MLM_set_timing
 	pop bc
 	pop de
@@ -1253,7 +1251,6 @@ MLMCOM_set_master_volume:
 ; c: channel
 ; Arguments:
 ;   1. %BBBBBBBB (Base time)
-;   2. %TTTTTTTT (Timing)
 MLMCOM_set_base_time:
 	push ix
 	push af
@@ -1265,8 +1262,7 @@ MLMCOM_set_base_time:
 
 		; Set timing
 		ld a,c
-		ld b,0
-		ld c,(ix+1)
+		ld bc,0
 		call MLM_set_timing
 	pop af
 	pop ix
@@ -1391,7 +1387,6 @@ MLMCOM_big_position_jump:
 ; c: channel
 ; Arguments:
 ;   1. %SSSSSSSS (Signed pitch offset per tick)
-;   2. %TTTTTTTT (Timing)
 MLMCOM_portamento_slide:
 	jp MLM_parse_command_end
 
