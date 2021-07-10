@@ -1504,6 +1504,7 @@ MLMCOM_wait_ticks_nibble:
 		ld c,a
 		ld b,0
 		ld a,l
+		inc c ; 0~15 -> 1~16
 		call MLM_set_timing
 	pop bc
 	pop af

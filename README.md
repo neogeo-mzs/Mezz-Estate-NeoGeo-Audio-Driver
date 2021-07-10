@@ -148,7 +148,11 @@ Offset = destination addr. - (current event addr. + 1 + current event argc)
 **format: `$0F %AAAAAAAA (timer A MSB) %TTTTTTAA (Timing; timer A LSB)`**
 
 ###### Command 16\~31: Wait ticks (nibble)
-**format: `$1T (Timing)`**
+**format: `$1T (Timing-1)`**
+
+This command will wait 1\~16 ticks, since the timing used
+is incremented by one. this means that if a 0 is specified, 
+one tick will be waited.
 
 ###### Command 32: Return from sub event list
 **format: `$20`**
