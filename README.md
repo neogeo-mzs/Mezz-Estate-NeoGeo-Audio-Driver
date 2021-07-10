@@ -227,7 +227,7 @@ $000A  | Padding                            | 21
 
 If any macro pointer is set to $0000, then that macro will be disabled.
 
-#### SSG macro structure
+### Control Macro structure
 
 offset | description                        | bytes
 -------|------------------------------------|------

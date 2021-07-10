@@ -41,16 +41,16 @@ SSGCNT_notes:			ds 3 ; u8[3]
 ; AND "SSGCNT_start_channel_macros"
 ; MIGHT STOP FUNCTIONING CORRECTLY 
 SSGCNT_macros:
-SSGCNT_mix_macro_A:		SSGCNT_macro
-SSGCNT_mix_macro_B:		SSGCNT_macro
-SSGCNT_mix_macro_C:		SSGCNT_macro
-SSGCNT_vol_macro_A: 	SSGCNT_macro 
-SSGCNT_vol_macro_B: 	SSGCNT_macro
-SSGCNT_vol_macro_C:		SSGCNT_macro
-SSGCNT_arp_macro_A: 	SSGCNT_macro 
-SSGCNT_arp_macro_B: 	SSGCNT_macro
-SSGCNT_arp_macro_C:		SSGCNT_macro
-;SSGCNT_noise_macro:	SSGCNT_macro
+SSGCNT_mix_macro_A:		ControlMacro
+SSGCNT_mix_macro_B:		ControlMacro
+SSGCNT_mix_macro_C:		ControlMacro
+SSGCNT_vol_macro_A: 	ControlMacro 
+SSGCNT_vol_macro_B: 	ControlMacro
+SSGCNT_vol_macro_C:		ControlMacro
+SSGCNT_arp_macro_A: 	ControlMacro 
+SSGCNT_arp_macro_B: 	ControlMacro
+SSGCNT_arp_macro_C:		ControlMacro
+;SSGCNT_noise_macro:	ControlMacro
 
 SSGCNT_wram_end:
 

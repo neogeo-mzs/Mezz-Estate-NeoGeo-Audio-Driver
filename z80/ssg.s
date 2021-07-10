@@ -58,7 +58,7 @@ SSGCNT_irq_vol_loop:
 
 	; Update all macros
 	ld b,9              ; total amount of macros
-	ld de,SSGCNT_macro  ; de = sizeof(SSGCNT_macro)
+	ld de,ControlMacro  ; de = sizeof(ControlMacro)
 	ld ix,SSGCNT_macros
 SSGCNT_irq_vol_macro_loop:
 	call SSGCNT_MACRO_update
@@ -134,7 +134,7 @@ SSGCNT_get_ym2610_ch_volume:
 		; If the macro is disabled (enable = $00)
 		; then return, else calculate the volume
 		; using the macro's data
-		ld a,(ix+SSGCNT_macro.enable)
+		ld a,(ix+ControlMacro.enable)
 		or a,a ; cp a,0
 		jr z,SSGCNT_get_ym2610_ch_volume_return
 
@@ -197,7 +197,7 @@ SSGCNT_update_note:
 		; If the macro is disabled (enable = $00), 
 		; just use the value in SSGCNT_notes[channel]
 		xor a,a ; ld a,0
-		cp a,(ix+SSGCNT_macro.enable)
+		cp a,(ix+ControlMacro.enable)
 		jr z,SSGCNT_update_note_macro_disabled
 		
 		; Else (the macro is enabled) add to
@@ -254,7 +254,7 @@ SSGCNT_update_channels_mix:
 		add ix,ix ; | hl *= 8
 		add ix,ix ; /
 		add ix,de
-		ld a,(ix+SSGCNT_macro.enable)
+		ld a,(ix+ControlMacro.enable)
 
 		; If the selected channel's mix macro is
 		; disabled (enable == $00) then return
@@ -433,9 +433,9 @@ SSGCNT_BMACRO_read:
 	push hl
 	push de
 		; a = macro.data[macro.curr_pt]
-		ld l,(ix+SSGCNT_macro.data)
-		ld h,(ix+SSGCNT_macro.data+1)
-		ld e,(ix+SSGCNT_macro.curr_pt)
+		ld l,(ix+ControlMacro.data)
+		ld h,(ix+ControlMacro.data+1)
+		ld e,(ix+ControlMacro.curr_pt)
 		ld d,0
 		add hl,de
 		ld a,(hl)
@@ -454,9 +454,9 @@ SSGCNT_NMACRO_read:
 		; Load byte containing the value
 		; by adding to the macro data 
 		; pointer curr_pt divided by two
-		ld l,(ix+SSGCNT_macro.data)
-		ld h,(ix+SSGCNT_macro.data+1)
-		ld a,(ix+SSGCNT_macro.curr_pt)
+		ld l,(ix+ControlMacro.data)
+		ld h,(ix+ControlMacro.data+1)
+		ld a,(ix+ControlMacro.curr_pt)
 		srl a
 		ld e,a ; e = macro.curr_pt / 2
 		ld d,0
@@ -466,7 +466,7 @@ SSGCNT_NMACRO_read:
 		; If macro.curr_pt is even, then
 		; return the least significant nibble,
 		; else return the most significant one.
-		bit 0,(ix+SSGCNT_macro.curr_pt)
+		bit 0,(ix+ControlMacro.curr_pt)
 		jr z,SSGCNT_NMACRO_read_even_pt
 
 		srl a ; \
@@ -488,21 +488,21 @@ SSGCNT_MACRO_update:
 		; the length minus 1 (remember that
 		; the length is always stored 
 		; decremented by one)
-		ld a,(ix+SSGCNT_macro.length)
-		cp a,(ix+SSGCNT_macro.loop_pt)
+		ld a,(ix+ControlMacro.length)
+		cp a,(ix+ControlMacro.loop_pt)
 		jr nc,SSGCNT_MACRO_update_valid_loop_pt ; if macro.length >= macro.loop_pt ...
 
-		ld (ix+SSGCNT_macro.loop_pt),a ; macro.loop_pt = macro.length (length is stored decremented by 1)
+		ld (ix+ControlMacro.loop_pt),a ; macro.loop_pt = macro.length (length is stored decremented by 1)
 SSGCNT_MACRO_update_valid_loop_pt:
 
 		; increment macro.curr_pt, if it
 		; overflows set it to macro.loop_pt
-		inc (ix+SSGCNT_macro.curr_pt)
-		cp a,(ix+SSGCNT_macro.curr_pt)
+		inc (ix+ControlMacro.curr_pt)
+		cp a,(ix+ControlMacro.curr_pt)
 		jr nc,SSGCNT_MACRO_update_return ; if macro.length >= macro.curr_pt
 
-		ld a,(ix+SSGCNT_macro.loop_pt)
-		ld (ix+SSGCNT_macro.curr_pt),a
+		ld a,(ix+ControlMacro.loop_pt)
+		ld (ix+ControlMacro.curr_pt),a
 
 SSGCNT_MACRO_update_return:
 	pop af
@@ -518,7 +518,7 @@ SSGCNT_MACRO_set:
 	push de
 		; Disable macro, if needed it'll be 
 		; enabled later in the function
-		ld (ix+SSGCNT_macro.enable),&00
+		ld (ix+ControlMacro.enable),&00
 
 		; If the address to the macro initialization data is
 		; equal to MLM_HEADER, then return from the subroutine
@@ -533,21 +533,21 @@ SSGCNT_MACRO_set:
 
 		; Set macro's length
 		ld a,(hl)
-		ld (ix+SSGCNT_macro.length),a
+		ld (ix+ControlMacro.length),a
 
 		; Set macro's loop point
 		inc hl
 		ld a,(hl)
-		ld (ix+SSGCNT_macro.loop_pt),a
+		ld (ix+ControlMacro.loop_pt),a
 
 		; Set macro's data pointer
 		inc hl
-		ld (ix+SSGCNT_macro.data),l
-		ld (ix+SSGCNT_macro.data+1),h
+		ld (ix+ControlMacro.data),l
+		ld (ix+ControlMacro.data+1),h
 
 		; Set other variables
-		ld (ix+SSGCNT_macro.enable),&FF
-		ld (ix+SSGCNT_macro.curr_pt),0
+		ld (ix+ControlMacro.enable),&FF
+		ld (ix+ControlMacro.curr_pt),0
 SSGCNT_MACRO_set_return:
 	pop de
 	pop hl
@@ -568,16 +568,16 @@ SSGCNT_start_channel_macros:
 		add ix,ix ; | ix *= 8
 		add ix,ix ; /
 		add ix,de
-		ld (ix+SSGCNT_macro.curr_pt),0
+		ld (ix+ControlMacro.curr_pt),0
 
 		; Set channel's volume macro.curr_pt to 0
-		ld de,SSGCNT_macro*3
+		ld de,ControlMacro*3
 		add ix,de
-		ld (ix+SSGCNT_macro.curr_pt),0
+		ld (ix+ControlMacro.curr_pt),0
 		
 		; Set channel's arpeggio macro.curr_pt to 0
 		add ix,de
-		ld (ix+SSGCNT_macro.curr_pt),0
+		ld (ix+ControlMacro.curr_pt),0
 	pop de
 	pop ix
 	ret
