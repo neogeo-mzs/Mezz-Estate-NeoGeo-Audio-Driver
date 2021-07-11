@@ -157,6 +157,22 @@ one tick will be waited.
 ###### Command 32: Return from sub event list
 **format: `$20`**
 
+###### Command 48\~63: Set Volume (byte)
+
+FM, ADPCM:
+	**format: `%0011SOOO (Sign bit; Offset)`**
+
+	The sign bit signifies whether the offset is positive (cleared) or negative (set). The offset is incremented (if positive) or decremented (if negative) by one; Thus the range is -8~-1 and 1~8.
+	The offset operates based on the YM2610 volume range ($00~$7F for FM, $00~$1F for ADPCMA), not the MLM range, this is done by shifting the offset to the left once for FM and thrice for ADPCMA. This is done after
+	the offset is incremented.
+	WARNING: The volume isn't clamped, it can overflow and underflow! just know that it's stored in a single byte.
+
+SSG:
+	**format: `%0011VVVV (Volume)`**
+
+	In the case of SSG channels, the volume is set directly. The volume
+	range is the oned used in SSG registers, 0~15
+
 ### Instruments and Other Data
 The driver can access up to 256 instruments. The pointer to said instrument is defined in the song header.
 Each instrument occupies 32 bytes, how those 32 bytes are used depends on the channel type (ADPCM, FM, SSG).

@@ -488,8 +488,6 @@ MLM_play_sample_pa:
 	push bc
 	push hl
 	push ix
-		brk
-
 		; Load current instrument index into hl
 		ld h,0
 		ld l,a 
@@ -1048,14 +1046,18 @@ MLM_command_vectors:
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
 	dsw 16,  MLMCOM_wait_ticks_nibble
 	dw MLMCOM_return_from_sub_el
-	dsw 95,  MLMCOM_invalid ; Invalid commands
+	dsw 15,  MLMCOM_invalid ; Invalid commands
+	dsw 16,  MLMCOM_set_channel_volume_byte
+	dsw 64,  MLMCOM_invalid ; Invalid commands
 
 MLM_command_argc:
 	db &00, &01, &01, &01, &02, &01, &01, &01
 	db &01, &02, &01, &02, &01, &02, &02, &02
 	dsb 16, &00 ; Wait ticks nibble
 	db &00
-	dsb 95, 0   ; Invalid commands all have no arguments
+	dsb 15, 0   ; Invalid commands all have no arguments
+	dsb 16, 0   ; Set Channel Volume (byte sized)
+	dsb 64, 0   ; Invalid commands all have no arguments
 
 ; c: channel
 MLMCOM_end_of_list:
@@ -1539,6 +1541,160 @@ MLMCOM_return_from_sub_el:
 	pop af
 	pop hl
 	jp MLM_parse_command_end_skip_playback_pointer_set
+
+
+; c: channel
+; de: playback pointer
+MLMCOM_set_channel_volume_byte:
+	push af
+	push bc
+
+		ld a,c
+		cp a,MLM_CH_FM1
+		jp c,MLMCOM_set_channel_volume_byte_ADPCMA
+
+		cp a,MLM_CH_SSG1
+		jp c,MLMCOM_set_channel_volume_byte_FM
+
+		jp MLMCOM_set_channel_volume_byte_SSG
+
+MLMCOM_set_channel_volume_byte_ret:
+
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+	pop af
+	jp MLM_parse_command_end
+
+; a: channel
+; c: channel
+; de: playback pointer
+MLMCOM_set_channel_volume_byte_ADPCMA:
+	push af
+	push hl
+	push bc
+	push de
+		; Load command byte in l
+		ex de,hl
+		dec hl
+		ld e,(hl)
+		ex de,hl
+
+		; Store offset from com byte
+		; in a and increment it by 1
+		ld a,l
+		and a,&07
+		inc a
+
+		; Shift offset to the left
+		; to adjust the offset to
+		; the ADPCM-A range ($00~$1F)
+		sla a
+		sla a
+		sla a
+
+		; If the sign bit is set, 
+		; negate offset
+		bit 3,l
+		jr z,MLMCOM_set_channel_volume_byte_ADPCMA_pos
+		neg ; negates a
+
+MLMCOM_set_channel_volume_byte_ADPCMA_pos:
+		; Calculate address to channel volume
+		ld hl,MLM_channel_volumes
+		ld b,0
+		add hl,bc
+
+		; Add offset to channel volume
+		add a,(hl)
+		call MLM_set_channel_volume
+	pop de
+	pop bc
+	pop hl
+	pop af
+	jp MLMCOM_set_channel_volume_byte_ret
+
+; a: channel
+; c: channel
+; de: playback pointer
+MLMCOM_set_channel_volume_byte_FM:
+	push af
+	push hl
+	push bc
+	push de
+		; Load command byte in l
+		ex de,hl
+		dec hl
+		ld e,(hl)
+		ex de,hl
+
+		; Store offset from com byte
+		; in a and increment it by 1
+		ld a,l
+		and a,&07
+		inc a
+
+		; Shift offset to the left
+		; to adjust the offset to
+		; the FM range ($00~$7F)
+		sla a
+
+		; If the sign bit is set, 
+		; negate offset
+		bit 3,l
+		jr z,MLMCOM_set_channel_volume_byte_FM_pos
+		neg ; negates a
+
+MLMCOM_set_channel_volume_byte_FM_pos:
+		; Calculate address to channel volume
+		ld hl,MLM_channel_volumes
+		ld b,0
+		add hl,bc
+
+		; Add offset to channel volume
+		add a,(hl)
+		call MLM_set_channel_volume
+	pop de
+	pop bc
+	pop hl
+	pop af
+	jp MLMCOM_set_channel_volume_byte_ret
+
+
+; a: channel
+; c: channel
+; de: playback pointer
+MLMCOM_set_channel_volume_byte_SSG:
+	push af
+	push de
+		; Load command byte in a, and 
+		; then get the volume from the 
+		; least significant nibble of it
+		ex de,hl
+		dec hl
+		ld a,(hl)
+		ex de,hl
+		and a,&0F
+
+		; Transform SSG Volume ($00~$0F)
+		; into an MLM volume ($00~$FF)
+		sla a ; -\
+		sla a ;  | a <<= 4
+		sla a ;  /
+		sla a ; /
+
+		call MLM_set_channel_volume
+	pop de
+	pop af
+	jp MLMCOM_set_channel_volume_byte_ret
+
+; a: volume
+; c: channel
+;	This sets MLM_channel_volumes,
+;   the register writes are done in
+;   the IRQ
+;MLM_set_channel_volume
 
 ; invalid command, plays a noisy beep
 ; and softlocks the driver
