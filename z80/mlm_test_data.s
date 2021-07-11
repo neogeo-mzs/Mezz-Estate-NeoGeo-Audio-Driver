@@ -63,9 +63,12 @@ MLM_song_pa6:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_pa: ; Start in Zone 3
+	db &30 | 8 | (8-1) ; Offset volume by -8
 	db &80 | 30, 0 ; Play ADPCM-A sample 0 (C)
 	db &09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /
+
+	db &30 | (6-1) ; Offset volume by +6
 	db &80 | 30, 2 ; Play ADPCM-A sample 2 (D)
 	db &00 ; End of song
 
@@ -107,9 +110,12 @@ MLM_song_fm4:
 
 MLM_el_fm:
 	db &02,2 ; Set instrument to 2
+	db &30 | 8 | (8-1) ; Offset volume by -8
 	db &80 | 30, 0 | (4 << 4) ; Play FM note C4 and wait 21 ticks
 	db &09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /
+
+	db &30 | (4-1) ; Offset volume by +4
 	db &80 | 30, 2 | (4 << 4) ; Play FM note D4 and wait 127 ticks
  	db &00 ; End of song
  	
@@ -141,9 +147,12 @@ MLM_song_ssg3:
 	
 MLM_el_ssg:
 	db &02,1                  ; Set instrument to 1
+	db &38 ; Set SSG volume to 8
 	db &80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
 	db &09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /
+
+	db &3F ; Set SSG volume to F
 	db &80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db &00 ; End of song
 
