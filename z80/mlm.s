@@ -521,11 +521,23 @@ MLM_play_sample_pa:
 		ld d,(hl)
 
 		; Add MLM_header offset to
-		; it to obtain the actual address.
+		; it to obtain the actual address
 		ld hl,MLM_HEADER
 		add hl,de
 		ld e,l
 		ld d,h
+
+		; Check if sample id is valid;
+		; if it isn't softlock.
+		;   the count should be incremented by 1,
+		;   but to make a <= comparison it'd have
+		;   been decremented by 1 anyway.
+		push af
+			ld a,(hl)
+			cp a,c
+			jp c,softlock ; if smp_count <= smp_id
+			inc de ; Increment past sample count
+		pop af
 
 		; ix = &ADPCM_sample_table[sample_idx]
 		ld h,0
