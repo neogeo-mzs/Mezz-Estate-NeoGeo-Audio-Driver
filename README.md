@@ -101,10 +101,14 @@ this command ends the playback for the current channel
 **format: `$02 %IIIIIIII (Instrument)`**
 
 ###### Command 3: Wait ticks (byte)
-**format: `$03 %TTTTTTTT (Timing)`**
+**format: `$03 %TTTTTTTT (Timing-1)`**
+
+This command's range is 1\~256
 
 ###### Command 4: Wait ticks (word)
-**format: `$04 %TTTTTTTT (Timing LSB) %TTTTTTTT (Timing MSB)`**
+**format: `$04 %TTTTTTTT (Timing-1 LSB) %TTTTTTTT (Timing-1 MSB)`**
+
+This command's range is 1\~65536
 
 ###### Command 5: Set channel volume
 **format: `$05 %VVVVVVVV (Volume)`**
