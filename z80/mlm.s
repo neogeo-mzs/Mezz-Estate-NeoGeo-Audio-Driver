@@ -1164,7 +1164,6 @@ MLMCOM_wait_ticks_word:
 		ld a,c
 		ld b,(ix+1)
 		ld c,(ix+0)
-		inc bc
 		call MLM_set_timing
 	pop ix
 	pop af
