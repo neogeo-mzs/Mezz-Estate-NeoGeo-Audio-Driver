@@ -10,6 +10,9 @@ sys.argv.pop(0)
 def str_filter(text):
     return bool(re.match("^[A-Za-z0-9_-]*$", text))
 
+sample_count = len(sys.argv)
+adpcma_smp_lut.append(sample_count)
+
 for pcma_filepath in sys.argv:
     pcma_file_label = os.path.splitext(pcma_filepath)[0].replace(" ", "_")
     alphanum_filter = filter(str_filter, pcma_file_label)

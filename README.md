@@ -188,11 +188,12 @@ $0002  | Padding                | 30
 
 offset | description                    | bytes
 -------|--------------------------------|------
-$0000  | Sample 0 start address / 256   | 2
-$0002  | Sample 0 end address / 256     | 2
+$0000  | Sample count-1                 | 1
+$0001  | Sample 0 start address / 256   | 2
+$0003  | Sample 0 end address / 256     | 2
 ...    | ...                            | ...
-$03FC  | Sample 255 start address / 256 | 2
-$03FE  | Sample 255 end address / 256   | 2
+$03FD  | Sample 255 start address / 256 | 2
+$03FF  | Sample 255 end address / 256   | 2
 
 #### FM instrument structure
 
