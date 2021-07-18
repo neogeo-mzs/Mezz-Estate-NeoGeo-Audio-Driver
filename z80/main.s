@@ -31,7 +31,7 @@ j_IRQ:
 	di
 	jp IRQ
 
-	asciiz "MZS driver v. 5.0-beta by GbaCretin"
+	asciiz "MZS driver v. 6.2-beta by GbaCretin"
 
 	org &0066
 NMI:
