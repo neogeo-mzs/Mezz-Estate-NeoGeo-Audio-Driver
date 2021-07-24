@@ -222,6 +222,13 @@ SSGCNT_MIX_EN_NOISE	equ 3
 		pop af
 	endm
 
+	macro brk3
+		push af
+		ld a,&3B
+		ld (breakpoint),a
+		pop af
+	endm
+
 	macro fm_ch_data, fb,algo,ams,pms
 		db \algo | (\fb << 3)
 		db \pms | (\ams << 4)

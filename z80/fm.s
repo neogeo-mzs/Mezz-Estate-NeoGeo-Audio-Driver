@@ -494,6 +494,7 @@ FMCNT_set_note:
 		; Set block/octave
 		ld a,ixh
 		and a,%01110000 ; Get octave (-OOONNNN -> 0OOO0000)
+		add a,%00010000 ; Increment octave by 1
 		srl a           ; Get octave in the right position (block needs to be set to octave)
 		or a,b          ; OR block with F-Num 2
 		ld b,a
