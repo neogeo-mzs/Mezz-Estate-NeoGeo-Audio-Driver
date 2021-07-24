@@ -1,4 +1,6 @@
 ; wpset F800,1,w,wpdata==39
+; wpset F800,1,w,wpdata==3A,{printf "[PORTA] addr: 0x%02X; data: 0x%02X", d, e; go}
+; wpset F800,1,w,wpdata==3B,{printf "[PORTB] addr: 0x%02X; data: 0x%02X", d, e; go}
 
 	include "def.inc"
 
@@ -31,7 +33,7 @@ j_IRQ:
 	di
 	jp IRQ
 
-	asciiz "MZS driver v. 6.2-beta by GbaCretin"
+	asciiz "MZS driver v. 6.3-beta by GbaCretin"
 
 	org &0066
 NMI:
@@ -246,6 +248,8 @@ softlock:
 	include "math.s"
 	include "irq.s"
 
-	include "mlm_test_data.s"
+	;include "mlm_test_data.s"
+	org MLM_HEADER ; block 1
+	incbin "m1_sdata.bin"
 
 	include "wram.s"

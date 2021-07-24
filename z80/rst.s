@@ -12,6 +12,8 @@ port_write_delay2:
 
 port_write_a:
 	push af
+		brk2
+
 		ld     a,d
 		out    (YM2610_A0),a
 		rst RST_YM_DELAY1
@@ -25,6 +27,8 @@ port_write_a:
 
 port_write_b:
 	push af
+		brk3
+		
 		ld     a,d
 		out    (YM2610_B0),a
 		rst RST_YM_DELAY1

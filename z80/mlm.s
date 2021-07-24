@@ -77,6 +77,7 @@ MLM_update_channel_playback:
 		; else save decremented timing
 		push hl
 			ld hl,0
+			or a,a ; clear carry flag
 			sbc hl,de
 		pop hl
 MLM_update_channel_playback_execute_events:
@@ -201,6 +202,8 @@ MLM_stop:
 	push de
 	push bc
 	push af
+		brk
+
 		; Stop SSG Controller
 		call SSGCNT_init
 		call FMCNT_init
@@ -275,7 +278,6 @@ MLM_play_song:
 		ld b,CHANNEL_COUNT
 MLM_play_song_loop:
 		call MLM_playback_init
-		call MLM_ch_parameters_init
 		djnz MLM_play_song_loop
 
 		; Load timer a counter load
@@ -336,6 +338,11 @@ MLM_play_song_loop:
 		call FM_enable_channel
 		ld c,3
 		call FM_enable_channel
+
+		ld b,CHANNEL_COUNT
+MLM_play_song_loop2:
+		call MLM_ch_parameters_init
+		djnz MLM_play_song_loop2
 	pop af
 	pop ix
 	pop de
@@ -409,6 +416,11 @@ MLM_ch_parameters_init:
 		dec a
 		ld c,PANNING_CENTER
 		call MLM_set_channel_panning
+
+		ld a,0
+		ld c,b
+		dec c
+		call MLM_set_instrument
 	pop bc
 	pop af
 	ret
@@ -484,6 +496,7 @@ MLM_parse_note_end:
 ;   a:  channel
 ;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
 MLM_play_sample_pa:
+	;jp MLM_parse_note_end ; Temporarily disable PA
 	push de
 	push bc
 	push hl
