@@ -106,7 +106,7 @@ this command ends the playback for the current channel
 This command's range is 1\~256
 
 ###### Command 4: Wait ticks (word)
-**format: `$04 %TTTTTTTT (Timing LSB) %TTTTTTTT (Timing-1 MSB)`**
+**format: `$04 %TTTTTTTT (Timing LSB) %TTTTTTTT (Timing MSB)`**
 
 This command's range is 0\~65536
 

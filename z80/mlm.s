@@ -202,8 +202,6 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		brk
-
 		; Stop SSG Controller
 		call SSGCNT_init
 		call FMCNT_init
@@ -496,7 +494,7 @@ MLM_parse_note_end:
 ;   a:  channel
 ;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
 MLM_play_sample_pa:
-	;jp MLM_parse_note_end ; Temporarily disable PA
+	jp MLM_parse_note_end ; Temporarily disable PA
 	push de
 	push bc
 	push hl
@@ -1157,7 +1155,7 @@ MLMCOM_wait_ticks_byte:
 		ld a,c
 		ld b,0
 		ld c,(hl)
-		inc c
+		inc bc
 		call MLM_set_timing
 	pop af
 	pop bc

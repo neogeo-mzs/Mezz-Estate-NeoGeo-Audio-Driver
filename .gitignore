@@ -2,6 +2,8 @@
 *.pcma
 *.elf
 *.wav
+*.vgm.txt
+*.tr
 build
 z80/listing.txt
 z80/adpcma_sample_lut.bin
