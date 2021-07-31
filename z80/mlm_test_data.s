@@ -110,16 +110,14 @@ MLM_song_fm4:
 
 MLM_el_fm:
 	db &02,2 ; Set instrument to 2
-	db &30 | 8 | (8-1) ; Offset volume by -8
-	db &80 | 30, 0 | (4 << 4) ; Play FM note C4 and wait 21 ticks
-	db &09                        ; - Jump to sub event list
-	dw MLM_sub_el_wait-MLM_HEADER ; /
+	db &80 | (8*3), 0 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
+	db &80 | (8*3), 2 | (4 << 4) ; Play FM note D4 and wait 8*3 ticks
+	db &80 | (8*3), 4 | (4 << 4) ; Play FM note E4 and wait 8*3 ticks
+	db &80 | (8*3), 5 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
 
-	db &30 | (4-1) ; Offset volume by +4
-	db &80 | 30, 2 | (4 << 4) ; Play FM note D4 and wait 127 ticks
- 	db &00 ; End of song
- 	
-	db &00 ; End of song
+	; Jump to MLM_el_fm
+	db &0B
+	dw MLM_el_fm-MLM_header
 
 
 MLM_song_ssg1:
