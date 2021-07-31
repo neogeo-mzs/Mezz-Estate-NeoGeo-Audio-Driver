@@ -236,6 +236,11 @@ FMCNT_update_key_on:
 		ld hl,FM_channel_LUT-1
 		add hl,de
 
+		; Proceed to stop the FM channel
+		ld e,(hl)
+		ld d,REG_FM_KEY_ON
+		rst RST_YM_WRITEA
+		
 		; OR the FM channel id and the OP enable 
 		; nibble, then store the result in e and
 		; write it to the FM Key On YM2610 register
