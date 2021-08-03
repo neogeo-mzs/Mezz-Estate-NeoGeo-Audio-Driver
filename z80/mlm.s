@@ -202,6 +202,8 @@ MLM_stop:
 	push de
 	push bc
 	push af
+		brk
+		
 		; Stop SSG Controller
 		call SSGCNT_init
 		call FMCNT_init

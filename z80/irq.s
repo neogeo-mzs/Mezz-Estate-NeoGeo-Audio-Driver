@@ -5,6 +5,8 @@ IRQ: ; MLM_2CH_mode
 	push hl
 	push ix
 	push iy
+        brk2
+
         in a,(4)
         bit 0,a
         jr z,IRQ_end
@@ -16,14 +18,15 @@ IRQ: ; MLM_2CH_mode
         call FMCNT_irq
         call SSGCNT_irq
 
-        ; data = TM_CNT_LOAD_TA | TM_CNT_ENABLE_TA_IRQ | TM_CNT_TA_FLG_RESET
-        ; data |= *EXT_2CH_mode
+        ld e,&00
+        ld d,REG_TIMER_CNT
+        ;rst RST_YM_WRITEA
+
         ld e,TM_CNT_LOAD_TA | TM_CNT_ENABLE_TA_IRQ | TM_CNT_TA_FLG_RESET
-        ;ld a,(EXT_2CH_mode)
-        ;or a,e
-        ;ld e,a
         ld d,REG_TIMER_CNT
 		rst RST_YM_WRITEA
+
+        brk2
 IRQ_end:
 	pop iy
 	pop ix

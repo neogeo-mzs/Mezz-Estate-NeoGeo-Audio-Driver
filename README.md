@@ -308,8 +308,7 @@ The z80 memory zones used are zone 3 and zone 2. The driver starts playing zone 
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
 
 ## BUGS
-* If the pitch slide is set to anything that isn't 0, notes seem to be triggered afterwards
-* z80/68k communication doesn't work on real hardware
+* 70hz+ frequencies don't work correctly
 
 ## TODO
 * Implement ADPCM-B

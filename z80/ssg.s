@@ -42,8 +42,8 @@ SSGCNT_init_loop:
 
 ; DOESN'T BACKUP REGISTERS!!
 SSGCNT_irq:
+	ret
 	ld b,3
-	brk2
 
 SSGCNT_irq_vol_loop:
 	dec b

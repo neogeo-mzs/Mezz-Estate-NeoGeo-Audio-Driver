@@ -63,6 +63,7 @@ FM_operator_TLs:		ds FM_CHANNEL_COUNT*FM_OP_COUNT ; u8[FM_CH_COUNT][FM_OP_COUNT]
 FM_channel_volumes:		ds FM_CHANNEL_COUNT             ; u8[4] (127 is lowest, 0 is highest)
 FM_channel_key_on:		ds FM_CHANNEL_COUNT             ; bool[4] (If it isn't 0, then the channel will be played next IRQ and the value will be cleared)
 FM_channel_enable:      ds FM_CHANNEL_COUNT             ; bool[4] (If it's 0, then the channel won't be touched by the FM IRQ routine)
+FM_channel_algos:       ds FM_CHANNEL_COUNT             ; u8[4]
 FM_wram_end:
 
 ; ======== PA ========

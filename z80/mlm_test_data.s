@@ -80,7 +80,7 @@ MLM_song_fm1:
 	dsw 6,0
 	dw MLM_el_fm-MLM_header
 	dsw 6, 0
-	dw 98 ; Timer A frequency
+	dw 378 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
@@ -110,11 +110,12 @@ MLM_song_fm4:
 
 MLM_el_fm:
 	db &02,2 ; Set instrument to 2
-	db &80 | (8*3), 0 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
-	db &80 | (8*3), 2 | (4 << 4) ; Play FM note D4 and wait 8*3 ticks
-	db &80 | (8*3), 4 | (4 << 4) ; Play FM note E4 and wait 8*3 ticks
-	db &80 | (8*3), 5 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
-
+	db &80 | (8*3), 0 | (5 << 4) ; Play FM note C4 and wait 8*3 ticks
+	db &80 | (8*3), 2 | (5 << 4) ; Play FM note D4 and wait 8*3 ticks
+	db &80 | (8*3), 4 | (5 << 4) ; Play FM note E4 and wait 8*3 ticks
+	db &80 | (8*3), 5 | (5 << 4) ; Play FM note C4 and wait 8*3 ticks
+	db &00
+	
 	; Jump to MLM_el_fm
 	db &0B
 	dw MLM_el_fm-MLM_header

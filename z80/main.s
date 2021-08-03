@@ -249,8 +249,8 @@ softlock:
 	include "math.s"
 	include "irq.s"
 
-	include "mlm_test_data.s"
-	;org MLM_HEADER ; block 1
-	;incbin "m1_sdata.bin"
+	;include "mlm_test_data.s"
+	org MLM_HEADER ; block 1
+	incbin "m1_sdata.bin"
 
 	include "wram.s"
