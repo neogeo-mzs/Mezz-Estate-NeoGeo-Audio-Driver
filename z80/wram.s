@@ -79,4 +79,3 @@ IRQ_buffer_idx_r:             ds 1                   ; u8
 
 ; ======== Others ========
 EXT_2CH_mode: ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
-tmp: ds 1

@@ -31,7 +31,7 @@ MLM_update_loop:
 	ld a,iyl
 	or a,a ; cp a,0
 	call z,MLM_stop
-	
+
 MLM_update_skip:
 	ret
 
@@ -202,8 +202,6 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		brk
-		
 		; Stop SSG Controller
 		call SSGCNT_init
 		call FMCNT_init
@@ -496,7 +494,6 @@ MLM_parse_note_end:
 ;   a:  channel
 ;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
 MLM_play_sample_pa:
-	jp MLM_parse_note_end ; Temporarily disable PA
 	push de
 	push bc
 	push hl
@@ -865,13 +862,13 @@ MLM_set_timing:
 	ret
 
 ; a: channel (MLM)
-MLM_stop_channel:
+MLM_stop_note:
 	push hl
 	push de
 	push af
 		ld h,0
 		ld l,a
-		ld de,MLM_stop_channel_vectors
+		ld de,MLM_stop_note_vectors
 		add hl,hl
 		add hl,de
 		ld e,(hl)
@@ -879,24 +876,24 @@ MLM_stop_channel:
 		ld d,(hl)
 		ex de,hl
 		jp (hl)
-MLM_stop_channel_return:
+MLM_stop_note_return:
 	pop af
 	pop de
 	pop hl
 	ret
 
-MLM_stop_channel_vectors:
-	dsw 6, MLM_stop_channel_PA
-	dsw 4, MLM_stop_channel_FM
-	dsw 3, MLM_stop_channel_SSG
+MLM_stop_note_vectors:
+	dsw 6, MLM_stop_note_PA
+	dsw 4, MLM_stop_note_FM
+	dsw 3, MLM_stop_note_SSG
 
 ; a: channel
-MLM_stop_channel_PA:
+MLM_stop_note_PA:
 	call PA_stop_sample
-	jp MLM_stop_channel_return
+	jp MLM_stop_note_return
 
 ; a: channel
-MLM_stop_channel_FM:
+MLM_stop_note_FM:
 	push bc
 	push af
 		sub a,MLM_CH_FM1
@@ -904,13 +901,13 @@ MLM_stop_channel_FM:
 		call FMCNT_stop_channel
 	pop af
 	pop bc
-	jp MLM_stop_channel_return
+	jp MLM_stop_note_return
 
 ; a: channel
-MLM_stop_channel_SSG:
+MLM_stop_note_SSG:
 	sub a,MLM_CH_SSG1
 	call SSGCNT_disable_channel
-	jp MLM_stop_channel_return
+	jp MLM_stop_note_return
 
 ; a: volume
 ; c: channel
@@ -1119,7 +1116,7 @@ MLMCOM_note_off:
 	push de
 	push bc
 		ld a,c
-		call MLM_stop_channel
+		call MLM_stop_note
 		ld hl,MLM_event_arg_buffer
 		ld a,c
 		ld b,0
@@ -1714,13 +1711,6 @@ MLMCOM_set_channel_volume_byte_SSG:
 	pop de
 	pop af
 	jp MLMCOM_set_channel_volume_byte_ret
-
-; a: volume
-; c: channel
-;	This sets MLM_channel_volumes,
-;   the register writes are done in
-;   the IRQ
-;MLM_set_channel_volume
 
 ; invalid command, plays a noisy beep
 ; and softlocks the driver

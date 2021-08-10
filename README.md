@@ -130,7 +130,8 @@ This command's range is 0\~65536
 **format $09 %AAAAAAAA (Address LSB) %AAAAAAAA (Address MSB)**
 
 Does NOT allow nesting. Do not use this command in a sub event list.
-
+Additionally, each sub event list will start with a standard volume 
+($FF) and instrument ($00)
 ###### Command 10: Small position jump
 **format: `$0A %OOOOOOOO (Offset)`**
 

@@ -1,4 +1,3 @@
-	org MLM_HEADER ; block 1
 MLM_header:
 	db 13 ; Song count
 	dw MLM_song_pa1-MLM_header

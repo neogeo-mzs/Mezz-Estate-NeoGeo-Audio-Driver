@@ -124,6 +124,8 @@ PA_set_channel_panning:
 	push hl
 	push de
 	push bc
+		ld c,0 ; Temporarily disable PA
+		
 		; Store panning in 
 		; PA_channel_pannings[channel]
 		ld h,0
