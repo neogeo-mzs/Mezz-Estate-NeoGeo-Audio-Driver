@@ -25,11 +25,11 @@ FMCNT_init:
 		ld (hl),0
 		ldir
 
-		; set all operator TLs to &7F
+		; set all operator TLs to $7F
 		ld hl,FM_operator_TLs
 		ld de,FM_operator_TLs+1
 		ld bc,(FM_CHANNEL_COUNT*FM_OP_COUNT)-1
-		ld (hl),&7F
+		ld (hl),$7F
 		ldir
 		
 		ld b,4
@@ -37,7 +37,7 @@ FMCNT_init:
 FMCNT_init_loop:
 		ld c,b
 		dec c
-		ld a,&7F ; default volume
+		ld a,$7F ; default volume
 		call FMCNT_set_volume
 
 		ld a,PANNING_CENTER
@@ -194,7 +194,7 @@ FMCNT_update_carrier_tl:
 		ld d,0
 		add hl,de               ; calculate address to FM_operator_TLs[channel][operator]
 		ld a,(hl)
-		xor a,&7F               ; lowest 127 highest 0 -> lowest 0 highest 127
+		xor a,$7F               ; lowest 127 highest 0 -> lowest 0 highest 127
 
 		; Load volume from WRAM into e
 		ld l,c
@@ -217,7 +217,7 @@ FMCNT_update_carrier_tl:
 		; Invert the result's least 
 		; significant 7 bits
 		ld a,l
-		xor a,&7F
+		xor a,$7F
 
 		; Load OP register offset in d
 		ld h,0
@@ -296,7 +296,7 @@ FMCNT_update_modulator_tl:
 	ret
 
 FM_op_register_offsets_LUT:
-	db &00,&08,&04,&0C
+	db $00,$08,$04,$0C
 
 ; b: channel (1~4)
 FMCNT_update_key_on:
@@ -325,7 +325,7 @@ FMCNT_update_key_on:
 		ld e,b
 		add hl,de
 		ld a,(hl)
-		and a,&F0 ; Clear the lower nibble just in case
+		and a,$F0 ; Clear the lower nibble just in case
 
 		; Calculate address to correct FM channel id
 		ld hl,FM_channel_LUT-1
@@ -509,7 +509,7 @@ FMCNT_set_operator:
 		call z,port_write_a  ; | If the channel is 0 and 1 use port a else use port b
 		call nz,port_write_b ; /
 		inc hl               ; increment pointer to source
-		ld a,&10             ; \
+		ld a,$10             ; \
 		add a,d              ; | Increment register address
 		ld d,a               ; /
 
@@ -536,7 +536,7 @@ FMCNT_set_operator:
 		pop de
 		pop hl
 		inc hl   ; increment pointer to source
-		ld a,&10 ; \
+		ld a,$10 ; \
 		add a,d  ; | Increment register address
 		ld d,a   ; /
 
@@ -550,7 +550,7 @@ FMCNT_set_operator_loop:
 
 		; Increment pointer to source and register address
 		inc hl
-		ld a,&10
+		ld a,$10
 		add a,d
 		ld d,a
 
@@ -591,7 +591,7 @@ FMCNT_set_note:
 
 		; Load base pitch from FMCNT_pitch_LUT in bc
 		ld a,ixh
-		and a,&0F ; -OOONNNN -> 0000NNNN; Get note
+		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
 		ld l,a
 		ld h,0
 		ld de,FMCNT_pitch_LUT
@@ -662,7 +662,7 @@ FMCNT_play_channel:
 		ld hl,FM_channel_key_on
 		ld b,0
 		add hl,bc
-		ld a,&FF
+		ld a,$FF
 		ld (hl),a
 	pop hl
 	pop bc
@@ -707,7 +707,7 @@ FM_enable_channel:
 		ld b,0
 		ld hl,FM_channel_enable
 		add hl,bc
-		ld (hl),&FF
+		ld (hl),$FF
 	pop hl
 	pop bc
 	pop af
@@ -721,7 +721,7 @@ FM_disable_channel:
 		ld b,0
 		ld hl,FM_channel_enable
 		add hl,bc
-		ld (hl),&00
+		ld (hl),$00
 	pop hl
 	pop bc
 	pop af

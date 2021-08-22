@@ -4,7 +4,7 @@
 
 PA_stop:
 	push de
-		ld de,(REG_PA_CTRL<<8) | &BF
+		ld de,(REG_PA_CTRL<<8) | $BF
 		rst RST_YM_WRITEB
 	pop de
 	ret
@@ -15,18 +15,18 @@ PA_reset:
 	push af
 		call PA_stop
 
-		; Set volumes to &1F and panning
+		; Set volumes to $1F and panning
 		; to center for every channel
 		ld b,6
 		ld d,REG_PA_CVOL
-		ld e,PANNING_CENTER | &1F
+		ld e,PANNING_CENTER | $1F
 PA_reset_loop:
 		rst RST_YM_WRITEB
 		inc d
 		djnz PA_reset_loop
 
-		; Set master volume to &3F
-		ld de,(REG_PA_MVOL<<8) | &3F
+		; Set master volume to $3F
+		ld de,(REG_PA_MVOL<<8) | $3F
 		rst RST_YM_WRITEB
 	pop af
 	pop bc
@@ -165,7 +165,7 @@ PA_channel_on_masks:
 
 pb_stop:
 	push de
-		ld de,(REG_PB_CTRL<<8) | &01
+		ld de,(REG_PB_CTRL<<8) | $01
 		rst RST_YM_WRITEB
 
 		dec e
