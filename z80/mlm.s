@@ -439,6 +439,8 @@ MLM_update_events:
 		inc hl
 		ld d,(hl)
 
+		brk
+		
 		; If the first byte's most significant bit is 0, then
 		; parse it and evaluate it as a note, else parse 
 		; and evaluate it as a command
@@ -539,13 +541,10 @@ MLM_play_sample_pa:
 
 		; Check if sample id is valid;
 		; if it isn't softlock.
-		;   the count should be incremented by 1,
-		;   but to make a <= comparison it'd have
-		;   been decremented by 1 anyway.
 		push af
-			ld a,(hl)
-			cp a,c
-			jp c,softlock ; if smp_count <= smp_id
+			ld a,c
+			cp a,(hl)
+			jp nc,softlock ; if smp_id >= smp_count
 			inc de ; Increment past sample count
 		pop af
 

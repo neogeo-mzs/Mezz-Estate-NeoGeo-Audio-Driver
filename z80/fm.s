@@ -51,7 +51,7 @@ FMCNT_init_loop:
 
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
-	ret
+	;ret
 	ld b,FM_CHANNEL_COUNT
 FMCNT_irq_loop:
 	; If FM_channel_enable[channel] is 0,
