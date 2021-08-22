@@ -55,7 +55,7 @@ MLM_update_channel_playback:
 
 		inc iyl ; increment active mlm channel counter
 
-		; hl = &MLM_playback_timings[channel]
+		; hl = $MLM_playback_timings[channel]
 		; de = *hl
 		ld h,0
 		ld l,c
@@ -137,9 +137,9 @@ MLM_update_ch_vol_return:
 	ret
 
 MLM_update_ch_vol_vectors:
-	dsw 6, MLM_update_ch_vol_PA
-	dsw 4, MLM_update_ch_vol_FM
-	dsw 3, MLM_update_ch_vol_SSG
+	.6 dw MLM_update_ch_vol_PA
+	.4 dw MLM_update_ch_vol_FM
+	.3 dw MLM_update_ch_vol_SSG
 
 MLM_update_ch_vol_PA:
 	push af
@@ -316,15 +316,15 @@ MLM_play_song_loop:
 		ldir
 
 		; Set all the channel's
-		; volumes to &FF
+		; volumes to $FF
 		ld hl,MLM_channel_volumes
 		ld de,MLM_channel_volumes+1
 		ld bc,CHANNEL_COUNT-1
-		ld (hl),&FF
+		ld (hl),$FF
 		ldir
 
 		; Set ADPCM-A master volume
-		ld de,(REG_PA_MVOL<<8) | &3F
+		ld de,(REG_PA_MVOL<<8) | $3F
 		rst RST_YM_WRITEB
 
 		; Enable all FM channels
@@ -350,11 +350,11 @@ MLM_play_song_loop2:
 
 ; [INPUT]
 ;	b:	channel+1
-;	de:	&MLM_playback_pointers[ch]
-;	ix:	&MLM_playback_control[ch]
+;	de:	$MLM_playback_pointers[ch]
+;	ix:	$MLM_playback_control[ch]
 ; [OUTPUT]
-;	de:	&MLM_playback_pointers[ch+1]
-;	ix:	&MLM_playback_control[ch+1]
+;	de:	$MLM_playback_pointers[ch+1]
+;	ix:	$MLM_playback_control[ch+1]
 MLM_playback_init:
 	push bc
 	push af
@@ -376,8 +376,8 @@ MLM_playback_init:
 		; playback offset.
 		;	Only the due words' MSB need
 		;	to be added together, since
-		;	the LSB is always equal to &00.
-		ld a,>MLM_HEADER
+		;	the LSB is always equal to $00.
+		ld a,high MLM_HEADER
 		add a,b
 
 		; store said pointer into
@@ -391,13 +391,13 @@ MLM_playback_init:
 
 		; If the playback pointer isn't
 		; equal to 0, set the channel's
-		; playback control to &FF
+		; playback control to $FF
 		push hl
 			ld hl,0
 			or a,a ; Clear carry flag
 			sbc hl,bc
 			jr z,MLM_playback_init_no_playback
-			ld (ix+0),&FF
+			ld (ix+0),$FF
 MLM_playback_init_no_playback:
 			inc ix
 		pop hl
@@ -459,14 +459,14 @@ MLM_update_events_skip:
 
 ;   c:  channel
 ;   hl: source (playback pointer)
-;   de: &MLM_playback_pointers[channel]+1
+;   de: $MLM_playback_pointers[channel]+1
 MLM_parse_note:
 	push af
 	push bc
 	push hl
 	push de
 		ld a,(hl)
-		and a,&7F ; Clear bit 7 of the note's first byte
+		and a,$7F ; Clear bit 7 of the note's first byte
 		ld b,a
 		ld a,c    ; move channel in a
 		inc hl
@@ -548,7 +548,7 @@ MLM_play_sample_pa:
 			inc de ; Increment past sample count
 		pop af
 
-		; ix = &ADPCM_sample_table[sample_idx]
+		; ix = $ADPCM_sample_table[sample_idx]
 		ld h,0
 		ld l,c
 		add hl,hl ; - hl *= 4
@@ -652,7 +652,7 @@ MLM_set_instrument_return:
 	ret
 
 ; a:  channel
-; hl: &MLM_channel_instruments[channel]
+; hl: $MLM_channel_instruments[channel]
 MLM_set_instrument_fm:
 	push hl
 	push de
@@ -677,7 +677,7 @@ MLM_set_instrument_fm:
 		add hl,hl ; /
 		add hl,de
 
-		; Set feedback & algorithm
+		; Set feedback $ algorithm
 		sub a,MLM_CH_FM1
 		ld c,a
 		ld a,(hl)
@@ -723,7 +723,7 @@ MLM_set_instrument_fm:
 	jr MLM_set_instrument_return
 
 ; a:  channel
-; hl: &MLM_channel_instruments[channel]
+; hl: $MLM_channel_instruments[channel]
 MLM_set_instrument_ssg:
 	push de
 	push hl
@@ -803,7 +803,7 @@ MLM_set_instrument_ssg:
 		; to the volume macro in WRAM (ix)
 		ex de,hl
 		inc hl
-		ld bc,ControlMacro*3
+		ld bc,ControlMacro.SIZE*3
 		add ix,bc
 
 		; Set volume macro
@@ -882,9 +882,9 @@ MLM_stop_note_return:
 	ret
 
 MLM_stop_note_vectors:
-	dsw 6, MLM_stop_note_PA
-	dsw 4, MLM_stop_note_FM
-	dsw 3, MLM_stop_note_SSG
+	.6 dw MLM_stop_note_PA
+	.4 dw MLM_stop_note_FM
+	.3 dw MLM_stop_note_SSG
 
 ; a: channel
 MLM_stop_note_PA:
@@ -950,9 +950,9 @@ MLM_set_ch_pan_ret:
 	ret
 
 MLM_set_ch_pan_vectors:
-	dsw 6, MLM_set_ch_pan_PA
-	dsw 4, MLM_set_ch_pan_FM
-	dsw 3, MLM_set_ch_pan_ret ; SSG is mono
+	.6 dw MLM_set_ch_pan_PA
+	.4 dw MLM_set_ch_pan_FM
+	.3 dw MLM_set_ch_pan_ret ; SSG is mono
 
 MLM_set_ch_pan_PA:
 	call PA_set_channel_panning
@@ -972,7 +972,7 @@ MLM_set_ch_pan_FM:
 
 ;   c:  channel
 ;   hl: source (playback pointer)
-;   de: &MLM_playback_pointers[channel]+1
+;   de: $MLM_playback_pointers[channel]+1
 MLM_parse_command:
 	push af
 	push bc
@@ -980,7 +980,7 @@ MLM_parse_command:
 	push hl
 	push de
 	push iy
-		; Backup &MLM_playback_pointers[channel]+1
+		; Backup $MLM_playback_pointers[channel]+1
 		; into ix
 		ld ixl,e
 		ld ixh,d
@@ -1036,7 +1036,7 @@ MLM_parse_command_execute:
 MLM_parse_command_end:
 		ex de,hl
 		
-		; Load &MLM_playback_pointers[channel]
+		; Load $MLM_playback_pointers[channel]
 		; back into de
 		ld e,ixl
 		ld d,ixh
@@ -1065,20 +1065,20 @@ MLM_command_vectors:
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
-	dsw 16,  MLMCOM_wait_ticks_nibble
+	.16 dw MLMCOM_wait_ticks_nibble
 	dw MLMCOM_return_from_sub_el
-	dsw 15,  MLMCOM_invalid ; Invalid commands
-	dsw 16,  MLMCOM_set_channel_volume_byte
-	dsw 64,  MLMCOM_invalid ; Invalid commands
+	.15 dw MLMCOM_invalid ; Invalid commands
+	.16 dw MLMCOM_set_channel_volume_byte
+	.64 dw MLMCOM_invalid ; Invalid commands
 
 MLM_command_argc:
-	db &00, &01, &01, &01, &02, &01, &01, &01
-	db &01, &02, &01, &02, &01, &02, &02, &02
-	dsb 16, &00 ; Wait ticks nibble
-	db &00
-	dsb 15, 0   ; Invalid commands all have no arguments
-	dsb 16, 0   ; Set Channel Volume (byte sized)
-	dsb 64, 0   ; Invalid commands all have no arguments
+	db $00, $01, $01, $01, $02, $01, $01, $01
+	db $01, $02, $01, $02, $01, $02, $02, $02
+	ds 16, $00 ; Wait ticks nibble
+	db $00
+	ds 15, 0   ; Invalid commands all have no arguments
+	ds 16, 0   ; Set Channel Volume (byte sized)
+	ds 64, 0   ; Invalid commands all have no arguments
 
 ; c: channel
 MLMCOM_end_of_list:
@@ -1293,7 +1293,7 @@ MLMCOM_set_base_time:
 	jp MLM_parse_command_end
 
 ; c: channel
-; ix: &MLM_playback_pointers[channel]+1
+; ix: $MLM_playback_pointers[channel]+1
 ; de: source (playback pointer; points to next command)
 ; Arguments:
 ;	1. %AAAAAAAA (Address LSB)
@@ -1318,7 +1318,7 @@ MLMCOM_jump_to_sub_el:
 		inc hl
 		ld d,(hl)
 
-		; Add MLM_HEADER (&4000) to it 
+		; Add MLM_HEADER ($4000) to it 
 		; to obtain the actual address
 		ld hl,MLM_HEADER
 		add hl,de
@@ -1339,7 +1339,7 @@ MLMCOM_jump_to_sub_el:
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c:  channel
-; ix: &MLM_playback_pointers[channel]+1
+; ix: $MLM_playback_pointers[channel]+1
 ; de: source (playback pointer)
 ; Arguments:
 ;   1. %OOOOOOOO (Offset)
@@ -1374,7 +1374,7 @@ MLMCOM_small_position_jump:
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c:  channel
-; ix: &MLM_playback_pointers[channel]+1
+; ix: $MLM_playback_pointers[channel]+1
 ; de: source (playback pointer)
 ; Arguments:
 ;   1. %AAAAAAAA (Address LSB)
@@ -1439,7 +1439,7 @@ MLMCOM_porta_write:
 		cp a,REG_TIMER_CNT
 		jr nz,MLMCOM_porta_write_return
 
-		; If address is equal to &27, then
+		; If address is equal to $27, then
 		; store the data's 7th bit in WRAM
 		ld a,e
 		and a,%01000000 ; bit 6 enables 2CH mode
@@ -1524,7 +1524,7 @@ MLMCOM_wait_ticks_nibble:
 		ld a,(hl)
 		ld l,c ; backup channel
 
-		and a,&0F ; get timing
+		and a,$0F ; get timing
 		ld c,a
 		ld b,0
 		ld a,l
@@ -1536,7 +1536,7 @@ MLMCOM_wait_ticks_nibble:
 	jp MLM_parse_command_end
 
 ; c: channel
-; ix: &MLM_playback_pointers[channel]+1
+; ix: $MLM_playback_pointers[channel]+1
 ; de: source (playback pointer)
 MLMCOM_return_from_sub_el:
 	push hl
@@ -1606,7 +1606,7 @@ MLMCOM_set_channel_volume_byte_ADPCMA:
 		; Store offset from com byte
 		; in a and increment it by 1
 		ld a,l
-		and a,&07
+		and a,$07
 		inc a
 
 		; Shift offset to the left
@@ -1654,7 +1654,7 @@ MLMCOM_set_channel_volume_byte_FM:
 		; Store offset from com byte
 		; in a and increment it by 1
 		ld a,l
-		and a,&07
+		and a,$07
 		inc a
 
 		; Shift offset to the left
@@ -1697,7 +1697,7 @@ MLMCOM_set_channel_volume_byte_SSG:
 		dec hl
 		ld a,(hl)
 		ex de,hl
-		and a,&0F
+		and a,$0F
 
 		; Transform SSG Volume ($00~$0F)
 		; into an MLM volume ($00~$FF)

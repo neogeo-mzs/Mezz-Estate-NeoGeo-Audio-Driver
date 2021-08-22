@@ -29,8 +29,8 @@ BCOM_reset:
 	retn			; RETN to 0
 
 BCOM_bios10:
-	ld sp,&fffc
-	ld hl,&0e35
+	ld sp,$fffc
+	ld hl,$0e35
 	push hl
 	retn
 
@@ -113,10 +113,10 @@ UCOM_handle_command:
         call UCOM_run_command
 
         ; Set the current command
-        ; word to $0080 (NOP)
-        ld (hl),&00
+        ; word t$ $0080 (NOP)
+        ld (hl),$00
         dec hl
-        ld (hl),&80
+        ld (hl),$80
 
         ; Increment com_buffer_idx_r
         srl a ; a /= 2
@@ -172,25 +172,25 @@ UCOM_run_command_return:
 UCOM_command_vectors:
     dw UCOM_CMD_nop,       UCOM_CMD_play_song
     dw UCOM_CMD_stop_song, UCOM_CMD_ssg_test
-    dsw 128-4,UCOM_CMD_invalid
+    .(128-4) dw UCOM_CMD_invalid
 
 UCOM_CMD_nop:
     jp UCOM_run_command_return
 
-; b: song
-; c: &01
+; b: $ong
+; c: $01
 UCOM_CMD_play_song:
     call IRQ_write2buffer 
     jp UCOM_run_command_return
 
-; b: &00
-; c: &02
+; b: $00
+; c: $02
 UCOM_CMD_stop_song:
     call IRQ_write2buffer
     jp UCOM_run_command_return
 
-; b: &00
-; c: &03
+; b: $00
+; c: $03
 UCOM_CMD_ssg_test:
     jp UCOM_run_command_return
 

@@ -1,13 +1,13 @@
 ssg_stop:
 	push de
-		ld de,(REG_SSG_CHA_VOL<<8) | &00
+		ld de,(REG_SSG_CHA_VOL<<8) | $00
 		rst RST_YM_WRITEA
-		ld de,(REG_SSG_CHB_VOL<<8) | &00
+		ld de,(REG_SSG_CHB_VOL<<8) | $00
 		rst RST_YM_WRITEA
-		ld de,(REG_SSG_CHC_VOL<<8) | &00
+		ld de,(REG_SSG_CHC_VOL<<8) | $00
 		rst RST_YM_WRITEA
 
-		ld de,(REG_SSG_MIX_ENABLE<<8) | &3F
+		ld de,(REG_SSG_MIX_ENABLE<<8) | $3F
 		rst RST_YM_WRITEA
 	pop de
 	ret
@@ -56,8 +56,8 @@ SSGCNT_irq_vol_loop:
 	call SSGCNT_update_noise_tune
 
 	; Update all macros
-	ld b,9              ; total amount of macros
-	ld de,ControlMacro  ; de = sizeof(ControlMacro)
+	ld b,9                   ; total amount of macros
+	ld de,ControlMacro.SIZE  ; de = sizeof(ControlMacro)
 	ld ix,SSGCNT_macros
 SSGCNT_irq_vol_macro_loop:
 	call SSGCNT_MACRO_update
@@ -180,7 +180,7 @@ SSGCNT_update_note:
 
 		; Wrap l inbetween 0 and 127
 		ld a,l
-		and a,&7F
+		and a,$7F
 		ld l,a
 
 		; Calculate pointer to
@@ -294,7 +294,7 @@ SSGCNT_update_mixing:
 	push af
 		ld d,REG_SSG_MIX_ENABLE
 		ld a,(SSGCNT_mix_flags)
-		xor a,&3F ; Flip all flags, since the SSG mixing register uses negative enable flags
+		xor a,$3F ; Flip all flags, since the SSG mixing register uses negative enable flags
 		ld e,a
 		rst RST_YM_WRITEA
 	pop af
@@ -382,10 +382,10 @@ SSGCNT_set_mixing:
 		ld c,1
 		call shift_left_c_by_b_bits
 
-		; mix_flags = ~mask & SSGCNT_mix_flags
+		; mix_flags = ~mask $ SSGCNT_mix_flags
 		ld hl,SSGCNT_mix_flags
 		ld a,c
-		xor a,&FF
+		xor a,$FF
 		and a,(hl)
 
 		; mix_flags |= bit
@@ -405,7 +405,7 @@ SSGCNT_enable_channel:
 		ld e,a
 		ld d,0
 		add hl,de
-		ld (hl),&FF
+		ld (hl),$FF
 	pop de
 	pop hl
 	ret
@@ -474,7 +474,7 @@ SSGCNT_NMACRO_read:
 		srl a ; /
 
 SSGCNT_NMACRO_read_even_pt:
-		and a,&0F
+		and a,$0F
 	pop de
 	pop hl
 	ret
@@ -517,7 +517,7 @@ SSGCNT_MACRO_set:
 	push de
 		; Disable macro, if needed it'll be 
 		; enabled later in the function
-		ld (ix+ControlMacro.enable),&00
+		ld (ix+ControlMacro.enable),$00
 
 		; If the address to the macro initialization data is
 		; equal to MLM_HEADER, then return from the subroutine
@@ -545,7 +545,7 @@ SSGCNT_MACRO_set:
 		ld (ix+ControlMacro.data+1),h
 
 		; Set other variables
-		ld (ix+ControlMacro.enable),&FF
+		ld (ix+ControlMacro.enable),$FF
 		ld (ix+ControlMacro.curr_pt),0
 SSGCNT_MACRO_set_return:
 	pop de
@@ -570,7 +570,7 @@ SSGCNT_start_channel_macros:
 		ld (ix+ControlMacro.curr_pt),0
 
 		; Set channel's volume macro.curr_pt to 0
-		ld de,ControlMacro*3
+		ld de,ControlMacro.SIZE*3
 		add ix,de
 		ld (ix+ControlMacro.curr_pt),0
 		

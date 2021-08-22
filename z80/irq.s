@@ -18,7 +18,7 @@ IRQ: ; MLM_2CH_mode
         call FMCNT_irq
         call SSGCNT_irq
 
-        ld e,&00
+        ld e,$00
         ld d,REG_TIMER_CNT
         ;rst RST_YM_WRITEA
 
@@ -97,9 +97,9 @@ IRQ_handle_command_loop:
 
         ; Set the current command
         ; word to $0000 (NOP)
-        ld (hl),&00
+        ld (hl),$00
         dec hl
-        ld (hl),&00
+        ld (hl),$00
 
         ; Increment IRQ_buffer_idx_r
         srl a ; a /= 2
@@ -122,7 +122,7 @@ IRQ_run_command:
     push bc
     push hl
     push de
-        ; hl = &IRQ_command_vectors[command]
+        ; hl = $IRQ_command_vectors[command]
         ld l,c
         ld h,0
         ld de,IRQ_command_vectors
@@ -147,7 +147,7 @@ IRQ_run_command_return:
 IRQ_command_vectors:
     dw IRQ_CMD_nop,           IRQ_CMD_mlm_play_song
     dw IRQ_CMD_mlm_stop_song, IRQ_CMD_invalid
-    dsw 256-4,IRQ_CMD_invalid
+    .(256-4) dw IRQ_CMD_invalid
 
 IRQ_CMD_nop:
     jp IRQ_run_command_return
