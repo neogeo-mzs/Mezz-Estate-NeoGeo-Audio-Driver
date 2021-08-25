@@ -13,6 +13,10 @@
 // bpset 18, 1, { print "CHK instruction" }
 // bpset 1C, 1, { print "TRAPV instruction" }
 
+const int dip_jp_rom;
+const int dip_eu_rom;
+const int dip_us_rom;
+
 const char* INSTRUCTION_BOX_STRING =
 {                                                
     "\x83\x80\x80\x80\x80\x80\x80\x80\x80\x80\x81""MZS test program\x82\x80\x80\x80\x80\x80\x80\x80\x80\x80\x84"
