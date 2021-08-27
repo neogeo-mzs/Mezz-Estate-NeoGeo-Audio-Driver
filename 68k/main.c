@@ -13,10 +13,6 @@
 // bpset 18, 1, { print "CHK instruction" }
 // bpset 1C, 1, { print "TRAPV instruction" }
 
-const int dip_jp_rom;
-const int dip_eu_rom;
-const int dip_us_rom;
-
 const char* INSTRUCTION_BOX_STRING =
 {                                                
     "\x83\x80\x80\x80\x80\x80\x80\x80\x80\x80\x81""MZS test program\x82\x80\x80\x80\x80\x80\x80\x80\x80\x80\x84"
@@ -35,11 +31,7 @@ volatile struct {
 void rom_callback_VBlank() {
     // if the logic code is taking 
     // too long, skip the frame
-    if (render_status.logic_done)
-    {
-        BIOS_SystemIo();
-        BIOS_MessOut();
-    }
+    //if (render_status.logic_done) BIOS_SystemIo();
 
     render_status.vblank_done = 1;
 }
@@ -83,13 +75,12 @@ int main()
             Z80_UCOM_STOP();
 
         FIX_SetCursor(8, 6);
-        FIX_PrintNibble(selected_song >> 4);
-        FIX_PrintNibble(selected_song & 0x0F);
+        FIX_PrintNibble(*((u8*)BIOS_P1CHANGE) >> 4);
+        FIX_PrintNibble(*((u8*)BIOS_P1CHANGE) & 0x0F);
 
         // wait for vblank
         PAL_ENTRY(0, 1) = DARKGREY;
         render_status.logic_done = 1;
-        *BIOS_MESS_BUSY = 0;
         while(!render_status.vblank_done);
     }
 

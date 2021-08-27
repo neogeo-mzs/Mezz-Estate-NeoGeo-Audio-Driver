@@ -8,9 +8,9 @@ SRC := main.s
 build: m1rom.bin
 
 m1rom.bin: $(SRC)
-	sjasmplus --raw=m1rom.tmp.bin $< 
+	zasm -i $< -o m1rom.tmp.bin 
 	$(ROMWAK) /p m1rom.tmp.bin $@ 64 0
-	rm -fv m1rom.tmp.bin
+	#rm -fv m1rom.tmp.bin
 
 .PHONY: clean
 

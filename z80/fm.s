@@ -1,6 +1,6 @@
 fm_stop:
 	push de
-		ld de,(REG_FM_KEY_ON<<8) | FM_CH1
+		ld de,REG_FM_KEY_ON<<8 | FM_CH1
 		rst RST_YM_WRITEA
 		ld e,FM_CH2
 		rst RST_YM_WRITEA
@@ -28,7 +28,7 @@ FMCNT_init:
 		; set all operator TLs to $7F
 		ld hl,FM_operator_TLs
 		ld de,FM_operator_TLs+1
-		ld bc,(FM_CHANNEL_COUNT*FM_OP_COUNT)-1
+		ld bc,FM_CHANNEL_COUNT*FM_OP_COUNT - 1
 		ld (hl),$7F
 		ldir
 		
