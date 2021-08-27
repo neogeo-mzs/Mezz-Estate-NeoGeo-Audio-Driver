@@ -137,9 +137,13 @@ MLM_update_ch_vol_return:
 	ret
 
 MLM_update_ch_vol_vectors:
-	.6 dw MLM_update_ch_vol_PA
-	.4 dw MLM_update_ch_vol_FM
-	.3 dw MLM_update_ch_vol_SSG
+	dw MLM_update_ch_vol_PA,MLM_update_ch_vol_PA
+	dw MLM_update_ch_vol_PA,MLM_update_ch_vol_PA
+	dw MLM_update_ch_vol_PA,MLM_update_ch_vol_PA
+	dw MLM_update_ch_vol_FM,MLM_update_ch_vol_FM
+	dw MLM_update_ch_vol_FM,MLM_update_ch_vol_FM
+	dw MLM_update_ch_vol_SSG,MLM_update_ch_vol_SSG
+	dw MLM_update_ch_vol_SSG
 
 MLM_update_ch_vol_PA:
 	push af
@@ -324,7 +328,7 @@ MLM_play_song_loop:
 		ldir
 
 		; Set ADPCM-A master volume
-		ld de,(REG_PA_MVOL<<8) | $3F
+		ld de,REG_PA_MVOL<<8 | $3F
 		rst RST_YM_WRITEB
 
 		; Enable all FM channels
@@ -377,7 +381,7 @@ MLM_playback_init:
 		;	Only the due words' MSB need
 		;	to be added together, since
 		;	the LSB is always equal to $00.
-		ld a,high MLM_HEADER
+		ld a,MLM_HEADER>>8
 		add a,b
 
 		; store said pointer into
@@ -882,9 +886,13 @@ MLM_stop_note_return:
 	ret
 
 MLM_stop_note_vectors:
-	.6 dw MLM_stop_note_PA
-	.4 dw MLM_stop_note_FM
-	.3 dw MLM_stop_note_SSG
+	dw MLM_stop_note_PA,MLM_stop_note_PA
+	dw MLM_stop_note_PA,MLM_stop_note_PA
+	dw MLM_stop_note_PA,MLM_stop_note_PA
+	dw MLM_stop_note_FM,MLM_stop_note_FM
+	dw MLM_stop_note_FM,MLM_stop_note_FM
+	dw MLM_stop_note_SSG,MLM_stop_note_SSG
+	dw MLM_stop_note_SSG
 
 ; a: channel
 MLM_stop_note_PA:
@@ -950,9 +958,13 @@ MLM_set_ch_pan_ret:
 	ret
 
 MLM_set_ch_pan_vectors:
-	.6 dw MLM_set_ch_pan_PA
-	.4 dw MLM_set_ch_pan_FM
-	.3 dw MLM_set_ch_pan_ret ; SSG is mono
+	dw MLM_set_ch_pan_PA,MLM_set_ch_pan_PA
+	dw MLM_set_ch_pan_PA,MLM_set_ch_pan_PA
+	dw MLM_set_ch_pan_PA,MLM_set_ch_pan_PA
+	dw MLM_set_ch_pan_FM,MLM_set_ch_pan_FM
+	dw MLM_set_ch_pan_FM,MLM_set_ch_pan_FM
+	dw MLM_set_ch_pan_ret,MLM_set_ch_pan_ret
+	dw MLM_set_ch_pan_ret ; SSG is mono
 
 MLM_set_ch_pan_PA:
 	call PA_set_channel_panning
@@ -1065,11 +1077,19 @@ MLM_command_vectors:
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
 	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
-	.16 dw MLMCOM_wait_ticks_nibble
+	dup 16
+		dw MLMCOM_wait_ticks_nibble
+	edup
 	dw MLMCOM_return_from_sub_el
-	.15 dw MLMCOM_invalid ; Invalid commands
-	.16 dw MLMCOM_set_channel_volume_byte
-	.64 dw MLMCOM_invalid ; Invalid commands
+	dup 15
+		dw MLMCOM_invalid ; Invalid commands
+	edup
+	dup 16
+		dw MLMCOM_set_channel_volume_byte
+	edup
+	dup 64
+		dw MLMCOM_invalid ; Invalid commands
+	edup
 
 MLM_command_argc:
 	db $00, $01, $01, $01, $02, $01, $01, $01
@@ -1495,7 +1515,7 @@ MLMCOM_set_timer_a:
 		inc d
 		ld e,(ix+1)
 		rst RST_YM_WRITEA
-		ld de,(REG_TIMER_CNT<<8) | %10101
+		ld de,REG_TIMER_CNT<<8 | %10101
 		RST RST_YM_WRITEA
 
 		ld b,0

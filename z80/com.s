@@ -172,12 +172,14 @@ UCOM_run_command_return:
 UCOM_command_vectors:
     dw UCOM_CMD_nop,       UCOM_CMD_play_song
     dw UCOM_CMD_stop_song, UCOM_CMD_ssg_test
-    .(128-4) dw UCOM_CMD_invalid
+    dup 124
+        dw UCOM_CMD_invalid
+    edup
 
 UCOM_CMD_nop:
     jp UCOM_run_command_return
 
-; b: $ong
+; b: song
 ; c: $01
 UCOM_CMD_play_song:
     call IRQ_write2buffer 

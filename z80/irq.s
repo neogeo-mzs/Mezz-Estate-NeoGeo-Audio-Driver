@@ -147,8 +147,10 @@ IRQ_run_command_return:
 IRQ_command_vectors:
     dw IRQ_CMD_nop,           IRQ_CMD_mlm_play_song
     dw IRQ_CMD_mlm_stop_song, IRQ_CMD_invalid
-    .(256-4) dw IRQ_CMD_invalid
-
+    dup 252
+        dw IRQ_CMD_invalid
+    edup
+    
 IRQ_CMD_nop:
     jp IRQ_run_command_return
 

@@ -1,13 +1,13 @@
 ssg_stop:
 	push de
-		ld de,(REG_SSG_CHA_VOL<<8) | $00
+		ld de,REG_SSG_CHA_VOL<<8 | $00
 		rst RST_YM_WRITEA
-		ld de,(REG_SSG_CHB_VOL<<8) | $00
+		ld de,REG_SSG_CHB_VOL<<8 | $00
 		rst RST_YM_WRITEA
-		ld de,(REG_SSG_CHC_VOL<<8) | $00
+		ld de,REG_SSG_CHC_VOL<<8 | $00
 		rst RST_YM_WRITEA
 
-		ld de,(REG_SSG_MIX_ENABLE<<8) | $3F
+		ld de,REG_SSG_MIX_ENABLE<<8 | $3F
 		rst RST_YM_WRITEA
 	pop de
 	ret

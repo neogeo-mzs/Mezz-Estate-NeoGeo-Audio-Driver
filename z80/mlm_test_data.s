@@ -16,7 +16,7 @@ MLM_header:
 
 MLM_song_pa1:
 	dw MLM_el_pa-MLM_header
-	dsw 12, 0
+	ds 12*2, 0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
@@ -24,39 +24,39 @@ MLM_song_pa1:
 MLM_song_pa2
 	dw 0
 	dw MLM_el_pa-MLM_header
-	dsw 11, 0
+	ds 11*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa3:
-	dsw 2,0
+	ds 2*2,0
 	dw MLM_el_pa-MLM_header
-	dsw 10, 0
+	ds 10*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa4:
-	dsw 3,0
+	ds 3*2,0
 	dw MLM_el_pa-MLM_header
-	dsw 9, 0
+	ds 9*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa5:
-	dsw 4,0
+	ds 4*2,0
 	dw MLM_el_pa-MLM_header
-	dsw 8, 0
+	ds 8*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa6:
-	dsw 5,0
+	ds 5*2,0
 	dw MLM_el_pa-MLM_header
-	dsw 7, 0
+	ds 7*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
@@ -76,33 +76,33 @@ MLM_sub_el_wait:
 	db $20
 
 MLM_song_fm1:
-	dsw 6,0
+	ds 6*2,0
 	dw MLM_el_fm-MLM_header
-	dsw 6, 0
+	ds 6*2,0
 	dw 378 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_fm2:
-	dsw 7,0
+	ds 7*2,0
 	dw MLM_el_fm-MLM_header
-	dsw 5, 0
+	ds 5*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_fm3:
-	dsw 8,0
+	ds 8*2,0
 	dw MLM_el_fm-MLM_header
-	dsw 4, 0
+	ds 4*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_fm4:
-	dsw 9,0
+	ds 9*2,0
 	dw MLM_el_fm-MLM_header
-	dsw 3, 0
+	ds 3*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
@@ -121,15 +121,15 @@ MLM_el_fm:
 
 
 MLM_song_ssg1:
-	dsw 10,0
+	ds 10*2,0
 	dw MLM_el_ssg-MLM_header
-	dsw 2, 0
+	ds 2*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_ssg2:
-	dsw 11,0
+	ds 11*2,0
 	dw MLM_el_ssg-MLM_header
 	dw 0
 	dw 98 ; Timer A frequency
@@ -137,7 +137,7 @@ MLM_song_ssg2:
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_ssg3:
-	dsw 12,0
+	ds 12*2,0
 	dw MLM_el_ssg-MLM_header
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
@@ -157,7 +157,7 @@ MLM_el_ssg:
 MLM_song_instruments:
 	; Instrument 0 (ADPCM-A)
 	dw OTHER_DATA-MLM_header ; Point to ADPCM-A sample LUT (in Zone 1)
-	dsb 30,0 ; padding
+	ds 30,0 ; padding
 
 	; Instrument 1 (SSG)
 	db 1                               ; Mixing: Tone ON; Noise OFF
@@ -175,7 +175,7 @@ MLM_song_instruments:
 	fm_op_data 3,0,40,2,31,0,4,5,1,7,0
 	fm_op_data 3,0,13,0,31,0,9,5,1,7,0
 	fm_op_data 3,1,10,0,31,0,4,3,1,7,0
-	dsb 1,0 ; Padding
+	ds 1,0 ; Padding
 
 	; Other data
 	org OTHER_DATA
@@ -183,9 +183,9 @@ MLM_song_instruments:
 MLM_odata_mix_macro1:
 	db (30*3)-1 ; Macro length
 	db 30       ; Set loop point to 30
-	dsb 15,$11  ; 30 frames with tone enabled and noise disabled
-	dsb 15,$22  ; 30 frames with tone disabled and noise enabled
-	dsb 15,$33  ; 30 frames with tone and noise enabled
+	ds 15,$11  ; 30 frames with tone enabled and noise disabled
+	ds 15,$22  ; 30 frames with tone disabled and noise enabled
+	ds 15,$33  ; 30 frames with tone and noise enabled
 
 MLM_odata_vol_macro1:
 	db 24-1 ; Macro length

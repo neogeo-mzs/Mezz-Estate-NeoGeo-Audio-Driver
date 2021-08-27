@@ -24,11 +24,11 @@ void Z80_send_user_command(u8 command, u8 parameter)
 	FIX_PrintNibble(command >> 4);
     FIX_PrintNibble(command & 0x0F);
 
-	while (*REG_SOUND != (command ^ 0xFF))
+    u8 neg_command = command ^ 0xFF;
+	while (*REG_SOUND != neg_command)
 	{
 		FIX_SetCursor(0, 1);
 		tmp = *REG_SOUND;
-
 		FIX_PrintNibble(tmp >> 4);
     	FIX_PrintNibble(tmp & 0x0F);
 	};
@@ -46,7 +46,8 @@ void Z80_send_user_command(u8 command, u8 parameter)
 	FIX_PrintNibble(parameter >> 4);
     FIX_PrintNibble(parameter & 0x0F);
 
-	while (*REG_SOUND != (parameter ^ 0xFF))
+    u8 neg_parameter = parameter ^ 0xFF;
+	while (*REG_SOUND != neg_parameter)
 	{
 		FIX_SetCursor(0, 3);
 		tmp = *REG_SOUND;

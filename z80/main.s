@@ -2,9 +2,10 @@
 ; trace bst_test.tr,1,noloop
 ; wpset F800,1,w,wpdata==3A,{tracelog "A addr: 0x%02X; data: 0x%02X\n", d, e; go}
 ; wpset F800,1,w,wpdata==3B,{tracelog "B addr: 0x%02X; data: 0x%02X\n", d, e; go}
-
+	
 	include "def.inc"
 
+	org $0000
 j_startup:
 	di
 	jp startup
@@ -92,7 +93,7 @@ startup:
 
 	ld hl,98
 	call ta_counter_load_set
-	ld de,(REG_TIMER_CNT<<8) | TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ
+	ld de,REG_TIMER_CNT<<8 | TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ
 	rst RST_YM_WRITEA
 	
 	call set_default_banks
@@ -111,35 +112,35 @@ fast_beep:
 		ld de, 0100h
 		rst RST_YM_WRITEA
 
-		ld de, (REG_SSG_VOL_ENV<<8) | $0F		;EG period: $50F
+		ld de, REG_SSG_VOL_ENV<<8 | $0F		;EG period: $50F
 		rst RST_YM_WRITEA
-		ld de, (REG_SSG_COARSE_ENV<<8) | $05 
+		ld de, REG_SSG_COARSE_ENV<<8 | $05 
 		rst RST_YM_WRITEA
 
-		ld de, (REG_SSG_CHA_VOL<<8) | $10		;Channel's 1 amplitude is tied to the EG
+		ld de, REG_SSG_CHA_VOL<<8 | $10		;Channel's 1 amplitude is tied to the EG
 		rst RST_YM_WRITEA
-		ld de, (REG_SSG_VOL_ENV_SHAPE<<8) | $08		;EG shape: Repetitive ramp down
+		ld de, REG_SSG_VOL_ENV_SHAPE<<8 | $08		;EG shape: Repetitive ramp down
 		rst RST_YM_WRITEA
-		ld de, (REG_SSG_MIX_ENABLE<<8) | $0E		;All channels except 1 are off
+		ld de, REG_SSG_MIX_ENABLE<<8 | $0E		;All channels except 1 are off
 		rst RST_YM_WRITEA
 	pop de
 	ret
 
 play_sample:
 	push de
-		ld de,(REG_PA_MVOL<<8) | $3F
+		ld de,REG_PA_MVOL<<8 | $3F
 		rst RST_YM_WRITEB
-		ld de,(REG_PA_CVOL<<8) | %11000000 | $1F
+		ld de,REG_PA_CVOL<<8 | %11000000 | $1F
 		rst RST_YM_WRITEB
-		ld de,(REG_PA_STARTL<<8) | $00
+		ld de,REG_PA_STARTL<<8 | $00
 		rst RST_YM_WRITEB
-		ld de,(REG_PA_STARTH<<8) | $00
+		ld de,REG_PA_STARTH<<8 | $00
 		rst RST_YM_WRITEB
-		ld de,(REG_PA_ENDL<<8) | $40
+		ld de,REG_PA_ENDL<<8 | $40
 		rst RST_YM_WRITEB
-		ld de,(REG_PA_ENDH<<8) | $00
+		ld de,REG_PA_ENDH<<8 | $00
 		rst RST_YM_WRITEB
-		ld de,(REG_PA_CTRL<<8) | 1
+		ld de,REG_PA_CTRL<<8 | 1
 		rst RST_YM_WRITEB
 	pop de
 	ret
@@ -250,7 +251,7 @@ softlock:
 	include "irq.s"
 
 	org MLM_HEADER ; block 1
-	;include "mlm_test_data.s"
-	incbin "m1_sdata.bin"
+	include "mlm_test_data.s"
+	;incbin "m1_sdata.bin"
 
 	include "wram.s"
