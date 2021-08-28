@@ -442,8 +442,6 @@ MLM_update_events:
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
-
-		brk
 		
 		; If the first byte's most significant bit is 0, then
 		; parse it and evaluate it as a note, else parse 
@@ -642,8 +640,7 @@ MLM_set_instrument:
 		cp a,MLM_CH_FM1                ; if a < MLM_CH_FM1 
 		jr c,MLM_set_instrument_return ; then ...
 
-		; If the channel is FM, for now
-		; do nothing. TODO make it do something
+		; If the channel is FM, branch
 		cp a,MLM_CH_SSG1               ; if a < MLM_CH_SSG1
 		jr c,MLM_set_instrument_fm     ; then ...
 

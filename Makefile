@@ -18,24 +18,24 @@ VROM_PATH  := smp
 BUILD_PATH := build
 MAME_ROM_PATH=$(HOME)/.mame/roms/neogeo
  
-ROM_NAME := puzzledp
+ROM_NAME := homebrew
 
 build: srom croms vrom m1rom prom
 	rm -rf build
 	mkdir build
-	$(MV) $(PROM_PATH)/prom.bin $(BUILD_PATH)/202-p1.bin
-	$(MV) $(M1ROM_PATH)/m1rom.bin $(BUILD_PATH)/202-m1.bin
-	$(MV) $(SROM_PATH)/srom.bin $(BUILD_PATH)/202-s1.bin
-	$(MV) $(CROMS_PATH)/c1rom.bin $(BUILD_PATH)/202-c1.bin
-	$(MV) $(CROMS_PATH)/c2rom.bin $(BUILD_PATH)/202-c2.bin
-	$(MV) $(VROM_PATH)/vrom.bin $(BUILD_PATH)/202-v1.bin
+	$(MV) $(PROM_PATH)/prom.bin $(BUILD_PATH)/prom.bin
+	$(MV) $(M1ROM_PATH)/m1rom.bin $(BUILD_PATH)/m1rom.bin
+	$(MV) $(SROM_PATH)/srom.bin $(BUILD_PATH)/srom.bin
+	$(MV) $(CROMS_PATH)/c1rom.bin $(BUILD_PATH)/c1rom.bin
+	$(MV) $(CROMS_PATH)/c2rom.bin $(BUILD_PATH)/c2rom.bin
+	$(MV) $(VROM_PATH)/vrom.bin $(BUILD_PATH)/vrom.bin
 	
-	$(LN) $(BUILD_PATH)/202-p1.bin $(BUILD_PATH)/202-p1.p1
-	$(LN) $(BUILD_PATH)/202-m1.bin $(BUILD_PATH)/202-m1.m1
-	$(LN) $(BUILD_PATH)/202-s1.bin $(BUILD_PATH)/202-s1.s1
-	$(LN) $(BUILD_PATH)/202-c1.bin $(BUILD_PATH)/202-c1.c1
-	$(LN) $(BUILD_PATH)/202-c2.bin $(BUILD_PATH)/202-c2.c2
-	$(LN) $(BUILD_PATH)/202-v1.bin $(BUILD_PATH)/202-v1.v1
+	$(LN) $(BUILD_PATH)/prom.bin $(BUILD_PATH)/202-p1.p1
+	$(LN) $(BUILD_PATH)/m1rom.bin $(BUILD_PATH)/202-m1.m1
+	$(LN) $(BUILD_PATH)/srom.bin $(BUILD_PATH)/202-s1.s1
+	$(LN) $(BUILD_PATH)/c1rom.bin $(BUILD_PATH)/202-c1.c1
+	$(LN) $(BUILD_PATH)/c2rom.bin $(BUILD_PATH)/202-c2.c2
+	$(LN) $(BUILD_PATH)/vrom.bin $(BUILD_PATH)/202-v1.v1
 
 prom: 
 	$(MAKE) -C $(PROM_PATH)
@@ -64,7 +64,7 @@ clean:
 	$(MAKE) -C $(VROM_PATH) clean
 
 mame: build
-	$(RM) -rf $(MAME_ROM_PATH)/$(ROM_NAME)
+	$(RM) -r $(MAME_ROM_PATH)/$(ROM_NAME)
 	$(CP) -r $(BUILD_PATH) $(MAME_ROM_PATH)/$(ROM_NAME)
 	$(MAME) neogeo $(ROM_NAME) -window -prescale 3 $(mame_args)
 
