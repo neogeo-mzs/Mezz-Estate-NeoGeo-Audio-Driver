@@ -75,8 +75,8 @@ int main()
             Z80_UCOM_STOP();
 
         FIX_SetCursor(8, 6);
-        FIX_PrintNibble(*((u8*)BIOS_P1CHANGE) >> 4);
-        FIX_PrintNibble(*((u8*)BIOS_P1CHANGE) & 0x0F);
+        FIX_PrintNibble(selected_song >> 4);
+        FIX_PrintNibble(selected_song & 0x0F);
 
         // wait for vblank
         PAL_ENTRY(0, 1) = DARKGREY;
