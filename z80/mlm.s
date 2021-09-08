@@ -40,6 +40,44 @@ MLM_update_skip:
 ; [OUTPUT]
 ;	iyl: active channel count 
 MLM_update_channel_playback:
+	push af
+	push bc
+	push hl
+	push de
+		brk2
+		; if MLM_playback_control[ch] == 0 then
+		; do not update this channel
+		ld hl,MLM_playback_control
+		ld b,0
+		add hl,bc
+		xor a,a   ; a = 0
+		cp a,(hl) ; compare 0 to (hl)
+		jr z,MLM_update_channel_playback_ret
+
+		inc iyl ; increment active mlm channel counter
+
+		ld de,MLM_playback_timings-MLM_playback_control
+		add hl,de
+		dec (hl)
+
+MLM_update_channel_playback_exec_check:
+		call z,MLM_update_events
+
+		add hl,de
+		cp a,(hl) ; cp 0,(hl)
+		jr z,MLM_update_channel_playback_exec_check
+
+MLM_update_channel_playback_ret:
+	pop de
+	pop hl
+	pop bc
+	pop af
+
+; [INPUT]
+; 	c: channel
+; [OUTPUT]
+;	iyl: active channel count 
+_MLM_update_channel_playback:
 	push hl
 	push de
 	push af
@@ -51,7 +89,7 @@ MLM_update_channel_playback:
 		add hl,de
 		ld a,(hl)
 		or a,a ; cp a,0
-		jr z,MLM_update_channel_playback_ret
+		jr z,_MLM_update_channel_playback_ret
 
 		inc iyl ; increment active mlm channel counter
 
@@ -80,7 +118,7 @@ MLM_update_channel_playback:
 			or a,a ; clear carry flag
 			sbc hl,de
 		pop hl
-MLM_update_channel_playback_execute_events:
+_MLM_update_channel_playback_execute_events:
 		call z,MLM_update_events
 
 		; if MLM_playback_set_timings[ch] is 0
@@ -101,8 +139,8 @@ MLM_update_channel_playback_execute_events:
 			or a,a ; clear carry flag
 			sbc hl,de
 		pop hl
-		jr z,MLM_update_channel_playback_execute_events
-MLM_update_channel_playback_ret:
+		jr z,_MLM_update_channel_playback_execute_events
+_MLM_update_channel_playback_ret:
 	pop af
 	pop de
 	pop hl
@@ -242,6 +280,7 @@ MLM_play_song:
 	push de
 	push ix
 	push af
+		brk
 		call MLM_stop
 		call set_default_banks 
 
@@ -838,9 +877,31 @@ MLM_set_instrument_ssg:
 	pop de
 	jp MLM_set_instrument_return
 
-; a:  channel
-; bc: timing
+; a: channel
+; c: timing
 MLM_set_timing:
+	push hl
+	push de
+	push af
+		; MLM_playback_timings[channel] = c
+		ld hl,MLM_playback_timings
+		ld e,a
+		ld d,0
+		add hl,de
+		ld (hl),c
+
+		; MLM_playback_set_timings[channel] = c
+		ld de,MLM_playback_set_timings-MLM_playback_timings
+		add hl,de
+		ld (hl),c
+	pop af
+	pop de
+	pop hl
+	ret
+
+; a:  channel
+; c: timing
+_MLM_set_timing:
 	push hl
 	push de
 		ld h,0

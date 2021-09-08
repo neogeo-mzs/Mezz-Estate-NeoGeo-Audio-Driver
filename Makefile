@@ -66,12 +66,12 @@ clean:
 mame: build
 	$(RM) -r $(MAME_ROM_PATH)/$(ROM_NAME)
 	$(CP) -r $(BUILD_PATH) $(MAME_ROM_PATH)/$(ROM_NAME)
-	$(MAME) neogeo $(ROM_NAME) -window -prescale 3 $(mame_args)
+	$(MAME) neogeo $(ROM_NAME) -window -prescale 2 $(mame_args)
 
 mame_debug: build
 	$(RM) -rf $(MAME_ROM_PATH)/$(ROM_NAME)
 	$(CP) -r $(BUILD_PATH) $(MAME_ROM_PATH)/$(ROM_NAME)
-	$(MAME) neogeo $(ROM_NAME) -window -prescale 3 -debug $(mame_args)
+	$(MAME) neogeo $(ROM_NAME) -window -prescale 2 -debug $(mame_args)
 
 gngeo: build
 	$(ZIP) -r -j $(BUILD_PATH)/puzzledp.zip $(BUILD_PATH)/*.bin
