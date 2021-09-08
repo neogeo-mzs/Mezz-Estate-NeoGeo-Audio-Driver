@@ -8,7 +8,7 @@ SRC := main.s
 build: m1rom.bin
 
 m1rom.bin: $(SRC)
-	zasm -i $< -o m1rom.tmp.bin -l listing.txt
+	zasm -i $< -o m1rom.tmp.bin -uwy -l listing.txt
 	$(ROMWAK) /p m1rom.tmp.bin $@ 64 0
 	rm -fv m1rom.tmp.bin
 
