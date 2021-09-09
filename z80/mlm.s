@@ -67,7 +67,7 @@ MLM_update_channel_playback:
 		push af
 			add hl,de
 		pop af 
-		
+
 MLM_update_channel_playback_exec_check:
 		call z,MLM_update_events
 
@@ -1155,6 +1155,7 @@ MLMCOM_wait_ticks_byte:
 ;   1. timing (LSB)
 ;   2. timing (MSB)
 MLMCOM_wait_ticks_word:
+	jp softlock
 	push hl
 	push bc
 	push af
