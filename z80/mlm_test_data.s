@@ -71,8 +71,8 @@ MLM_el_pa: ; Start in Zone 3
 	db $80 | 30, 2 ; Play ADPCM-A sample 2 (D)
 	db $00 ; End of song
 
-MLM_sub_el_wait:
-	db $01, 30
+MLM_sub_el_wait: ; ISSUE HERE !!!!! (Weird set_timing_values, not ch 0 ?)
+	db $01, 30 ; Stop note and wait 30 ticks
 	db $20
 
 MLM_song_fm1:
