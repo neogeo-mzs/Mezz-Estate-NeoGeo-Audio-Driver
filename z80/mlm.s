@@ -44,7 +44,6 @@ MLM_update_channel_playback:
 	push bc
 	push hl
 	push de
-		brk2
 		; if MLM_playback_control[ch] == 0 then
 		; do not update this channel
 		ld hl,MLM_playback_control
@@ -56,14 +55,24 @@ MLM_update_channel_playback:
 
 		inc iyl ; increment active mlm channel counter
 
+		; decrement MLM_playback_timings[ch],
+		; if afterwards it's 0 then update events
 		ld de,MLM_playback_timings-MLM_playback_control
 		add hl,de
 		dec (hl)
+		cp a,(hl) ; compare 0 to (hl)
 
+		; Calculate address of MLM_playback_set_timings[ch]
+		; without messing with flags
+		push af
+			add hl,de
+		pop af 
+		
 MLM_update_channel_playback_exec_check:
 		call z,MLM_update_events
 
-		add hl,de
+		; if MLM_playback_set_timings[ch] == 0
+		; update events again
 		cp a,(hl) ; cp 0,(hl)
 		jr z,MLM_update_channel_playback_exec_check
 
@@ -72,79 +81,6 @@ MLM_update_channel_playback_ret:
 	pop hl
 	pop bc
 	pop af
-
-; [INPUT]
-; 	c: channel
-; [OUTPUT]
-;	iyl: active channel count 
-_MLM_update_channel_playback:
-	push hl
-	push de
-	push af
-		; if MLM_playback_control[ch] == 0 then
-		; do not update this channel
-		ld h,0
-		ld l,c
-		ld de,MLM_playback_control
-		add hl,de
-		ld a,(hl)
-		or a,a ; cp a,0
-		jr z,_MLM_update_channel_playback_ret
-
-		inc iyl ; increment active mlm channel counter
-
-		; hl = $MLM_playback_timings[channel]
-		; de = *hl
-		ld h,0
-		ld l,c
-		ld de,MLM_playback_timings
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-
-		; Decrement the timing and 
-		; store it back into WRAM
-		dec de 
-		ld (hl),d
-		dec hl
-		ld (hl),e
-
-		; if timing==0 update events
-		; else save decremented timing
-		push hl
-			ld hl,0
-			or a,a ; clear carry flag
-			sbc hl,de
-		pop hl
-_MLM_update_channel_playback_execute_events:
-		call z,MLM_update_events
-
-		; if MLM_playback_set_timings[ch] is 0
-		; (thus the timing was set to 0 during this loop)
-		; then execute the next event immediately
-		ld h,0
-		ld l,c
-		ld de,MLM_playback_set_timings
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-
-		; compare de to 0
-		push hl
-			ld hl,0
-			or a,a ; clear carry flag
-			sbc hl,de
-		pop hl
-		jr z,_MLM_update_channel_playback_execute_events
-_MLM_update_channel_playback_ret:
-	pop af
-	pop de
-	pop hl
-	ret
 
 ; c: channel
 MLM_update_channel_volume:
@@ -280,7 +216,6 @@ MLM_play_song:
 	push de
 	push ix
 	push af
-		brk
 		call MLM_stop
 		call set_default_banks 
 
@@ -899,29 +834,6 @@ MLM_set_timing:
 	pop hl
 	ret
 
-; a:  channel
-; c: timing
-_MLM_set_timing:
-	push hl
-	push de
-		ld h,0
-		ld l,a
-		ld de,MLM_playback_timings
-		add hl,hl
-		add hl,de
-		ld (hl),c
-		inc hl
-		ld (hl),b
-
-		ld de,MLM_playback_set_timings-MLM_playback_timings
-		add hl,de
-		ld (hl),b
-		dec hl
-		ld (hl),c
-	pop de
-	pop hl
-	ret
-
 ; a: channel (MLM)
 MLM_stop_note:
 	push hl
@@ -1106,7 +1018,7 @@ MLM_parse_command_execute:
 MLM_parse_command_end:
 		ex de,hl
 		
-		; Load $MLM_playback_pointers[channel]
+		; Load $MLM_playback_pointers[channel]+1
 		; back into de
 		ld e,ixl
 		ld d,ixh

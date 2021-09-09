@@ -1,4 +1,5 @@
 ; wpset F800,1,w,wpdata==39
+; wpset F800,1,w,wpdata==3A && bc == 0201
 ; trace bst_test.tr,1,noloop
 ; wpset F800,1,w,wpdata==3A,{tracelog "A addr: 0x%02X; data: 0x%02X\n", d, e; go}
 ; wpset F800,1,w,wpdata==3B,{tracelog "B addr: 0x%02X; data: 0x%02X\n", d, e; go}
