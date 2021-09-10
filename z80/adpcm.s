@@ -81,38 +81,32 @@ PA_stop_sample:
 	pop hl
 	ret
 
-; a: channel
-; c: volume
+; c: channel
+; a: volume
+; AF and B aren't backed up
 PA_set_channel_volume:
 	push de
 	push hl
+		brk
 		; Store volume in 
 		; PA_channel_volumes[channel]
-		ld h,0
-		ld l,a
-		ld de,PA_channel_volumes
-		add hl,de
-		ld (hl),c
+		ld hl,PA_channel_volumes
+		ld b,0
+		add hl,bc
+		ld (hl),a
 
 		; Load panning from 
 		; PA_channel_pannings[channel]
 		; and OR it with the volume
-		push af
-			ld h,0
-			ld l,a
-			ld de,PA_channel_pannings
-			add hl,de
-			ld e,(hl)
-			ld a,c
-			or a,e ; ORs the volume and panning
-			ld e,a
-		pop af
-
+		ld de,PA_channel_pannings-PA_channel_volumes
+		add hl,de
+		or a,(hl) ; ORs the volume and panning
+		ld e,a
+		
 		; Set CVOL register
-		push af
-			add a,REG_PA_CVOL
-			ld d,a
-		pop af
+		ld a,c
+		add a,REG_PA_CVOL
+		ld d,a
 		rst RST_YM_WRITEB
 	pop hl
 	pop de
