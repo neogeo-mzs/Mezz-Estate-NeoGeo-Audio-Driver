@@ -112,7 +112,7 @@ MLM_update_ch_vol_SSG:
 		rrca
 		and a,$0F
 
-		ld b,0
+		; Store volume into SSGCNT WRAM
 		ld hl,SSGCNT_volumes-MLM_CH_SSG1
 		add hl,bc
 		ld (hl),a
@@ -134,11 +134,6 @@ MLM_update_ch_vol_PA:
 		rrca
 		and a,$1F
 
-		; swap a and c
-		ld b,c
-		ld c,a
-		ld a,b
-
 		call PA_set_channel_volume
 	pop bc
 	ret
@@ -154,13 +149,10 @@ MLM_update_ch_vol_FM:
 		; Scale down volume ($00~$FF -> $00 $7F)
 		srl a
 
-		; Calculate Fm channel (0~3)
-		push af
-			ld a,c
-			sub a,MLM_CH_FM1
-			ld c,a
-		pop af
-		call FMCNT_set_volume
+		; Store volume into FMCNT WRAM
+		ld hl,FM_channel_volumes-MLM_CH_FM1
+		add hl,bc
+		ld (hl),a
 	pop bc
 	ret
 
