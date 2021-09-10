@@ -112,13 +112,10 @@ MLM_update_ch_vol_SSG:
 		rrca
 		and a,$0F
 
-		; swap a and c
-		ld b,c
-		ld c,a
-		ld a,b
-
-		sub a,MLM_CH_SSG1
-		call SSGCNT_set_vol
+		ld b,0
+		ld hl,SSGCNT_volumes-MLM_CH_SSG1
+		add hl,bc
+		ld (hl),a
 	pop bc
 	ret
 
