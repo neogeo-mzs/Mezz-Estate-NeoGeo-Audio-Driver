@@ -38,7 +38,8 @@ MLM_update_skip:
 ; [INPUT]
 ; 	c: channel
 ; [OUTPUT]
-;	iyl: active channel count 
+;	iyl: active channel count
+; OPTIMIZED
 MLM_update_channel_playback:
 	push af
 	push bc
@@ -83,50 +84,58 @@ MLM_update_channel_playback_ret:
 	pop af
 
 ; c: channel
+; DOESN'T BACKUP AF and HL registers
+; OPTIMIZED
 MLM_update_channel_volume:
 	push bc
-	push hl
-	push af
-	push de
+		ld a,c
+
+		cp a,MLM_CH_FM1  ; if channel is ADPCMA...
+		jp c,MLM_update_ch_vol_PA
+
+		cp a,MLM_CH_SSG1 ; if channel is FM...
+		jp c,MLM_update_ch_vol_FM
+
+; Doesn't backup AF, and HL
+MLM_update_ch_vol_SSG:
+		; Load channel volume
 		ld b,0
 		ld hl,MLM_channel_volumes
 		add hl,bc
 		ld a,(hl)
 
-		ld h,0
-		ld l,c
-		ld de,MLM_update_ch_vol_vectors
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		jp (hl)
-MLM_update_ch_vol_return:
-	pop de
-	pop af
-	pop hl
+		; Scale down volume
+		; ($00~$FF -> $00~$0F)
+		rrca
+		rrca
+		rrca
+		rrca
+		and a,$0F
+
+		; swap a and c
+		ld b,c
+		ld c,a
+		ld a,b
+
+		sub a,MLM_CH_SSG1
+		call SSGCNT_set_vol
 	pop bc
 	ret
 
-MLM_update_ch_vol_vectors:
-	dw MLM_update_ch_vol_PA,MLM_update_ch_vol_PA
-	dw MLM_update_ch_vol_PA,MLM_update_ch_vol_PA
-	dw MLM_update_ch_vol_PA,MLM_update_ch_vol_PA
-	dw MLM_update_ch_vol_FM,MLM_update_ch_vol_FM
-	dw MLM_update_ch_vol_FM,MLM_update_ch_vol_FM
-	dw MLM_update_ch_vol_SSG,MLM_update_ch_vol_SSG
-	dw MLM_update_ch_vol_SSG
-
+; Doesn't backup AF, HL and BC
 MLM_update_ch_vol_PA:
-	push af
-	push bc
+		; Load channel volume
+		ld b,0
+		ld hl,MLM_channel_volumes
+		add hl,bc
+		ld a,(hl)
+
 		; Scale down volume
 		; ($00~$FF -> $00~$1F)
-		srl a
-		srl a
-		srl a
+		rrca
+		rrca
+		rrca
+		and a,$1F
 
 		; swap a and c
 		ld b,c
@@ -135,11 +144,16 @@ MLM_update_ch_vol_PA:
 
 		call PA_set_channel_volume
 	pop bc
-	pop af
-	jr MLM_update_ch_vol_return
+	ret
 
+; Doesn't backup AF and HL
 MLM_update_ch_vol_FM:
-	push af
+		; Load channel volume
+		ld b,0
+		ld hl,MLM_channel_volumes
+		add hl,bc
+		ld a,(hl)
+
 		; Scale down volume ($00~$FF -> $00 $7F)
 		srl a
 
@@ -150,29 +164,8 @@ MLM_update_ch_vol_FM:
 			ld c,a
 		pop af
 		call FMCNT_set_volume
-	pop af
-	jr MLM_update_ch_vol_return
-
-MLM_update_ch_vol_SSG:
-	push af
-	push bc
-		; Scale down volume
-		; ($00~$FF -> $00~$0F)
-		srl a
-		srl a
-		srl a
-		srl a
-
-		; swap a and c
-		ld b,c
-		ld c,a
-		ld a,b
-
-		sub a,MLM_CH_SSG1
-		call SSGCNT_set_vol
 	pop bc
-	pop af
-	jr MLM_update_ch_vol_return
+	ret
 
 ; stop song
 MLM_stop:
