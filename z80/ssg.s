@@ -331,6 +331,25 @@ SSGCNT_set_vol:
 	pop bc
 	ret
 
+; c: channel
+; a: volume
+SSGCNT_set_vol_opt:
+	push bc
+	push hl
+	push af
+		ld b,a ; \
+		ld a,c ; | Swap a and c
+		ld c,b ; /
+
+		ld b,0
+		ld hl,SSGCNT_volumes
+		add hl,bc
+		ld (hl),a
+	pop af
+	pop hl
+	pop bc
+	ret
+
 ; a: noise tune
 ; 	Everyone needs a useless
 ;	subroutine that is there
