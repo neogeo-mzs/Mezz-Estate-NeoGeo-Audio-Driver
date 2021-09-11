@@ -356,7 +356,6 @@ FMCNT_set_fbalgo:
 	push de
 	push af
 	push hl
-		call FMCNT_assert_channel
 		ld e,a ; Store value in e
 
 		; If the channel is even then
@@ -392,8 +391,6 @@ FMCNT_set_amspms:
 	push de
 	push af
 	push hl
-		call FMCNT_assert_channel
-
 		; Load channel's Panning, 
 		; AMS and PMS from WRAM
 		ld hl,FM_channel_lramspms
@@ -436,8 +433,6 @@ FMCNT_set_panning:
 	push de
 	push af
 	push hl
-		call FMCNT_assert_channel
-
 		; Load channel's Panning, 
 		; AMS and PMS from WRAM
 		ld hl,FM_channel_lramspms
@@ -480,9 +475,6 @@ FMCNT_set_operator:
 	push de
 	push af
 	push bc
-		call FMCNT_assert_channel
-		call FMCNT_assert_operator
-
 		; Load OP register offset in a, then 
 		; add said offset to DTMUL base address.
 		; After that, move result to d
@@ -567,8 +559,6 @@ FMCNT_set_op_enable:
 	push hl
 	push bc
 	push af
-		call FMCNT_assert_channel
-
 		; Store OP enable in WRAM
 		ld hl,FM_channel_op_enable
 		ld b,0
@@ -587,8 +577,6 @@ FMCNT_set_note:
 	push af
 	push bc
 		ld c,ixl
-		call FMCNT_assert_channel
-
 		; Load base pitch from FMCNT_pitch_LUT in bc
 		ld a,ixh
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
@@ -640,8 +628,6 @@ FMCNT_set_volume:
 	push hl
 	push bc
 	push af
-		call FMCNT_assert_channel
-
 		ld b,0
 		ld hl,FM_channel_volumes
 		add hl,bc
@@ -657,8 +643,6 @@ FMCNT_play_channel:
 	push af
 	push bc
 	push hl
-		call FMCNT_assert_channel
-
 		ld hl,FM_channel_key_on
 		ld b,0
 		add hl,bc
@@ -674,8 +658,6 @@ FMCNT_stop_channel:
 	push af
 	push de
 	push hl
-		call FMCNT_assert_channel
-
 		; Clear channel's key on value in WRAM
 		ld hl,FM_channel_key_on
 		ld e,c
@@ -729,25 +711,3 @@ FM_disable_channel:
 
 FM_channel_LUT:
 	db FM_CH1, FM_CH2, FM_CH3, FM_CH4
-
-; c: channel
-;	if the channel is invalid (> 3),
-;   softlock the program 
-FMCNT_assert_channel:
-	push af
-		ld a,c
-		cp a,4 
-		jp nc,softlock ; if a >= 4 then softlock
-	pop af
-	ret
-
-; b: channel
-;	if the operator is invalid (> 3),
-;   softlock the program 
-FMCNT_assert_operator:
-	push af
-		ld a,b
-		cp a,4 
-		jp nc,softlock ; if a >= 4 then softlock
-	pop af
-	ret
