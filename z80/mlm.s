@@ -61,13 +61,9 @@ MLM_update_channel_playback:
 		ld de,MLM_playback_timings-MLM_playback_control
 		add hl,de
 		dec (hl)
-		cp a,(hl) ; compare 0 to (hl)
-
-		; Calculate address of MLM_playback_set_timings[ch]
-		; without messing with flags
-		push af
-			add hl,de
-		pop af 
+		ld b,(hl)
+		add hl,de ; get pointer to MLM_playback_set_timings[ch]
+		cp a,b    ; compare 0 to MLM_playback_timings[ch]
 
 MLM_update_channel_playback_exec_check:
 		call z,MLM_update_events
