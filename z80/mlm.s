@@ -12,7 +12,6 @@ MLM_irq:
 	ret nz ; skip update
 
 	ld c,0
-
 	dup CHANNEL_COUNT
 		call MLM_update_channel_playback
 		call MLM_update_channel_volume
@@ -83,14 +82,49 @@ MLM_update_channel_playback_exec_check:
 	ex de,hl
 	ld a,(hl)
 	bit 7,a
-	call z,MLM_parse_command
-	call nz,MLM_parse_note
+	jp z,MLM_parse_command
+
+	; ======== Parse note ========
+	push bc
+		ld a,(hl)
+		and a,$7F ; Clear bit 7 of the note's first byte
+		ld b,a
+		ld a,c    ; move channel in a
+		inc hl
+		ld c,(hl)
+		inc hl
+		
+		; if (channel < 6) MLM_parse_note_pa()
+		cp a,6
+		jp c,MLM_play_sample_pa
+
+		cp a,10
+		jp c,MLM_play_note_fm
+		
+		; Else, Play note SSG...
+		sub a,MLM_CH_SSG1
+		call SSGCNT_set_note
+		call SSGCNT_enable_channel
+		call SSGCNT_start_channel_macros
+
+		add a,MLM_CH_SSG1
+		ld c,b
+		call MLM_set_timing
+
+MLM_parse_note_end:
+		; store playback pointer into WRAM
+		ex de,hl
+		ld (hl),d
+		dec hl
+		ld (hl),e
+	pop bc
 
 MLM_update_channel_playback_check_set_t:
 	exx ; Get normal registers back
 
 	; if MLM_playback_set_timings[ch] == 0
-	; update events again	
+	; update events again
+	xor a,a
 	cp a,(hl) ; cp 0,(hl)
 	jr z,MLM_update_channel_playback_exec_check
 
@@ -405,41 +439,6 @@ MLM_update_events_skip:
 	pop hl
 	jp MLM_update_channel_playback_check_set_t
 
-;   c:  channel
-;   hl: source (playback pointer)
-;   de: $MLM_playback_pointers[channel]+1
-MLM_parse_note:
-	push af
-	push bc
-	push hl
-	push de
-		ld a,(hl)
-		and a,$7F ; Clear bit 7 of the note's first byte
-		ld b,a
-		ld a,c    ; move channel in a
-		inc hl
-		ld c,(hl)
-		inc hl
-		
-		; if (channel < 6) MLM_parse_note_pa()
-		cp a,6
-		jp c,MLM_play_sample_pa
-
-		cp a,10
-		jp c,MLM_play_note_fm
-		jp MLM_play_note_ssg
-MLM_parse_note_end:
-		; store playback pointer into WRAM
-		ex de,hl
-		ld (hl),d
-		dec hl
-		ld (hl),e
-	pop de
-	pop hl
-	pop bc
-	pop af
-	ret
-
 ; [INPUT]
 ;   a:  channel
 ;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
@@ -553,19 +552,7 @@ MLM_play_note_fm:
 ;   a:  channel+10
 ;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
 MLM_play_note_ssg:
-	push af
-	push bc
-		sub a,MLM_CH_SSG1
-		call SSGCNT_set_note
-		call SSGCNT_enable_channel
-		call SSGCNT_start_channel_macros
-
-		add a,MLM_CH_SSG1
-		ld c,b
-		ld b,0
-		call MLM_set_timing
-	pop bc
-	pop af
+		
 	jp MLM_parse_note_end
 
 ; a: instrument
@@ -1008,7 +995,7 @@ MLM_parse_command_end_skip_playback_pointer_set:
 	pop ix
 	pop bc
 	pop af
-	ret
+	jp MLM_update_channel_playback_check_set_t
 
 MLM_command_vectors:
 	dw MLMCOM_end_of_list,         MLMCOM_note_off
