@@ -9,19 +9,15 @@ MLM_irq:
 	inc a
 	cp a,c
 	ld (MLM_base_time_counter),a
-	jr nz,MLM_update_skip
+	ret nz ; skip update
 
-	ld b,CHANNEL_COUNT
-MLM_update_loop:
-	ld c,b
-	dec c
+	ld c,0
 
-	push bc
+	dup CHANNEL_COUNT
 		call MLM_update_channel_playback
 		call MLM_update_channel_volume
-	pop bc
-
-	djnz MLM_update_loop 
+		inc c
+	edup
 
 	; Clear MLM_base_time_counter
 	xor a,a
