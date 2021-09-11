@@ -16,8 +16,10 @@ MLM_update_loop:
 	ld c,b
 	dec c
 
-	call MLM_update_channel_playback
-	call MLM_update_channel_volume
+	push bc
+		call MLM_update_channel_playback
+		call MLM_update_channel_volume
+	pop bc
 
 	djnz MLM_update_loop 
 
@@ -39,117 +41,130 @@ MLM_update_skip:
 ; 	c: channel
 ; [OUTPUT]
 ;	iyl: active channel count
+; Doesn't backup AF, HL, DE, B, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
-	push af
-	push bc
-	push hl
-	push de
-		; if MLM_playback_control[ch] == 0 then
-		; do not update this channel
-		ld hl,MLM_playback_control
-		ld b,0
-		add hl,bc
-		xor a,a   ; a = 0
-		cp a,(hl) ; compare 0 to (hl)
-		jr z,MLM_update_channel_playback_ret
+	; if MLM_playback_control[ch] == 0 then
+	; do not update this channel
+	ld hl,MLM_playback_control
+	ld b,0
+	add hl,bc
+	xor a,a   ; a = 0
+	cp a,(hl) ; compare 0 to (hl)
+	ret z
 
-		inc iyl ; increment active mlm channel counter
+	inc iyl ; increment active mlm channel counter
 
-		; decrement MLM_playback_timings[ch],
-		; if afterwards it's 0 then update events
-		ld de,MLM_playback_timings-MLM_playback_control
-		add hl,de
-		dec (hl)
-		ld b,(hl)
-		add hl,de ; get pointer to MLM_playback_set_timings[ch]
-		cp a,b    ; compare 0 to MLM_playback_timings[ch]
+	; decrement MLM_playback_timings[ch],
+	; if afterwards it's 0 then update events
+	ld de,MLM_playback_timings-MLM_playback_control
+	add hl,de
+	dec (hl)
+	ld b,(hl)
+	add hl,de ; get pointer to MLM_playback_set_timings[ch]
+	cp a,b    ; compare 0 to MLM_playback_timings[ch]
+	push bc   ; \
+		exx   ; | Instead than using the stack, use exx since it's faster
+	pop bc    ; /
 
 MLM_update_channel_playback_exec_check:
-		call z,MLM_update_events
+	jr nz,MLM_update_channel_playback_check_set_t
 
-		; if MLM_playback_set_timings[ch] == 0
-		; update events again
-		cp a,(hl) ; cp 0,(hl)
-		jr z,MLM_update_channel_playback_exec_check
+	; ======== Update events ========
+	; de = MLM_playback_pointers[ch]
+	ld h,0
+	ld l,c
+	add hl,hl
+	ld de,MLM_playback_pointers
+	add hl,de
+	ld e,(hl)
+	inc hl
+	ld d,(hl)
+	
+	; If the first byte's most significant bit is 0, then
+	; parse it and evaluate it as a note, else parse 
+	; and evaluate it as a command
+	ex de,hl
+	ld a,(hl)
+	bit 7,a
+	call z,MLM_parse_command
+	call nz,MLM_parse_note
 
-MLM_update_channel_playback_ret:
-	pop de
-	pop hl
-	pop bc
-	pop af
+MLM_update_channel_playback_check_set_t:
+	exx ; Get normal registers back
+
+	; if MLM_playback_set_timings[ch] == 0
+	; update events again	
+	cp a,(hl) ; cp 0,(hl)
+	jr z,MLM_update_channel_playback_exec_check
+
+	exx ; select shadow registers again
+	ret
 
 ; c: channel
-; DOESN'T BACKUP AF and HL registers
+; Doesn't backup AF, HL and B registers
 ; OPTIMIZED
 MLM_update_channel_volume:
-	push bc
-		ld a,c
+	ld a,c
 
-		cp a,MLM_CH_FM1  ; if channel is ADPCMA...
-		jp c,MLM_update_ch_vol_PA
+	cp a,MLM_CH_FM1  ; if channel is ADPCMA...
+	jp c,MLM_update_ch_vol_PA
 
-		cp a,MLM_CH_SSG1 ; if channel is FM...
-		jp c,MLM_update_ch_vol_FM
+	cp a,MLM_CH_SSG1 ; if channel is FM...
+	jp c,MLM_update_ch_vol_FM
 
-; Doesn't backup AF, and HL
-MLM_update_ch_vol_SSG:
-		; Load channel volume
-		ld b,0
-		ld hl,MLM_channel_volumes
-		add hl,bc
-		ld a,(hl)
+MLM_update_ch_vol_SSG: ; Else, channel is SSG...
+	; Load channel volume
+	ld b,0
+	ld hl,MLM_channel_volumes
+	add hl,bc
+	ld a,(hl)
 
-		; Scale down volume
-		; ($00~$FF -> $00~$0F)
-		rrca
-		rrca
-		rrca
-		rrca
-		and a,$0F
+	; Scale down volume
+	; ($00~$FF -> $00~$0F)
+	rrca
+	rrca
+	rrca
+	rrca
+	and a,$0F
 
-		; Store volume into SSGCNT WRAM
-		ld hl,SSGCNT_volumes-MLM_CH_SSG1
-		add hl,bc
-		ld (hl),a
-	pop bc
+	; Store volume into SSGCNT WRAM
+	ld hl,SSGCNT_volumes-MLM_CH_SSG1
+	add hl,bc
+	ld (hl),a
 	ret
 
-; Doesn't backup AF, HL and BC
 MLM_update_ch_vol_PA:
-		; Load channel volume
-		ld b,0
-		ld hl,MLM_channel_volumes
-		add hl,bc
-		ld a,(hl)
+	; Load channel volume
+	ld b,0
+	ld hl,MLM_channel_volumes
+	add hl,bc
+	ld a,(hl)
 
-		; Scale down volume
-		; ($00~$FF -> $00~$1F)
-		rrca
-		rrca
-		rrca
-		and a,$1F
+	; Scale down volume
+	; ($00~$FF -> $00~$1F)
+	rrca
+	rrca
+	rrca
+	and a,$1F
 
-		call PA_set_channel_volume
-	pop bc
+	call PA_set_channel_volume
 	ret
 
-; Doesn't backup AF and HL
 MLM_update_ch_vol_FM:
-		; Load channel volume
-		ld b,0
-		ld hl,MLM_channel_volumes
-		add hl,bc
-		ld a,(hl)
+	; Load channel volume
+	ld b,0
+	ld hl,MLM_channel_volumes
+	add hl,bc
+	ld a,(hl)
 
-		; Scale down volume ($00~$FF -> $00 $7F)
-		srl a
+	; Scale down volume ($00~$FF -> $00 $7F)
+	srl a
 
-		; Store volume into FMCNT WRAM
-		ld hl,FM_channel_volumes-MLM_CH_FM1
-		add hl,bc
-		ld (hl),a
-	pop bc
+	; Store volume into FMCNT WRAM
+	ld hl,FM_channel_volumes-MLM_CH_FM1
+	add hl,bc
+	ld (hl),a
 	ret
 
 ; stop song
@@ -385,31 +400,14 @@ MLM_update_events:
 	push de
 	push af
 	push ix
-		; de = MLM_playback_pointers[ch]
-		ld h,0
-		ld l,c
-		add hl,hl
-		ld de,MLM_playback_pointers
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
 		
-		; If the first byte's most significant bit is 0, then
-		; parse it and evaluate it as a note, else parse 
-		; and evaluate it as a command
-		ex de,hl
-		ld a,(hl)
-		bit 7,a
-		call z,MLM_parse_command
-		call nz,MLM_parse_note
 
 MLM_update_events_skip:
 	pop ix
 	pop af
 	pop de
 	pop hl
-	ret
+	jp MLM_update_channel_playback_check_set_t
 
 ;   c:  channel
 ;   hl: source (playback pointer)
