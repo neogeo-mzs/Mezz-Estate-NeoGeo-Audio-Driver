@@ -36,7 +36,7 @@ MLM_update_skip:
 ; 	c: channel
 ; [OUTPUT]
 ;	iyl: active channel count
-; Doesn't backup AF, HL, DE, B, HL', BC' and DE'
+; Doesn't backup AF, HL, DE, B, IX, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
 	; if MLM_playback_control[ch] == 0 then
@@ -110,7 +110,6 @@ MLM_update_channel_playback_exec_check:
 		add a,MLM_CH_SSG1
 		ld c,b
 		call MLM_set_timing
-
 MLM_parse_note_end:
 		; store playback pointer into WRAM
 		ex de,hl
@@ -424,29 +423,14 @@ MLM_ch_parameters_init:
 	pop af
 	ret
 
-; c: channel
-MLM_update_events:
-	push hl
-	push de
-	push af
-	push ix
-		
-
-MLM_update_events_skip:
-	pop ix
-	pop af
-	pop de
-	pop hl
-	jp MLM_update_channel_playback_check_set_t
-
 ; [INPUT]
 ;   a:  channel
 ;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
+; Doesn't backup BC, IX and AF'
+; OPTIMIZED
 MLM_play_sample_pa:
 	push de
-	push bc
 	push hl
-	push ix
 		; Load current instrument index into hl
 		ld h,0
 		ld l,a 
@@ -457,43 +441,41 @@ MLM_play_sample_pa:
 
 		; Load pointer to instrument data
 		; from WRAM into de
-		push af
+		ex af,af'
 			ld a,(MLM_instruments)
 			ld e,a
 			ld a,(MLM_instruments+1)
 			ld d,a
-		pop af
 
-		; Calculate pointer to the current
-		; instrument's data and store it in hl
-		add hl,hl ; \
-		add hl,hl ;  \
-		add hl,hl ;   | hl *= 32
-		add hl,hl ;  /
-		add hl,hl ; /
-		add hl,de
+			; Calculate pointer to the current
+			; instrument's data and store it in hl
+			add hl,hl ; \
+			add hl,hl ;  \
+			add hl,hl ;   | hl *= 32
+			add hl,hl ;  /
+			add hl,hl ; /
+			add hl,de
 
-		; Store offset to ADPCM 
-		; sample table in hl
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
+			; Store offset to ADPCM 
+			; sample table in hl
+			ld e,(hl)
+			inc hl
+			ld d,(hl)
 
-		; Add MLM_header offset to
-		; it to obtain the actual address
-		ld hl,MLM_HEADER
-		add hl,de
-		ld e,l
-		ld d,h
+			; Add MLM_header offset to
+			; it to obtain the actual address
+			ld hl,MLM_HEADER
+			add hl,de
+			ld e,l
+			ld d,h
 
-		; Check if sample id is valid;
-		; if it isn't softlock.
-		push af
+			; Check if sample id is valid;
+			; if it isn't softlock.
 			ld a,c
 			cp a,(hl)
 			jp nc,softlock ; if smp_id >= smp_count
 			inc de ; Increment past sample count
-		pop af
+		ex af,af'
 
 		; ix = $ADPCM_sample_table[sample_idx]
 		ld h,0
@@ -520,39 +502,25 @@ MLM_play_sample_pa:
 		ld d,REG_PA_CTRL
 		ld e,(hl) 
 		rst RST_YM_WRITEB
-	pop ix
 	pop hl
-	pop bc
 	pop de
 	jp MLM_parse_note_end
 
 ; [INPUT]
 ;   a:  channel+6
 ;   bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
+; Doesn't backup AF, IX and C
 MLM_play_note_fm:
-	push af
-	push ix
-	push bc
-		sub a,MLM_CH_FM1
-		ld ixh,c
-		ld ixl,a
-		call FMCNT_set_note
-		ld c,a
-		call FMCNT_play_channel
+	sub a,MLM_CH_FM1
+	ld ixh,c
+	ld ixl,a
+	call FMCNT_set_note
+	ld c,a
+	call FMCNT_play_channel
 
-		add a,MLM_CH_FM1
-		ld c,b
-		ld b,0
-		call MLM_set_timing
-	pop bc
-	pop ix
-	pop af
-	jp MLM_parse_note_end
-
-;   a:  channel+10
-;   bc: source (-TTTTTTT NNNNNNNN (Timing; Note))
-MLM_play_note_ssg:
-		
+	add a,MLM_CH_FM1
+	ld c,b
+	call MLM_set_timing
 	jp MLM_parse_note_end
 
 ; a: instrument
