@@ -95,10 +95,10 @@ MLM_update_channel_playback_exec_check:
 		inc hl
 		
 		; if (channel < 6) MLM_parse_note_pa()
-		cp a,6
+		cp a,MLM_CH_FM1
 		jp c,MLM_play_sample_pa
 
-		cp a,10
+		cp a,MLM_CH_SSG1
 		jp c,MLM_play_note_fm
 		
 		; Else, Play note SSG...
@@ -762,56 +762,34 @@ MLM_set_timing:
 	ret
 
 ; a: channel (MLM)
+; OPTIMIZED
 MLM_stop_note:
-	push hl
-	push de
 	push af
-		ld h,0
-		ld l,a
-		ld de,MLM_stop_note_vectors
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		jp (hl)
-MLM_stop_note_return:
+		cp a,MLM_CH_FM1
+		jp c,MLM_stop_note_PA
+
+		cp a,MLM_CH_SSG1
+		jp c,MLM_stop_note_FM
+
+		; Else, Stop SSG note...
+		sub a,MLM_CH_SSG1
+		call SSGCNT_disable_channel
 	pop af
-	pop de
-	pop hl
 	ret
 
-MLM_stop_note_vectors:
-	dw MLM_stop_note_PA,MLM_stop_note_PA
-	dw MLM_stop_note_PA,MLM_stop_note_PA
-	dw MLM_stop_note_PA,MLM_stop_note_PA
-	dw MLM_stop_note_FM,MLM_stop_note_FM
-	dw MLM_stop_note_FM,MLM_stop_note_FM
-	dw MLM_stop_note_SSG,MLM_stop_note_SSG
-	dw MLM_stop_note_SSG
-
-; a: channel
 MLM_stop_note_PA:
-	call PA_stop_sample
-	jp MLM_stop_note_return
+		call PA_stop_sample
+	pop af
+	ret
 
-; a: channel
 MLM_stop_note_FM:
 	push bc
-	push af
 		sub a,MLM_CH_FM1
 		ld c,a
 		call FMCNT_stop_channel
-	pop af
 	pop bc
-	jp MLM_stop_note_return
-
-; a: channel
-MLM_stop_note_SSG:
-	sub a,MLM_CH_SSG1
-	call SSGCNT_disable_channel
-	jp MLM_stop_note_return
+	pop af
+	ret
 
 ; a: volume
 ; c: channel
