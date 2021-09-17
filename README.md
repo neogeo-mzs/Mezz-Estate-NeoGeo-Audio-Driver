@@ -39,6 +39,7 @@ This should be located at address $4000, in the static bank
 |...     | ...                                      |
 |$01FD   | Last song bank (Zone3; SOON)             | 1
 |$01FE   | Last song offset (maximum of 256* songs) | 2
+|$0200   | SFX ADPCM-A table offset                 | 2
 
 * Only the first 128 songs can be played as of right now.
 

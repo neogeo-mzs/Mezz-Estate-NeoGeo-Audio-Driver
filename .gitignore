@@ -7,7 +7,7 @@
 build
 z80/listing.txt
 z80/adpcma_sample_lut.bin
-z80/m1_sdata.bin
+z80/m1rom_sdata.bin
 history
 neogeo.zip
 vrom.bin
