@@ -30,12 +30,12 @@ build: srom croms vrom m1rom prom
 	$(MV) $(CROMS_PATH)/c2rom.bin $(BUILD_PATH)/c2rom.bin
 	$(MV) $(VROM_PATH)/vrom.bin $(BUILD_PATH)/vrom.bin
 	
-	$(LN) $(BUILD_PATH)/prom.bin $(BUILD_PATH)/202-p1.p1
-	$(LN) $(BUILD_PATH)/m1rom.bin $(BUILD_PATH)/202-m1.m1
-	$(LN) $(BUILD_PATH)/srom.bin $(BUILD_PATH)/202-s1.s1
-	$(LN) $(BUILD_PATH)/c1rom.bin $(BUILD_PATH)/202-c1.c1
-	$(LN) $(BUILD_PATH)/c2rom.bin $(BUILD_PATH)/202-c2.c2
-	$(LN) $(BUILD_PATH)/vrom.bin $(BUILD_PATH)/202-v1.v1
+	$(CP) $(BUILD_PATH)/prom.bin $(BUILD_PATH)/202-p1.p1
+	$(CP) $(BUILD_PATH)/m1rom.bin $(BUILD_PATH)/202-m1.m1
+	$(CP) $(BUILD_PATH)/srom.bin $(BUILD_PATH)/202-s1.s1
+	$(CP) $(BUILD_PATH)/c1rom.bin $(BUILD_PATH)/202-c1.c1
+	$(CP) $(BUILD_PATH)/c2rom.bin $(BUILD_PATH)/202-c2.c2
+	$(CP) $(BUILD_PATH)/vrom.bin $(BUILD_PATH)/202-v1.v1
 
 prom: 
 	$(MAKE) -C $(PROM_PATH)
