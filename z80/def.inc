@@ -130,7 +130,8 @@ REG_PB_ENDH		equ $15
 REG_PB_FREQL	equ $19
 REG_PB_FREQH	equ $1A
 REG_PB_VOL		equ $1B
-REG_P_FLAGS		equ $1C
+REG_P_FLAGS_W		equ $1C
+REG_P_FLAGS_R   equ $06
 
 ; RSTs
 RST_YM_DELAY1 equ $08
@@ -198,6 +199,10 @@ UCOM_MASK         equ %01111111
 ; the driver??? change name later)
 SSGCNT_MIX_EN_TUNE	equ 0
 SSGCNT_MIX_EN_NOISE	equ 3
+
+SFXPS_CH_FREE  equ $00
+SFXPS_CH_BUSY  equ $01
+SFXPS_CH_TAKEN equ $02
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    MACROS                    ;;

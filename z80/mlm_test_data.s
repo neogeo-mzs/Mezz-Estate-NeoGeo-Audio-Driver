@@ -1,4 +1,5 @@
 MLM_header:
+	dw OTHER_DATA-MLM_header ; Point to ADPCM-A sample table
 	db 13 ; Song count
 	dw MLM_song_pa1-MLM_header
 	dw MLM_song_pa2-MLM_header

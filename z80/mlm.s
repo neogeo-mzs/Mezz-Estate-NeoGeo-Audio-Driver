@@ -250,7 +250,7 @@ MLM_play_song:
 		; Second song index validity check
 		;	If the song is bigger or equal to the
 		;   song count, the index is invalid.
-		ld hl,MLM_HEADER
+		ld hl,MLM_HEADER+2 ; Skip SFXPS header stuff
 		ld c,(hl)
 		cp a,c
 		call nc,softlock ; if a >= c then ...
