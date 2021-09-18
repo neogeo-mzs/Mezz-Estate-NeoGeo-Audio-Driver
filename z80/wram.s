@@ -77,5 +77,12 @@ IRQ_buffer:                   ds 2*IRQ_BUFFER_LENGTH ; u16[IRQ_BUFFER_LENGTH]
 IRQ_buffer_idx_w:             ds 1                   ; u8
 IRQ_buffer_idx_r:             ds 1                   ; u8
 
+; ======== SFX Playback System =======
+SFXPS_WRAM_start:
+SFXPS_adpcma_table: ds 2 ; void*
+SFXPS_channel_statuses: ds PA_CHANNEL_COUNT ; u8[6] ($00: free, $01: busy playing sfx, $02: taken for music playback)
+SFXPS_channel_priorities: ds PA_CHANNEL_COUNT ; u[6]
+SFXPS_WRAM_end:
+
 ; ======== Others ========
 EXT_2CH_mode: ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)

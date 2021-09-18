@@ -87,7 +87,6 @@ PA_stop_sample:
 PA_set_channel_volume:
 	push de
 	push hl
-		brk
 		; Store volume in 
 		; PA_channel_volumes[channel]
 		ld hl,PA_channel_volumes
@@ -150,8 +149,53 @@ PA_set_channel_panning:
 	pop hl
 	ret
 
+; e: channel
+; CHANGES FLAGS!!!
+;   Resets, masks, unmasks the channel
+;   status flag of an ADPCM-A channel.
+PA_channel_status_reset:
+	push hl
+	push de
+		; Get pointer to channel mask
+		ld hl,PA_channel_on_masks
+		ld d,0
+		add hl,de
+
+		; Reset and mask channel
+		ld e,(hl)
+		ld d,REG_P_FLAGS_W
+		rst RST_YM_WRITEA
+
+		; Unmask channel
+		ld e,0
+		rst RST_YM_WRITEA
+	pop de
+	pop hl
+	ret
+
+; e: channel
+; CHANGES FLAGS!!!
+;   Plays ADPCM-A channel
+PA_play_sample:
+	push hl
+	push de
+		; Get pointer to channel mask
+		ld hl,PA_channel_on_masks
+		ld d,0
+		add hl,de
+
+		; Play sample
+		ld d,REG_PA_CTRL
+		ld e,(hl)
+		rst RST_YM_WRITEB
+	pop de
+	pop hl
+	ret
+
 PA_channel_on_masks:
 	db %00000001,%00000010,%00000100,%00001000,%00010000,%00100000
+PA_channel_neg_masks:
+	db ~%00000001,~%00000010,~%00000100,~%00001000,~%00010000,~%00100000
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                 ADPCM-B                 ;;

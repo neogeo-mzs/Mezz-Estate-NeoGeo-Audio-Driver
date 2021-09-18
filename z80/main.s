@@ -98,12 +98,14 @@ startup:
 	rst RST_YM_WRITEA
 	
 	call set_default_banks
+	call SFXPS_init
 
 	out (ENABLE_NMI),a ; This does NOT crash or stop execution
 
 main_loop:
 	ei
 	call UCOM_handle_command
+	call SFXPS_update_loop
 	jr main_loop
 
 fast_beep:
@@ -250,9 +252,10 @@ softlock:
 	include "mlm.s"
 	include "math.s"
 	include "irq.s"
+	include "sfxps.s"
 
 	org MLM_HEADER ; block 1
-	;include "mlm_test_data.s"
-	incbin "m1rom_sdata.bin"
+	include "mlm_test_data.s"
+	;incbin "m1rom_sdata.bin"
 
 	include "wram.s"

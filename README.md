@@ -33,13 +33,13 @@ This should be located at address $4000, in the static bank
 
 |offsets | description                              | bytes 
 |--------|------------------------------------------|-------
-|$0000   | Song count                               | 1
-|$0001   | Song 0 bank (Zone3; SOON)                | 1
-|$0002   | Song 0 offset                            | 2
+|$0000   | SFX ADPCM-A table offset                 | 2
+|$0002   | Song count                               | 1
+|$0003   | Song 0 bank (Zone3; SOON)                | 1
+|$0004   | Song 0 offset                            | 2
 |...     | ...                                      |
-|$01FD   | Last song bank (Zone3; SOON)             | 1
-|$01FE   | Last song offset (maximum of 256* songs) | 2
-|$0200   | SFX ADPCM-A table offset                 | 2
+|$01FF   | Last song bank (Zone3; SOON)             | 1
+|$0201   | Last song offset (maximum of 256* songs) | 2
 
 * Only the first 128 songs can be played as of right now.
 
