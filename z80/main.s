@@ -98,6 +98,7 @@ startup:
 	rst RST_YM_WRITEA
 	
 	call set_default_banks
+	call UCOM_init
 	call SFXPS_init
 
 	out (ENABLE_NMI),a ; This does NOT crash or stop execution

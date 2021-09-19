@@ -2,14 +2,16 @@
 
 breakpoint: ds 1
 
-com_buffer:              ds COM_BUFFER_LENGTH*2 ; u16[COM_BUFFER_LENGTH]
-com_buffer_idx_w:        ds 1                   ; u8
-com_buffer_idx_r:        ds 1                   ; u8
+com_buffer:                   ds COM_BUFFER_LENGTH*2 ; u16[COM_BUFFER_LENGTH]
+com_buffer_idx_w:             ds 1                   ; u8
+com_buffer_idx_r:             ds 1                   ; u8
+com_sfxps_buffered_cvol:      ds 1 ; u8 (%LR-VVVVV)
+com_sfxps_buffered_prio:  ds 1
 
 ; If 0, then the z80 is waiting for the command's LSB,
 ; if 1, then the z80 is waiting for the command's MSB
 ; else, the behaviour is undefined.
-com_buffer_byte_significance: ds 1                   ; u8
+com_buffer_byte_significance:  ds 1                   ; u8
 
 ; ======== MLM player ========
 MLM_wram_start:

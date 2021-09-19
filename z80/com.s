@@ -39,6 +39,15 @@ BCOM_bios10:
 ;;                 USER COMMANDS                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+UCOM_init:
+    push af
+        ld a,$DF
+        ld (com_sfxps_buffered_cvol),a
+        xor a,a ; ld a,0
+        ld (com_sfxps_buffered_prio),a
+    pop af
+    ret
+    
 ; a: byte
 UCOM_write2buffer:
     push af
@@ -170,9 +179,10 @@ UCOM_run_command_return:
     ret
 
 UCOM_command_vectors:
-    dw UCOM_CMD_nop,       UCOM_CMD_play_song
-    dw UCOM_CMD_stop_song, UCOM_CMD_ssg_test
-    dup 124
+    dw UCOM_CMD_nop,               UCOM_CMD_play_song
+    dw UCOM_CMD_stop_song,         UCOM_CMD_sfxps_buffer_cvol
+    dw UCOM_CMD_sfxps_buffer_prio, UCOM_CMD_sfxps_play_smp
+    dup 122
         dw UCOM_CMD_invalid
     edup
 
@@ -191,9 +201,50 @@ UCOM_CMD_stop_song:
     call IRQ_write2buffer
     jp UCOM_run_command_return
 
-; b: $00
+; b: %1LRVVVVV
 ; c: $03
-UCOM_CMD_ssg_test:
+UCOM_CMD_sfxps_buffer_cvol:
+    push af
+    push de
+        ; Format %1LRVVVVV to %LR0VVVVV
+        ld a,b
+        and a,%01100000 ; %1LRVVVVV -> %0LR00000
+        sla a           ; %0LR00000 -> %LR000000
+        ld e,a
+        and a,%00011111 ; %1LRVVVVV -> %000VVVVV
+        or a,e          ; %000VVVVV -> %LR0VVVVV
+        ld (com_sfxps_buffered_cvol),a
+    pop de
+    pop af
+    jp UCOM_run_command_return
+
+; b: %1PPPPPPP
+; c: $04
+UCOM_CMD_sfxps_buffer_prio:
+    push af
+        ld a,b
+        and a,%01111111 ; %1PPPPPPP -> %0PPPPPPP
+        ld (com_sfxps_buffered_prio),a
+    pop af
+    jp UCOM_run_command_return
+
+; b: %1SSSSSSS
+; c: $05
+UCOM_CMD_sfxps_play_smp:
+    push bc
+    push iy
+    push af
+        ld a,(com_sfxps_buffered_cvol)
+        ld iyl,a
+        ld a,(com_sfxps_buffered_prio)
+        ld c,a
+        ld a,b          
+        and a,%01111111 ; %1SSSSSSS -> %0SSSSSSS  
+        ld b,a
+        call SFXPS_play_sfx
+    pop af
+    pop iy
+    pop bc
     jp UCOM_run_command_return
 
 UCOM_CMD_invalid:
