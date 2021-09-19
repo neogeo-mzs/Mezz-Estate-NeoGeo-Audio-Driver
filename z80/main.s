@@ -105,7 +105,7 @@ startup:
 main_loop:
 	ei
 	call UCOM_handle_command
-	call SFXPS_update_loop
+	call SFXPS_update
 	jr main_loop
 
 fast_beep:
