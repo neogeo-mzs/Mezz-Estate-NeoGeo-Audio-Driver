@@ -38,8 +38,8 @@ SFXPS_update:
     push hl
     push bc
     push de
-        ld b,FM_CHANNEL_COUNT
-        ld hl,SFXPS_channel_statuses+FM_CHANNEL_COUNT-1
+        ld b,SFXPS_CHANNEL_COUNT
+        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
 SFXPS_update_loop:
         ; If the SFXPS channel status isn't SFXPS_CH_BUSY,
         ; then skip status flag check.
@@ -90,81 +90,164 @@ SFXPS_set_channel_as_taken:
     pop bc
     ret
 
-; c:   channel
-; e:   priority
-; d:   sample id
+
+; [OUTPUT]
+;   a: free channel ($FF if none is found)
+; CHANGES FLAGS!!!
+SFXPS_find_free_channel:
+    push bc
+    push hl
+        ld b,SFXPS_CHANNEL_COUNT
+        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
+        xor a,a ; ld a,SFXPS_CH_FREE
+SFXPS_find_free_channel_loop:
+        ; if the channel is free ($00),
+        ; return the channel
+        cp a,(hl) 
+        jr z,SFXPS_find_free_channel_fchfound
+
+        dec hl ; Index address of precedent SFXPS ch. status
+        djnz SFXPS_find_free_channel_loop
+
+        ; Else, return $FF
+        ld a,$FF
+    pop hl
+    pop bc
+    ret
+
+SFXPS_find_free_channel_fchfound:
+        ld a,b
+        dec a
+    pop hl
+    pop bc
+    ret
+
+; [INPUT]
+;   c: priority
+; [OUTPUT]
+;   a: channel ($FF if none is found)
+; CHANGES FLAGS!!!
+;   First searches for a free channel,
+;   if none is available, it goes through
+;   the busy channels and checks their priority.
+SFXPS_find_suitable_channel:
+    ; If a free channel is found, return it
+    call SFXPS_find_free_channel
+    cp a,$FF
+    ret nz
+
+    ; Else, search through the busy channels
+    ; and based on their priorities, choose
+    ; a channel. If none is found, return $FF
+    push bc
+    push hl
+    push de
+        ld b,SFXPS_CHANNEL_COUNT
+        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
+        ld de,SFXPS_channel_priorities-SFXPS_channel_statuses
+SFXPS_find_suitable_channel_loop:
+        ; If the channel status isn't busy,
+        ; then it must be taken, skip
+        ; the priority check altogether
+        ld a,(hl)
+        dec a     ; cp a,SFXPS_BUSY
+        jr nz,SFXPS_find_suitable_channel_loop_next
+
+        ; Else, the channel status is busy.
+        ; compare the true priorities,
+        ; if the priority of the new sample
+        ; is higher or equal, return the channel.
+        add hl,de ; Get SFXPX_channel_priorities[ch]
+        ld a,c
+        cp a,(hl) ; if new_priority >= SFXPS_channel_priorities[channel]
+        jr nc,SFXPS_find_suitable_channel_loop_bch_found
+
+        or a,a    ; Clear carry flag
+        sbc hl,de ; Get SFXPS_channel_statuses[ch]
+SFXPS_find_suitable_channel_loop_next:
+        dec hl ; Index address of precedent SFXPS ch. status
+        djnz SFXPS_find_suitable_channel_loop
+
+        ; Else, no channel was 
+        ; found at all, return $FF
+        ld a,$FF
+    pop de
+    pop hl
+    pop bc
+    ret
+
+SFXPS_find_suitable_channel_loop_bch_found:
+        ld a,b
+        dec a
+    pop de
+    pop hl
+    pop bc
+    ret
+
+; c:   priority
+; b:   sample id
 ; iyl: CVOL (%PP-VVVVV; Panning, Volume)
 SFXPS_play_sfx:
-    push hl
     push af
     push bc
+    push hl
     push de
     push ix
-        ; Check if the channel status:
-        ;   If it's taken, return
+        ; Find a suitable channel, if
+        ; none is found return.
+        call SFXPS_find_suitable_channel
+        cp a,$FF
+        jr z,SFXPS_play_sfx_ret
+
+        ; Else, there's a channel the 
+        ; sample can be played in.
+        ;   Set the SFXPS ch. status to busy
         ld hl,SFXPS_channel_statuses
-        ld b,0
-        add hl,bc
-        ld a,SFXPS_CH_TAKEN
-        cp a,(hl)                ; if SFXPS_CH_TAKEN == SFXPS_channel_statuses[ch]
-        jr z,SFXPS_play_sfx_ret  ; then ...
+        ld e,a
+        ld d,0
+        add hl,de
+        ld (hl),SFXPS_CH_BUSY
 
-        ;   If it's free (not busy), skip the priority check
-        dec a
-        cp a,(hl)                            ; if SFXPS_CH_BUSY != SFXPS_channel_statuses[ch]
-        jr nz,SFXPS_play_sfx_skip_prio_check ; then ...
-
-        ; Else (channel is busy), check the priority
-        ;   Load priority of currently playing sample in e
+        ;   Store the new priority in WRAM
         ld hl,SFXPS_channel_priorities
-        add hl,bc
-        ld a,e ; Move new sample priority in a
-        ld e,(hl)
+        add hl,de
+        ld (hl),c
 
-        ;   If the priority of the currently playing sample is 
-        ;   higher than the priority of the new sample, return
-        cp a,e                  ; if new_smp_priority < SFXPS_channel_priorities[ch]
-        jr c,SFXPS_play_sfx_ret ; then ...
-SFXPS_play_sfx_skip_prio_check:
-        ld b,d ; backup sample id in b
-        
-        ; All the sfx playback conditions have been met, play the sample
         ;   Index SFX ADPCM-A list
         ld h,0    ; \
-        ld l,d    ; | ofs = new_smp_id
+        ld l,b    ; | ofs = new_smp_id
         add hl,hl ; | ofs *= 4
         add hl,hl ; /
-        ld a,(SFXPS_adpcma_table)
-        ld e,a
-        ld a,(SFXPS_adpcma_table+1)
-        ld d,a
-        add hl,de
+        push de
+            ld a,(SFXPS_adpcma_table)
+            ld e,a
+            ld a,(SFXPS_adpcma_table+1)
+            ld d,a
+            add hl,de
+        pop de
 
         ;   Set ADPCM-A sample addresses
         push hl ; - ix = hl
         pop ix  ; /
-        ld a,c  ; Load channel in a
+        ld a,e ; Load channel in a
         call PA_set_sample_addr
 
         ;   Set CVOL register
-        ld d,REG_PA_CVOL
-        add a,d
+        ld a,REG_PA_CVOL
+        add a,e
+        ld d,a
         ld e,iyl
         rst RST_YM_WRITEB
 
         ;   Play the sample
-        ld e,c
+        sub a,REG_PA_CVOL ; Get channel back
+        ld e,a
         call PA_play_sample
-
-        ; Set the SFXPS status flag to SFXPS_CH_BUSY
-        ld hl,SFXPS_channel_priorities
-        ld b,0
-        add hl,bc
-        ld (hl),SFXPS_CH_BUSY
+        
 SFXPS_play_sfx_ret:
     pop ix
     pop de
-    pop bc
-    pop af 
     pop hl
+    pop bc
+    pop af
     ret

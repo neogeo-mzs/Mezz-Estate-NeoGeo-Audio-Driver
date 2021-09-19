@@ -204,6 +204,8 @@ SFXPS_CH_FREE  equ $00
 SFXPS_CH_BUSY  equ $01
 SFXPS_CH_TAKEN equ $02
 
+SFXPS_CHANNEL_COUNT equ PA_CHANNEL_COUNT
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    MACROS                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
