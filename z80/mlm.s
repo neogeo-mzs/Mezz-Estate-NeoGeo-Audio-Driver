@@ -202,9 +202,9 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		; Stop SSG Controller
 		call SSGCNT_init
 		call FMCNT_init
+		call SFXPS_set_taken_channels_free
 
 		; clear MLM WRAM
 		ld hl,MLM_wram_start
@@ -358,9 +358,11 @@ MLM_play_song_loop2:
 MLM_playback_init:
 	push bc
 	push af
+	push iy
 		; Set all channel timings to 1
 		ld a,b
 		dec a
+		ld iyl,a ; backup channel in iyl
 		ld bc,1
 		call MLM_set_timing
 
@@ -391,16 +393,24 @@ MLM_playback_init:
 
 		; If the playback pointer isn't
 		; equal to 0, set the channel's
-		; playback control to $FF
+		; playback control to $FF, and
+		; also set SFXPS ch. status to taken
 		push hl
 			ld hl,0
 			or a,a ; Clear carry flag
 			sbc hl,bc
 			jr z,MLM_playback_init_no_playback
 			ld (ix+0),$FF
+
+			; Even if the channel is invalid,
+			; the function detects that and
+			; just returns. nothing to worry
+			ld c,iyl
+			call SFXPS_set_channel_as_taken 
 MLM_playback_init_no_playback:
 			inc ix
 		pop hl
+	pop iy
 	pop af
 	pop bc
 	ret
