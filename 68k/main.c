@@ -18,6 +18,7 @@ const char* INSTRUCTION_BOX_STRING =
     "\x83\x80\x80\x80\x80\x80\x80\x80\x80\x80\x81""MZS test program\x82\x80\x80\x80\x80\x80\x80\x80\x80\x80\x84"
     "\x87                                    \x87"
     "\x87  \x88 Play   \x89 Stop   \x8E\x8F Song Select  \x87"
+    "\x87  \x8A Pan.   \x8B Play SFX   \x8C\x8D Priority \x87"
     "\x87                                    \x87"
     "\x85\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x86"
 };
@@ -45,8 +46,12 @@ void print_gui()
     FIX_SetCursor(0, 0);
     FIX_PrintString(INSTRUCTION_BOX_STRING);
 
-    FIX_SetCursor(1, 6);
+    FIX_SetCursor(1, 7);
     FIX_PrintString("Song: $");
+    FIX_SetCursor(1, 8);
+    FIX_PrintString("Prio: $");
+    FIX_SetCursor(1, 9);
+    FIX_PrintString("Pan.:");
 }   
 
 int main()
@@ -55,7 +60,10 @@ int main()
     print_gui();
 
     const int SONG_COUNT = 13;
+    const char* PAN_LABELS[] = { "NONE  ", "LEFT  ", "RIGHT ", "CENTER"};
     int selected_song = 0;
+    int priority = 0;
+    int panning = 3; // 0 = None, 1 = Left, 2 = Right, 3 = Center
     
     while(1)
     {
@@ -68,15 +76,37 @@ int main()
             selected_song = WRAP(selected_song+1, 0, SONG_COUNT);
         if (BIOS_P1CHANGE->down)
             selected_song = WRAP(selected_song-1, 0, SONG_COUNT);
+        if (BIOS_P1CHANGE->left)
+        {
+            priority = WRAP(priority-1, 0, 128);
+            Z80_UCOM_BUFFER_SFXPS_PRIO(priority);
+        }
+        if (BIOS_P1CHANGE->right)
+        {
+            priority = WRAP(priority+1, 0, 128);
+            Z80_UCOM_BUFFER_SFXPS_PRIO(priority);
+        }
 
         if (BIOS_P1CHANGE->A)
             Z80_UCOM_PLAY_SONG(selected_song);
         if (BIOS_P1CHANGE->B)
             Z80_UCOM_STOP();
-
-        FIX_SetCursor(8, 6);
+        if (BIOS_P1CHANGE->C)
+        {
+            panning = WRAP(panning+1, 0, 4);
+            Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<6, 0x1F);
+        }
+        if (BIOS_P1CHANGE->D)
+            Z80_UCOM_PLAY_SFXPS_SMP(12);
+            
+        FIX_SetCursor(8, 7);
         FIX_PrintNibble(selected_song >> 4);
         FIX_PrintNibble(selected_song & 0x0F);
+        FIX_SetCursor(8, 8);
+        FIX_PrintNibble(priority >> 4);
+        FIX_PrintNibble(priority & 0x0F);
+        FIX_SetCursor(7, 9);
+        FIX_PrintString(PAN_LABELS[panning]);
 
         // wait for vblank
         PAL_ENTRY(0, 1) = DARKGREY;
