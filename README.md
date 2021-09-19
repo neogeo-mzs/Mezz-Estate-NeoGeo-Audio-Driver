@@ -284,6 +284,16 @@ Each command is a single word. the LSB is the command, the MSB is the parameter.
 ##### Command 2: Stop song
 **format: %1-------'10000010**
 
+##### Command 3: Buffer SFXPS CVOL
+**format: %1LRVVVVV'10000011 (Left enable, Right enable, Volume)**
+
+##### Command 4: Buffer SFXPS Priority
+**format: %1PPPPPPP'10000100 (Priority)**
+
+##### Command 5: Play SFXPS sample
+**format: %1SSSSSSS'10000101 (Sample)**
+By default, the priority is $00, the panning is set to center and the volume is $1F
+
 ### Internal IRQ commands
 These commands are used internally to safely give commands 
 to anything IRQ related (such as the MLM song playback),
