@@ -79,13 +79,51 @@ SFXPS_update_loop_skip_statf_check:
     ret
     
 ; c: channel
+;   An invalid SFXPS channel can be used,
+;   the function will just do nothing
 SFXPS_set_channel_as_taken:
     push bc
     push hl
+    push af
+        ; If channel isn't a valid SFXPS
+        ; channel, just return
+        ld a,c
+        cp a,SFXPS_CHANNEL_COUNT
+        jr nc,SFXPS_set_channel_as_taken_ret
+        
         ld hl,SFXPS_channel_statuses
         ld b,0
         add hl,bc
         ld (hl),SFXPS_CH_TAKEN
+
+SFXPS_set_channel_as_taken_ret:
+    pop af
+    pop hl
+    pop bc
+    ret
+
+SFXPS_set_taken_channels_free:
+    push bc
+    push hl
+    push af
+        ld b,SFXPS_CHANNEL_COUNT
+        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
+SFXPS_set_taken_channels_free_loop:
+        ; If the channel status 
+        ; isn't taken, check the
+        ; next channel
+        
+        ld a,(hl)
+        dec hl    ; Get pointer to precedent channel's status
+        cp a,SFXPS_CH_TAKEN
+        jr nz,SFXPS_set_taken_channel_free_next
+
+        ; Else, set the SFXPS ch.
+        ; status to free
+        ld (hl),SFXPS_CH_FREE
+SFXPS_set_taken_channel_free_next:
+        djnz SFXPS_set_taken_channels_free_loop
+    pop af
     pop hl
     pop bc
     ret
