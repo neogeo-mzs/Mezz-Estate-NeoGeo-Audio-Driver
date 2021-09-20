@@ -19,6 +19,7 @@ SFXPS_init:
         ld h,a
         ld de,MLM_HEADER
         add hl,de
+        inc hl ; Skips sample count, TODO: Add sample id check
 
         ; Store said address in SFXPS_adpcma_table
         ld a,l
@@ -33,7 +34,6 @@ SFXPS_init:
 
 ; Ran in the main loop, not the IRQ
 SFXPS_update:
-    brk
     push af
     push hl
     push bc
