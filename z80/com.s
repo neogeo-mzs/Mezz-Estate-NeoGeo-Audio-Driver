@@ -201,34 +201,36 @@ UCOM_CMD_stop_song:
     call IRQ_write2buffer
     jp UCOM_run_command_return
 
-; b: %1LRVVVVV
+; b: %0LRVVVVV
 ; c: $03
 UCOM_CMD_sfxps_buffer_cvol:
     push af
     push de
+        brk
         ; Format %1LRVVVVV to %LR0VVVVV
         ld a,b
-        and a,%01100000 ; %1LRVVVVV -> %0LR00000
+        and a,%01100000 ; %0LRVVVVV -> %0LR00000
         sla a           ; %0LR00000 -> %LR000000
         ld e,a
-        and a,%00011111 ; %1LRVVVVV -> %000VVVVV
+        ld a,b
+        and a,%00011111 ; %0LRVVVVV -> %000VVVVV
         or a,e          ; %000VVVVV -> %LR0VVVVV
         ld (com_sfxps_buffered_cvol),a
     pop de
     pop af
     jp UCOM_run_command_return
 
-; b: %1PPPPPPP
+; b: %0PPPPPPP
 ; c: $04
 UCOM_CMD_sfxps_buffer_prio:
     push af
+        brk
         ld a,b
-        and a,%01111111 ; %1PPPPPPP -> %0PPPPPPP
         ld (com_sfxps_buffered_prio),a
     pop af
     jp UCOM_run_command_return
 
-; b: %1SSSSSSS
+; b: %0SSSSSSS
 ; c: $05
 UCOM_CMD_sfxps_play_smp:
     push bc
@@ -239,9 +241,6 @@ UCOM_CMD_sfxps_play_smp:
         ld iyl,a
         ld a,(com_sfxps_buffered_prio)
         ld c,a
-        ld a,b          
-        and a,%01111111 ; %1SSSSSSS -> %0SSSSSSS  
-        ld b,a
         call SFXPS_play_sfx
     pop af
     pop iy

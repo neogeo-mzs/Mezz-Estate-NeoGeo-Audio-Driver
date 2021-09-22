@@ -11,9 +11,9 @@
 
 typedef enum {
     PAN_NONE   = 0x00,
-    PAN_LEFT   = 0x80,
-    PAN_RIGHT  = 0x40,
-    PAN_CENTER = 0xC0,
+    PAN_LEFT   = 0x40,
+    PAN_RIGHT  = 0x20,
+    PAN_CENTER = 0x60,
 } Panning;
 
 void Z80_send_user_command(u8 command, u8 parameter);
