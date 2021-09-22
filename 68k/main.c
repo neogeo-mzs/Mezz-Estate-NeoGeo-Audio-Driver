@@ -60,10 +60,10 @@ int main()
     print_gui();
 
     const int SONG_COUNT = 13;
-    const char* PAN_LABELS[] = { "NONE  ", "LEFT  ", "RIGHT ", "CENTER"};
+    const char* PAN_LABELS[] = { "NONE  ", "RIGHT ", "LEFT  ", "CENTER"};
     int selected_song = 0;
     int priority = 0;
-    int panning = 3; // 0 = None, 1 = Left, 2 = Right, 3 = Center
+    int panning = 3; // 0 = None, 1 = Right, 2 = Left, 3 = Center
     
     while(1)
     {
@@ -94,7 +94,7 @@ int main()
         if (BIOS_P1CHANGE->C)
         {
             panning = WRAP(panning+1, 0, 4);
-            Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<6, 0x1F);
+            Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<5, 0x1F);
         }
         if (BIOS_P1CHANGE->D)
             Z80_UCOM_PLAY_SFXPS_SMP(12);
