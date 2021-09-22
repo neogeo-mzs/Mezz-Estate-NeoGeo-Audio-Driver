@@ -179,6 +179,7 @@ PA_channel_status_reset:
 PA_play_sample:
 	push hl
 	push de
+	push af
 		; Get pointer to channel mask
 		ld hl,PA_channel_on_masks
 		ld d,0
@@ -188,6 +189,7 @@ PA_play_sample:
 		ld d,REG_PA_CTRL
 		ld e,(hl)
 		rst RST_YM_WRITEB
+	pop af
 	pop de
 	pop hl
 	ret

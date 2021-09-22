@@ -33,6 +33,7 @@ SFXPS_init:
     ret
 
 ; Ran in the main loop, not the IRQ
+; DOESN'T WORK ?
 SFXPS_update:
     push af
     push hl
