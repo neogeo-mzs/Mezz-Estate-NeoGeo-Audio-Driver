@@ -206,7 +206,6 @@ UCOM_CMD_stop_song:
 UCOM_CMD_sfxps_buffer_cvol:
     push af
     push de
-        brk
         ; Format %1LRVVVVV to %LR0VVVVV
         ld a,b
         and a,%01100000 ; %0LRVVVVV -> %0LR00000
@@ -224,7 +223,6 @@ UCOM_CMD_sfxps_buffer_cvol:
 ; c: $04
 UCOM_CMD_sfxps_buffer_prio:
     push af
-        brk
         ld a,b
         ld (com_sfxps_buffered_prio),a
     pop af
