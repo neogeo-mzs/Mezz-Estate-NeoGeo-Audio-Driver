@@ -71,7 +71,8 @@ FM_wram_end:
 ; ======== PA ========
 PA_wram_start:
 PA_channel_volumes:  ds PA_CHANNEL_COUNT
-PA_channel_pannings: ds PA_CHANNEL_COUNT	
+PA_channel_pannings: ds PA_CHANNEL_COUNT
+PA_status_register: ds 1	
 PA_wram_end:
 
 ; ======== IRQ ========

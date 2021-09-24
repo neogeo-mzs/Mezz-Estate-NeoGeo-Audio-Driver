@@ -45,15 +45,16 @@ SFXPS_update_loop:
         ; If the SFXPS channel status isn't SFXPS_CH_BUSY,
         ; then skip status flag check.
         ld a,(hl)
-        dec hl
         cp a,SFXPS_CH_BUSY
         jr nz,SFXPS_update_loop_skip_statf_check
 
         ; Load the ADPCM channel status flag in a,
         ; and mask away any other channel status flags
-        ld a,REG_P_FLAGS_R
-        rst RST_YM_READA
-        ld de,PA_channel_neg_masks-SFXPS_channel_statuses
+        ld a,(PA_status_register)
+        ld d,0
+        ld e,a
+        brk
+        ld de,PA_channel_on_masks-SFXPS_channel_statuses
         add hl,de
         and a,(hl)
         or a,a     ; Clear carry flag
@@ -65,11 +66,17 @@ SFXPS_update_loop:
 
         ; Else, the sample has stopped playing;
         ; proceed to set the SFXPS ch. status to
-        ; SFXPS_CH_FREE and reset the reg. flags
+        ; SFXPS_CH_FREE, reset the priority and flags.
         ld (hl),SFXPS_CH_FREE
+        ld de,SFXPS_channel_priorities-SFXPS_channel_statuses
+        add hl,de ; Get SFXPS_channel_priorities[ch]
+        ld (hl),0
+        or a,a    ; clear carry flag
+        sbc hl,de ; Get SFXPS_channel_statuses[ch] back
         ld e,b
         dec e
         call PA_channel_status_reset
+
 SFXPS_update_loop_skip_statf_check:
         dec hl ; Get address of precedent ch. SFXPS status ready
         djnz SFXPS_update_loop
@@ -278,7 +285,7 @@ SFXPS_play_sfx:
         ld e,iyl
         rst RST_YM_WRITEB
 
-        ;   Play the sample
+        ;   Play the sample (and deal with status flags)
         sub a,REG_PA_CVOL ; Get channel back
         ld e,a
         call PA_play_sample
