@@ -130,7 +130,7 @@ REG_PB_ENDH		equ $15
 REG_PB_FREQL	equ $19
 REG_PB_FREQH	equ $1A
 REG_PB_VOL		equ $1B
-REG_P_FLAGS_W		equ $1C
+REG_P_FLAGS_W	equ $1C
 REG_P_FLAGS_R   equ $06
 
 ; RSTs

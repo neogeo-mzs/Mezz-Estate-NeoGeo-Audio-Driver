@@ -106,6 +106,7 @@ startup:
 main_loop:
 	ei
 	call UCOM_handle_command
+	call PA_update
 	call SFXPS_update
 	jr main_loop
 

@@ -2,6 +2,27 @@
 ;;                 ADPCM-A                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Breaks MLM playback for some reason lol
+PA_update:
+	push af
+	push de
+		; Read status register flag 
+		; and store it into WRAM
+		in a,(6)
+		and a,$3F ; Get ADPCM-A flags
+		ld (PA_status_register),a
+
+		; Reset and mask raised flags
+		ld d,REG_P_FLAGS_W
+		rst RST_YM_WRITEA
+
+		; Unmask all flags
+		ld e,0
+		rst RST_YM_WRITEA
+	pop de
+	pop af
+	ret
+
 PA_stop:
 	push de
 		ld de,REG_PA_CTRL<<8 | $BF
@@ -174,8 +195,7 @@ PA_channel_status_reset:
 	ret
 
 ; e: channel
-; CHANGES FLAGS!!!
-;   Plays ADPCM-A channel
+;   Plays ADPCM-A channel and resets flags correctly
 PA_play_sample:
 	push hl
 	push de
@@ -184,10 +204,27 @@ PA_play_sample:
 		ld hl,PA_channel_on_masks
 		ld d,0
 		add hl,de
+		ld a,(hl)
+
+		; Stop sample if one's playing first
+		ld d,REG_PA_CTRL
+		or a,%10000000 ; Set dump bit
+		ld e,a
+		rst RST_YM_WRITEB
+
+		; Reset and mask channel status flag
+		;ld d,REG_P_FLAGS_W
+		and a,%01111111 ; Clear 7th bit
+		;ld e,a
+		;rst RST_YM_WRITEA
+
+		; Unmask channel status flag
+		;ld e,0
+		;rst RST_YM_WRITEA
 
 		; Play sample
 		ld d,REG_PA_CTRL
-		ld e,(hl)
+		ld e,a
 		rst RST_YM_WRITEB
 	pop af
 	pop de

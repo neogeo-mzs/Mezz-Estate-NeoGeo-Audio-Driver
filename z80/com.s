@@ -234,7 +234,6 @@ UCOM_CMD_sfxps_play_smp:
     push bc
     push iy
     push af
-        brk
         ld a,(com_sfxps_buffered_cvol)
         ld iyl,a
         ld a,(com_sfxps_buffered_prio)
