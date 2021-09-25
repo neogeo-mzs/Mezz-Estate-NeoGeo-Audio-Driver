@@ -2,27 +2,6 @@
 ;;                 ADPCM-A                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Breaks MLM playback for some reason lol
-PA_update:
-	push af
-	push de
-		; Read status register flag 
-		; and store it into WRAM
-		in a,(6)
-		and a,$3F ; Get ADPCM-A flags
-		ld (PA_status_register),a
-
-		; Reset and mask raised flags
-		ld d,REG_P_FLAGS_W
-		rst RST_YM_WRITEA
-
-		; Unmask all flags
-		ld e,0
-		rst RST_YM_WRITEA
-	pop de
-	pop af
-	ret
-
 PA_stop:
 	push de
 		ld de,REG_PA_CTRL<<8 | $BF
