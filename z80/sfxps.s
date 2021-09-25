@@ -98,6 +98,7 @@ SFXPS_set_taken_channels_free:
 ; CHANGES FLAGS!!!
 SFXPS_find_free_channel:
     push bc
+        brk
         ; By ORing the taken status and playback
         ; status byte, you get a byte in which if the
         ; channel's corresponding bit is clear, then
@@ -123,8 +124,8 @@ SFXPS_find_free_channel_loop:
     ret
 
 SFXPS_find_free_channel_fchfound:
-        ld a,b
-        dec a
+        ld a,SFXPS_CHANNEL_COUNT
+        sub a,b
     pop bc
     ret
 
@@ -167,7 +168,7 @@ SFXPS_find_suitable_channel_loop:
         jr nc,SFXPS_find_suitable_channel_loop_bch_found
 
 SFXPS_find_suitable_channel_loop_next:
-        dec hl ; Index address of precedent SFXPS ch. priorities
+        inc hl ; Index address of next SFXPS ch. priorities
         ld a,e ; Get channel taken status back
         srl a  ; Shift channel taken status bitflag
         ld e,a ; Update channel taken status copy
@@ -182,8 +183,8 @@ SFXPS_find_suitable_channel_loop_next:
     ret
 
 SFXPS_find_suitable_channel_loop_bch_found:
-        ld a,b
-        dec a
+        ld a,SFXPS_CHANNEL_COUNT
+        sub a,b
     pop de
     pop hl
     pop bc
@@ -215,7 +216,7 @@ SFXPS_play_sfx:
         ld a,(SFXPS_channel_playback_status)
         or a,(hl)
         ld (SFXPS_channel_playback_status),a
-        
+
         ;   Store the new priority in WRAM
         ld hl,SFXPS_channel_priorities
         add hl,de
