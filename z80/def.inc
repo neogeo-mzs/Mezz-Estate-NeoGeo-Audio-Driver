@@ -191,7 +191,6 @@ MLM_CH_SSG3 equ 12
 ; Should always be a multiple of 2
 ; and also be smaller than 128
 COM_BUFFER_LENGTH equ 32
-IRQ_BUFFER_LENGTH equ 16
 
 UCOM_MASK         equ %01111111
 

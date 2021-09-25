@@ -192,13 +192,16 @@ UCOM_CMD_nop:
 ; b: song
 ; c: $01
 UCOM_CMD_play_song:
-    call IRQ_write2buffer 
+    push af
+        ld a,b
+        call MLM_play_song
+    pop af
     jp UCOM_run_command_return
 
 ; b: $00
 ; c: $02
 UCOM_CMD_stop_song:
-    call IRQ_write2buffer
+    call MLM_stop
     jp UCOM_run_command_return
 
 ; b: %0LRVVVVV

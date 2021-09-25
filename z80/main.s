@@ -71,6 +71,9 @@ NMI_do_nothing:
 	pop af
 	retn
 
+IRQ:
+	reti
+
 startup:
 	ld sp,$FFFC
 	im 1
@@ -94,21 +97,36 @@ startup:
 
 	ld hl,98
 	call ta_counter_load_set
-	ld de,REG_TIMER_CNT<<8 | TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ
+	ld de,REG_TIMER_CNT<<8 | TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET ; | TM_CNT_ENABLE_TA_IRQ
 	rst RST_YM_WRITEA
 	
 	call set_default_banks
 	call SFXPS_init
 	call UCOM_init
 
-	out (ENABLE_NMI),a ; This does NOT crash or stop execution
+	out (ENABLE_NMI),a 
 
 main_loop:
-	ei
+	; Check the timer A flag, if so, 
+	; execute the timer based functions
+	in a,(4)
+	bit 1,a
+	call nz,execute_tma_tick
+
 	call UCOM_handle_command
 	call PA_update
 	call SFXPS_update
 	jr main_loop
+
+execute_tma_tick:
+	call MLM_irq
+	call FMCNT_irq
+	call SSGCNT_irq
+
+	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET ;| TM_CNT_ENABLE_TA_IRQ 
+	ld d,REG_TIMER_CNT
+	rst RST_YM_WRITEA
+	ret
 
 fast_beep:
 	push de
@@ -253,7 +271,6 @@ softlock:
 	include "timer.s"
 	include "mlm.s"
 	include "math.s"
-	include "irq.s"
 	include "sfxps.s"
 
 	org MLM_HEADER ; block 1
