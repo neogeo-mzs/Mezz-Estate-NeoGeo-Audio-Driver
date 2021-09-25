@@ -94,15 +94,21 @@ startup:
 	; Useless devkit port write (probably?)
 	ld a,1
 	out ($C0),a
-
-	ld hl,98
-	call ta_counter_load_set
-	ld de,REG_TIMER_CNT<<8 | TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET ; | TM_CNT_ENABLE_TA_IRQ
-	rst RST_YM_WRITEA
 	
 	call set_default_banks
 	call SFXPS_init
 	call UCOM_init
+
+	ld hl,98
+	call ta_counter_load_set
+
+	; Reset timer counters to 0
+	ld de,REG_TIMER_CNT<<8 
+	rst RST_YM_WRITEA
+
+	; Loads Load counter to TA counter and resets TA flags
+	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ
+	rst RST_YM_WRITEA
 
 	out (ENABLE_NMI),a 
 
@@ -110,7 +116,10 @@ main_loop:
 	; Check the timer A flag, if so, 
 	; execute the timer based functions
 	in a,(4)
-	bit 1,a
+	ld e,a
+	ld d,0
+	brk
+	bit 0,a
 	call nz,execute_tma_tick
 
 	call UCOM_handle_command
@@ -123,7 +132,7 @@ execute_tma_tick:
 	call FMCNT_irq
 	call SSGCNT_irq
 
-	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET ;| TM_CNT_ENABLE_TA_IRQ 
+	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ 
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA
 	ret
