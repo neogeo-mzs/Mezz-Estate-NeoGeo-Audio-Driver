@@ -33,54 +33,30 @@ SFXPS_init:
     ret
 
 ; Ran in the main loop, not the IRQ
-; DOESN'T WORK ?
 SFXPS_update:
     push af
-    push hl
-    push bc
     push de
-        ld b,SFXPS_CHANNEL_COUNT
-        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
-SFXPS_update_loop:
-        ; If the SFXPS channel status isn't SFXPS_CH_BUSY,
-        ; then skip status flag check.
-        ld a,(hl)
-        cp a,SFXPS_CH_BUSY
-        jr nz,SFXPS_update_loop_skip_statf_check
+        ; Read status register flag 
+		; and store it into WRAM
+		in a,(6)
+		and a,$3F ; Get ADPCM-A flags
+		ld e,a    ; backup status register flag in e
+        
+        ; SFXPS_channel_playback_status &= ~flags
+        xor a,$FF
+        ld d,a
+        ld a,(SFXPS_channel_playback_status)
+        and a,d
+        ld (SFXPS_channel_playback_status),a
 
-        ; Load the ADPCM channel status flag in a,
-        ; and mask away any other channel status flags
-        ld a,(PA_status_register)
- 
-        ld de,PA_channel_on_masks-SFXPS_channel_statuses
-        add hl,de
-        and a,(hl)
-        or a,a     ; Clear carry flag
-        sbc hl,de  ; Get back SFXPS_channel_statuses[channel]
+		; Reset and mask raised flags
+		ld d,REG_P_FLAGS_W
+		rst RST_YM_WRITEA
 
-        ; If a is 0, then don't set anything
-        or a,a ; cp a,0
-        jr z,SFXPS_update_loop_skip_statf_check
-
-        ; Else, the sample has stopped playing;
-        ; proceed to set the SFXPS ch. status to
-        ; SFXPS_CH_FREE, reset the priority and flags.
-        ld (hl),SFXPS_CH_FREE
-        ld de,SFXPS_channel_priorities-SFXPS_channel_statuses
-        add hl,de ; Get SFXPS_channel_priorities[ch]
-        ld (hl),0
-        or a,a    ; clear carry flag
-        sbc hl,de ; Get SFXPS_channel_statuses[ch] back
-        ld e,b
-        dec e
-        call PA_channel_status_reset
-
-SFXPS_update_loop_skip_statf_check:
-        dec hl ; Get address of precedent ch. SFXPS status ready
-        djnz SFXPS_update_loop
+		; Unmask all flags
+		ld e,0
+		rst RST_YM_WRITEA
     pop de
-    pop bc
-    pop hl
     pop af
     ret
     
@@ -97,11 +73,12 @@ SFXPS_set_channel_as_taken:
         cp a,SFXPS_CHANNEL_COUNT
         jr nc,SFXPS_set_channel_as_taken_ret
         
-        ld hl,SFXPS_channel_statuses
+        ld hl,PA_channel_on_masks
         ld b,0
         add hl,bc
-        ld (hl),SFXPS_CH_TAKEN
-
+        ld a,(SFXPS_channel_taken_status)
+        or a,(hl)
+        ld (SFXPS_channel_taken_status),a
 SFXPS_set_channel_as_taken_ret:
     pop af
     pop hl
@@ -109,29 +86,10 @@ SFXPS_set_channel_as_taken_ret:
     ret
 
 SFXPS_set_taken_channels_free:
-    push bc
-    push hl
     push af
-        ld b,SFXPS_CHANNEL_COUNT
-        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
-SFXPS_set_taken_channels_free_loop:
-        ; If the channel status 
-        ; isn't taken, check the
-        ; next channel
-        
-        ld a,(hl)
-        dec hl    ; Get pointer to precedent channel's status
-        cp a,SFXPS_CH_TAKEN
-        jr nz,SFXPS_set_taken_channel_free_next
-
-        ; Else, set the SFXPS ch.
-        ; status to free
-        ld (hl),SFXPS_CH_FREE
-SFXPS_set_taken_channel_free_next:
-        djnz SFXPS_set_taken_channels_free_loop
+        xor a,a
+        ld (SFXPS_channel_taken_status),a
     pop af
-    pop hl
-    pop bc
     ret
 
 
@@ -140,29 +98,33 @@ SFXPS_set_taken_channel_free_next:
 ; CHANGES FLAGS!!!
 SFXPS_find_free_channel:
     push bc
-    push hl
+        ; By ORing the taken status and playback
+        ; status byte, you get a byte in which if the
+        ; channel's corresponding bit is clear, then
+        ; the channel is free
+        ld a,(SFXPS_channel_taken_status)
+        ld c,a
+        ld a,(SFXPS_channel_playback_status)
+        or a,c
+
         ld b,SFXPS_CHANNEL_COUNT
-        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
-        xor a,a ; ld a,SFXPS_CH_FREE
 SFXPS_find_free_channel_loop:
-        ; if the channel is free ($00),
-        ; return the channel
-        cp a,(hl) 
+        ; if the channel is free (bit 0 is clear)
+        ; then return the channel
+        bit 0,a
         jr z,SFXPS_find_free_channel_fchfound
 
-        dec hl ; Index address of precedent SFXPS ch. status
+        srl a ; Shift bitflag to the right
         djnz SFXPS_find_free_channel_loop
 
         ; Else, return $FF
         ld a,$FF
-    pop hl
     pop bc
     ret
 
 SFXPS_find_free_channel_fchfound:
         ld a,b
         dec a
-    pop hl
     pop bc
     ret
 
@@ -187,29 +149,28 @@ SFXPS_find_suitable_channel:
     push hl
     push de
         ld b,SFXPS_CHANNEL_COUNT
-        ld hl,SFXPS_channel_statuses+SFXPS_CHANNEL_COUNT-1
-        ld de,SFXPS_channel_priorities-SFXPS_channel_statuses
+        ld hl,SFXPS_channel_priorities
+        ld a,(SFXPS_channel_taken_status)
+        ld e,a ; Keep a copy of the channel taken status in e
 SFXPS_find_suitable_channel_loop:
-        ; If the channel status isn't busy,
-        ; then it must be taken, skip
-        ; the priority check altogether
-        ld a,(hl)
-        dec a     ; cp a,SFXPS_BUSY
+        ; If the channel is taken, skip this 
+        ; iteration and check the next channel
+        bit 0,a
         jr nz,SFXPS_find_suitable_channel_loop_next
 
         ; Else, the channel status is busy.
         ; compare the true priorities,
         ; if the priority of the new sample
         ; is higher or equal, return the channel.
-        add hl,de ; Get SFXPX_channel_priorities[ch]
         ld a,c
         cp a,(hl) ; if new_priority >= SFXPS_channel_priorities[channel]
         jr nc,SFXPS_find_suitable_channel_loop_bch_found
 
-        or a,a    ; Clear carry flag
-        sbc hl,de ; Get SFXPS_channel_statuses[ch]
 SFXPS_find_suitable_channel_loop_next:
-        dec hl ; Index address of precedent SFXPS ch. status
+        dec hl ; Index address of precedent SFXPS ch. priorities
+        ld a,e ; Get channel taken status back
+        srl a  ; Shift channel taken status bitflag
+        ld e,a ; Update channel taken status copy
         djnz SFXPS_find_suitable_channel_loop
 
         ; Else, no channel was 
@@ -245,13 +206,16 @@ SFXPS_play_sfx:
 
         ; Else, there's a channel the 
         ; sample can be played in.
-        ;   Set the SFXPS ch. status to busy
-        ld hl,SFXPS_channel_statuses
+        ;   Set the SFXPS ch. playback status to busy
+        ;   (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
+        ld hl,PA_channel_on_masks
         ld e,a
         ld d,0
         add hl,de
-        ld (hl),SFXPS_CH_BUSY
-
+        ld a,(SFXPS_channel_playback_status)
+        or a,(hl)
+        ld (SFXPS_channel_playback_status),a
+        
         ;   Store the new priority in WRAM
         ld hl,SFXPS_channel_priorities
         add hl,de

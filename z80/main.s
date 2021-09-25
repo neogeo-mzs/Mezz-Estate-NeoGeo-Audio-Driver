@@ -116,14 +116,11 @@ main_loop:
 	; Check the timer A flag, if so, 
 	; execute the timer based functions
 	in a,(4)
-	ld e,a
-	ld d,0
-	brk
 	bit 0,a
 	call nz,execute_tma_tick
 
 	call UCOM_handle_command
-	call PA_update
+	;call PA_update
 	call SFXPS_update
 	jr main_loop
 

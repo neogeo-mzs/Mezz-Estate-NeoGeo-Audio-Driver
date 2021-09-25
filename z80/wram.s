@@ -78,8 +78,9 @@ PA_wram_end:
 ; ======== SFX Playback System =======
 SFXPS_WRAM_start:
 SFXPS_adpcma_table: ds 2 ; void*
-SFXPS_channel_statuses: ds PA_CHANNEL_COUNT ; u8[6] ($00: free, $01: busy playing sfx, $02: taken for music playback)
-SFXPS_channel_priorities: ds PA_CHANNEL_COUNT ; u[6]
+SFXPS_channel_priorities:      ds PA_CHANNEL_COUNT ; u[6]
+SFXPS_channel_taken_status:    ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 taken? 1 = yes, 0 = no)
+SFXPS_channel_playback_status: ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 playing? 1 = yes, 0 = no)
 SFXPS_WRAM_end:
 
 ; ======== Others ========
