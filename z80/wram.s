@@ -75,11 +75,6 @@ PA_channel_pannings: ds PA_CHANNEL_COUNT
 PA_status_register: ds 1	
 PA_wram_end:
 
-; ======== IRQ ========
-IRQ_buffer:                   ds 2*IRQ_BUFFER_LENGTH ; u16[IRQ_BUFFER_LENGTH]
-IRQ_buffer_idx_w:             ds 1                   ; u8
-IRQ_buffer_idx_r:             ds 1                   ; u8
-
 ; ======== SFX Playback System =======
 SFXPS_WRAM_start:
 SFXPS_adpcma_table: ds 2 ; void*

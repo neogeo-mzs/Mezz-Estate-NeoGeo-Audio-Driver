@@ -51,9 +51,7 @@ SFXPS_update_loop:
         ; Load the ADPCM channel status flag in a,
         ; and mask away any other channel status flags
         ld a,(PA_status_register)
-        ld d,0
-        ld e,a
-        brk
+ 
         ld de,PA_channel_on_masks-SFXPS_channel_statuses
         add hl,de
         and a,(hl)
