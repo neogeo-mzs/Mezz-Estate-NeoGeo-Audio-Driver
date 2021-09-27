@@ -27,7 +27,7 @@ MLM_song_pa2
 	dw MLM_el_pa-MLM_header
 	ds 11*2,0
 	dw 98 ; Timer A frequency
-	db 1  ; base time (0 is invalid)
+	db 2  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa3:
