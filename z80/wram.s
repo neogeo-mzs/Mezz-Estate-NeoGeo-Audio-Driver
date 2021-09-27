@@ -24,8 +24,6 @@ MLM_event_arg_buffer:         ds 32                  ; u8[32]
 MLM_channel_instruments:      ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
-MLM_base_time:                ds 1                   ; u8
-MLM_base_time_counter:        ds 1                   ; u8
 MLM_sub_el_return_pointers:   ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_instruments:              ds 2                   ; void* 
 MLM_wram_end:
@@ -85,3 +83,5 @@ SFXPS_WRAM_end:
 
 ; ======== Others ========
 EXT_2CH_mode: ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
+IRQ_tick_base_time:                ds 1                   ; u8
+IRQ_tick_time_counter:        ds 1                   ; u8

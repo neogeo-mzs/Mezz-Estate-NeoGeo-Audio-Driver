@@ -98,7 +98,6 @@ SFXPS_set_taken_channels_free:
 ; CHANGES FLAGS!!!
 SFXPS_find_free_channel:
     push bc
-        brk
         ; By ORing the taken status and playback
         ; status byte, you get a byte in which if the
         ; channel's corresponding bit is clear, then

@@ -120,15 +120,30 @@ main_loop:
 	call nz,execute_tma_tick
 
 	call UCOM_handle_command
-	;call PA_update
 	call SFXPS_update
 	jr main_loop
 
 execute_tma_tick:
+	; Increment base time counter, and if it's
+	; not equal to the song's base time, only
+	; update the YM2610 timer flags
+	ld a,(IRQ_tick_time_counter) ; \
+	inc a                        ; | MLM_base_time_counter++
+	ld (IRQ_tick_time_counter),a ; /
+	ld c,a ; Backup base time counter in c
+	ld a,(IRQ_tick_base_time)
+	cp a,c
+	jr nz,execute_tma_tick_skip ; If MLM_base_time_counter != MLM_base_time return
+
+	; Else, clear the counter and carry on executing the tick
+	xor a,a ; ld a,0
+	ld (IRQ_tick_time_counter),a
+
 	call MLM_irq
 	call FMCNT_irq
 	call SSGCNT_irq
 
+execute_tma_tick_skip:
 	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ 
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA

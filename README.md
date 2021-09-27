@@ -300,17 +300,6 @@ to anything IRQ related (such as the MLM song playback),
 each command also has a fixed size of one word, except in
 this case all 16 bits are used.
 
-#### Internal IRQ command list
-
-##### Command 0: NOP
-**format: %00000000'00000000**
-
-##### Command 1: MLM Play song
-**format: %SSSSSSSS'00000001 (Song index)**
-
-##### Command 2: MLM Stop song
-**format: %00000000'00000010**
-
 #### Bankswitching
 Each song is divided in 8kb blocks. The driver has access to two of these blocks at a time, and they can be switched freely allowing up to 512 KiB of data. The blocks are switched when the other starts playing.
 The z80 memory zones used are zone 3 and zone 2. The driver starts playing zone 3 first.

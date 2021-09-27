@@ -2,25 +2,12 @@
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
-	; base time counter code
-	ld a,(MLM_base_time)
-	ld c,a
-	ld a,(MLM_base_time_counter)	
-	inc a
-	cp a,c
-	ld (MLM_base_time_counter),a
-	ret nz ; skip update
-
 	ld c,0
 	dup CHANNEL_COUNT
 		call MLM_update_channel_playback
 		call MLM_update_channel_volume
 		inc c
 	edup
-
-	; Clear MLM_base_time_counter
-	xor a,a
-	ld (MLM_base_time_counter),a
 
 	; if active mlm channel counter is 0,
 	; then all channels have stopped, proceed
@@ -220,6 +207,8 @@ MLM_stop:
 		; Clear other WRAM variables
 		xor a,a
 		ld (EXT_2CH_mode),a
+		ld (IRQ_tick_base_time),a
+		ld (IRQ_tick_time_counter),a
 
 		call ssg_stop
 		call fm_stop
@@ -291,7 +280,7 @@ MLM_play_song_loop:
 		; header and store it into WRAM
 		inc hl
 		ld a,(hl)
-		ld (MLM_base_time),a
+		ld (IRQ_tick_base_time),a
 
 		; Load instrument offset into de
 		inc hl
@@ -1188,7 +1177,7 @@ MLMCOM_set_base_time:
 
 		; Set base time
 		ld a,(ix+0)
-		ld (MLM_base_time),a
+		ld (IRQ_tick_base_time),a
 
 		; Set timing
 		ld a,c
