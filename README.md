@@ -309,12 +309,10 @@ The z80 memory zones used are zone 3 and zone 2. The driver starts playing zone 
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
 
 ## BUGS
-* 70hz+ frequencies don't work correctly
+* 70hz+ frequencies don't work correctly (LAG ISSUE)
 
 ## TODO
 * Update MLM header parsing to allow banking
-* Implement a better ADPCM-A handling system
-* Move most things over to the main-loop
 * Implement ADPCM-B
 
 ## IDEAS

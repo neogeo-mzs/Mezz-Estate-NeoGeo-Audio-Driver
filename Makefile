@@ -50,9 +50,9 @@ croms:
 	$(MAKE) -C $(CROMS_PATH)
 
 vrom:
-	$(MAKE) -C $(VROM_PATH)
-	$(CP) $(VROM_PATH)/adpcma_sample_lut.bin $(M1ROM_PATH)/adpcma_sample_lut.bin
-	#$(CP) vrom.bin $(VROM_PATH)
+	#$(MAKE) -C $(VROM_PATH)
+	#$(CP) $(VROM_PATH)/adpcma_sample_lut.bin $(M1ROM_PATH)/adpcma_sample_lut.bin
+	$(CP) vrom.bin $(VROM_PATH)
 .PHONY: clean prom m1rom srom croms mame mame_debug gngeo gngeo_debug
 
 clean:
