@@ -295,7 +295,7 @@ softlock:
 	include "sfxps.s"
 
 	org MLM_HEADER ; block 1
-	;include "mlm_test_data.s"
-	incbin "m1rom_sdata.bin"
+	include "mlm_test_data.s"
+	;incbin "m1rom_sdata.bin"
 
 	include "wram.s"
