@@ -38,83 +38,78 @@ MLM_update_channel_playback:
 	inc iyl ; increment active mlm channel counter
 
 	; decrement MLM_playback_timings[ch],
-	; if afterwards it's 0 then update events
+	; if afterwards it isn't 0 return
 	ld de,MLM_playback_timings-MLM_playback_control
 	add hl,de
 	dec (hl)
 	ld b,(hl)
 	add hl,de ; get pointer to MLM_playback_set_timings[ch]
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
-	push bc   ; \
-		exx   ; | Instead than using the stack, use exx since it's faster
-	pop bc    ; /
+	ret nz
 
 MLM_update_channel_playback_exec_check:
-	jr nz,MLM_update_channel_playback_check_set_t
-
-	; ======== Update events ========
-	; de = MLM_playback_pointers[ch]
-	ld h,0
-	ld l,c
-	add hl,hl
-	ld de,MLM_playback_pointers
-	add hl,de
-	ld e,(hl)
-	inc hl
-	ld d,(hl)
-	
-	; If the first byte's most significant bit is 0, then
-	; parse it and evaluate it as a note, else parse 
-	; and evaluate it as a command
-	ex de,hl
-	ld a,(hl)
-	bit 7,a
-	jp z,MLM_parse_command
-
-	; ======== Parse note ========
-	push bc
-		ld a,(hl)
-		and a,$7F ; Clear bit 7 of the note's first byte
-		ld b,a
-		ld a,c    ; move channel in a
+	push hl
+		; ======== Update events ========
+		; de = MLM_playback_pointers[ch]
+		ld h,0
+		ld l,c
+		add hl,hl
+		ld de,MLM_playback_pointers
+		add hl,de
+		ld e,(hl)
 		inc hl
-		ld c,(hl)
-		inc hl
-		
-		; if (channel < 6) MLM_parse_note_pa()
-		cp a,MLM_CH_FM1
-		jp c,MLM_play_sample_pa
+		ld d,(hl)
 
-		cp a,MLM_CH_SSG1
-		jp c,MLM_play_note_fm
-		
-		; Else, Play note SSG...
-		sub a,MLM_CH_SSG1
-		call SSGCNT_set_note
-		call SSGCNT_enable_channel
-		call SSGCNT_start_channel_macros
-
-		add a,MLM_CH_SSG1
-		ld c,b
-		call MLM_set_timing
-MLM_parse_note_end:
-		; store playback pointer into WRAM
+		; If the first byte's most significant bit is 0, then
+		; parse it and evaluate it as a note, else parse 
+		; and evaluate it as a command
 		ex de,hl
-		ld (hl),d
-		dec hl
-		ld (hl),e
-	pop bc
+		ld a,(hl)
+		bit 7,a
+		jp z,MLM_parse_command
+
+		; ======== Parse note ========
+		push bc
+			ld a,(hl)
+			and a,$7F ; Clear bit 7 of the note's first byte
+			ld b,a
+			ld a,c    ; move channel in a
+			inc hl
+			ld c,(hl)
+			inc hl
+			
+			; if (channel < 6) MLM_parse_note_pa()
+			cp a,MLM_CH_FM1
+			jp c,MLM_play_sample_pa
+
+			cp a,MLM_CH_SSG1
+			jp c,MLM_play_note_fm
+			
+			; Else, Play note SSG...
+			sub a,MLM_CH_SSG1
+			call SSGCNT_set_note
+			call SSGCNT_enable_channel
+			call SSGCNT_start_channel_macros
+
+			add a,MLM_CH_SSG1
+			ld c,b
+			call MLM_set_timing
+MLM_parse_note_end:
+			; store playback pointer into WRAM
+			ex de,hl
+			ld (hl),d
+			dec hl
+			ld (hl),e
+		pop bc
 
 MLM_update_channel_playback_check_set_t:
-	exx ; Get normal registers back
+	pop hl
 
 	; if MLM_playback_set_timings[ch] == 0
 	; update events again
 	xor a,a
 	cp a,(hl) ; cp 0,(hl)
 	jr z,MLM_update_channel_playback_exec_check
-
-	exx ; select shadow registers again
 	ret
 
 ; c: channel
@@ -918,7 +913,6 @@ MLM_parse_command:
 MLM_parse_command_execute:
 		ex de,hl
 		jp (hl)
-
 MLM_parse_command_end:
 		ex de,hl
 		
@@ -942,6 +936,9 @@ MLM_parse_command_end_skip_playback_pointer_set:
 	pop af
 	jp MLM_update_channel_playback_check_set_t
 
+; commands only need to backup HL and DE, unless 
+; they set the playback pointer, then they don't
+; need to backup anything.
 MLM_command_vectors:
 	dw MLMCOM_end_of_list,         MLMCOM_note_off
 	dw MLMCOM_set_instrument,      MLMCOM_wait_ticks_byte
@@ -978,8 +975,6 @@ MLM_command_argc:
 MLMCOM_end_of_list:
 	push hl
 	push de
-	push af
-	push bc
 		; Set playback control to 0
 		ld h,0
 		ld l,c
@@ -994,8 +989,6 @@ MLMCOM_end_of_list:
 		ld bc,1
 		call MLM_set_timing
 MLMCOM_end_of_list_return:
-	pop bc
-	pop af
 	pop de
 	pop hl
 	jp MLM_parse_command_end
@@ -1005,9 +998,6 @@ MLMCOM_end_of_list_return:
 ; 	1. timing
 MLMCOM_note_off:
 	push hl
-	push af
-	push de
-	push bc
 		ld a,c
 		call MLM_stop_note
 		ld hl,MLM_event_arg_buffer
@@ -1015,9 +1005,6 @@ MLMCOM_note_off:
 		ld b,0
 		ld c,(hl)
 		call MLM_set_timing
-	pop bc
-	pop de
-	pop af
 	pop hl
 	jp MLM_parse_command_end
 
@@ -1025,15 +1012,11 @@ MLMCOM_note_off:
 ; Arguments
 ;   1. instrument
 MLMCOM_set_instrument:
-	push af
-	push bc
-		ld a,(MLM_event_arg_buffer)
-		call MLM_set_instrument
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
+	ld a,(MLM_event_arg_buffer)
+	call MLM_set_instrument
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end
 
 ; c: channel
@@ -1041,16 +1024,12 @@ MLMCOM_set_instrument:
 ;   1. timing
 MLMCOM_wait_ticks_byte:
 	push hl
-	push bc
-	push af
 		ld hl,MLM_event_arg_buffer
 		ld a,c
 		ld b,0
 		ld c,(hl)
 		inc bc
 		call MLM_set_timing
-	pop af
-	pop bc
 	pop hl
 	jp MLM_parse_command_end
 
@@ -1079,10 +1058,7 @@ MLMCOM_wait_ticks_word:
 ; Arguments:
 ;   1. Volume
 MLMCOM_set_channel_volume:
-	push ix
-	push af
 	push hl
-	push bc
 		ld ix,MLM_event_arg_buffer
 		ld a,c ; backup channel into a
 
@@ -1098,20 +1074,14 @@ MLMCOM_set_channel_volume:
 		; Set timing
 		ld bc,0
 		call MLM_set_timing
-	pop bc
 	pop hl
-	pop af
-	pop ix
 	jp MLM_parse_command_end
 
 ; c: channel
 ; Arguments:
 ;   1. %LRTTTTTT (Left on; Right on; Timing)
 MLMCOM_set_channel_panning:
-	push af
 	push hl
-	push bc
-	push de
 		; Load panning into c
 		ld a,(MLM_event_arg_buffer)
 		and a,%11000000
@@ -1129,20 +1099,14 @@ MLMCOM_set_channel_panning_set_timing:
 		ld a,b
 		ld b,0
 		call MLM_set_timing
-	pop de
-	pop bc
 	pop hl
-	pop af
 	jp MLM_parse_command_end
 
 ; c: channel
 ; Arguments:
 ;   1. %VVVVVVTT (Volume; Timing MSB)
 MLMCOM_set_master_volume:
-	push ix
-	push af
 	push de
-	push bc
 		ld ix,MLM_event_arg_buffer
 
 		; Set master volume
@@ -1161,30 +1125,21 @@ MLMCOM_set_master_volume:
 		ld c,b
 		ld b,0
 		call MLM_set_timing
-	pop bc
 	pop de
-	pop af
-	pop ix
 	jp MLM_parse_command_end
 
 ; c: channel
 ; Arguments:
 ;   1. %BBBBBBBB (Base time)
 MLMCOM_set_base_time:
-	push ix
-	push af
-		ld ix,MLM_event_arg_buffer
+	; Set base time
+	ld a,(MLM_event_arg_buffer)
+	ld (IRQ_tick_base_time),a
 
-		; Set base time
-		ld a,(ix+0)
-		ld (IRQ_tick_base_time),a
-
-		; Set timing
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop af
-	pop ix
+	; Set timing
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end
 
 ; c: channel
@@ -1194,43 +1149,35 @@ MLMCOM_set_base_time:
 ;	1. %AAAAAAAA (Address LSB)
 ;	2. %AAAAAAAA (Address MSB)
 MLMCOM_jump_to_sub_el:
-	push hl
-	push af
-	push bc
-	push de
-		; Store playback pointer in WRAM
-		ld b,0
-		ld hl,MLM_sub_el_return_pointers
-		add hl,bc
-		add hl,bc
-		ld (hl),e
-		inc hl
-		ld (hl),d
+	; Store playback pointer in WRAM
+	ld b,0
+	ld hl,MLM_sub_el_return_pointers
+	add hl,bc
+	add hl,bc
+	ld (hl),e
+	inc hl
+	ld (hl),d
 
-		; Load address to jump to in de
-		ld hl,MLM_event_arg_buffer
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
+	; Load address to jump to in de
+	ld hl,MLM_event_arg_buffer
+	ld e,(hl)
+	inc hl
+	ld d,(hl)
 
-		; Add MLM_HEADER ($4000) to it 
-		; to obtain the actual address
-		ld hl,MLM_HEADER
-		add hl,de
+	; Add MLM_HEADER ($4000) to it 
+	; to obtain the actual address
+	ld hl,MLM_HEADER
+	add hl,de
 
-		; Store the actual address in WRAM
-		ld (ix-1),l
-		ld (ix-0),h
+	; Store the actual address in WRAM
+	ld (ix-1),l
+	ld (ix-0),h
 
-		; Set timing to 0
-		; (Execute next command immediately)
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop de
-	pop bc
-	pop af
-	pop hl
+	; Set timing to 0
+	; (Execute next command immediately)
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c:  channel
@@ -1239,33 +1186,27 @@ MLMCOM_jump_to_sub_el:
 ; Arguments:
 ;   1. %OOOOOOOO (Offset)
 MLMCOM_small_position_jump:
-	push hl
-	push de
-	push ix
-		ld hl,MLM_event_arg_buffer
+	ld hl,MLM_event_arg_buffer
 
-		; Load offset and sign extend 
-		; it to 16bit (result in bc)
-		ld a,(hl)
-		ld l,c     ; Backup channel into l
-		call AtoBCextendendsign
+	; Load offset and sign extend 
+	; it to 16bit (result in bc)
+	ld a,(hl)
+	ld l,c     ; Backup channel into l
+	call AtoBCextendendsign
 
-		; Add offset to playback 
-		; pointer and store it into 
-		; MLM_playback_pointers[channel]
-		ld a,l ; Backup channel into a
-		ld l,e
-		ld h,d
-		add hl,bc
-		ld (ix-1),l
-		ld (ix-0),h
+	; Add offset to playback 
+	; pointer and store it into 
+	; MLM_playback_pointers[channel]
+	ld a,l ; Backup channel into a
+	ld l,e
+	ld h,d
+	add hl,bc
+	ld (ix-1),l
+	ld (ix-0),h
 
-		; Set timing to 0
-		ld bc,0
-		call MLM_set_timing
-	pop ix
-	pop de
-	pop hl
+	; Set timing to 0
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c:  channel
@@ -1275,32 +1216,24 @@ MLMCOM_small_position_jump:
 ;   1. %AAAAAAAA (Address LSB)
 ;   2. %AAAAAAAA (Address MSB)
 MLMCOM_big_position_jump:
-	push hl
-	push ix
-	push af
-	push bc
-		ld hl,MLM_event_arg_buffer
+	ld hl,MLM_event_arg_buffer
 
-		; Load offset into bc
-		ld a,c ; Backup channel into a
-		ld c,(hl)
-		inc hl
-		ld b,(hl)
+	; Load offset into bc
+	ld a,c ; Backup channel into a
+	ld c,(hl)
+	inc hl
+	ld b,(hl)
 
-		; Add MLM header offset to 
-		; obtain the actual address
-		ld hl,MLM_HEADER
-		add hl,bc
-		ld (ix-1),l
-		ld (ix-0),h
+	; Add MLM header offset to 
+	; obtain the actual address
+	ld hl,MLM_HEADER
+	add hl,bc
+	ld (ix-1),l
+	ld (ix-0),h
 
-		; Set timing to 0
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
-	pop ix
-	pop hl
+	; Set timing to 0
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 ; c: channel
@@ -1315,9 +1248,6 @@ MLMCOM_portamento_slide:
 ;   2. %DDDDDDDD (Data)
 MLMCOM_porta_write:
 	push de
-	push ix
-	push af
-	push bc
 		ld ix,MLM_event_arg_buffer
 
 		ld d,(ix+0)
@@ -1341,9 +1271,6 @@ MLMCOM_porta_write:
 		ld (EXT_2CH_mode),a
 		
 MLMCOM_porta_write_return:
-	pop bc
-	pop af
-	pop ix
 	pop de
 	jp MLM_parse_command_end
 
@@ -1353,9 +1280,6 @@ MLMCOM_porta_write_return:
 ;   2. %DDDDDDDD (Data)
 MLMCOM_portb_write:
 	push de
-	push ix
-	push af
-	push bc
 		ld ix,MLM_event_arg_buffer
 
 		ld d,(ix+0)
@@ -1365,9 +1289,6 @@ MLMCOM_portb_write:
 		ld a,c
 		ld bc,0
 		call MLM_set_timing
-	pop bc
-	pop af
-	pop ix
 	pop de
 	jp MLM_parse_command_end
 
@@ -1376,9 +1297,6 @@ MLMCOM_portb_write:
 ;   1. %AAAAAAAA (timer A MSB) 
 ;   2. %TTTTTTAA (Timing; timer A LSB)
 MLMCOM_set_timer_a:
-	push ix
-	push bc
-	push af
 	push de
 		ld ix,MLM_event_arg_buffer
 		ld e,c ; backup channel in e
@@ -1401,17 +1319,12 @@ MLMCOM_set_timer_a:
 		ld a,e
 		call MLM_set_timing
 	pop de
-	pop af
-	pop bc
-	pop ix
 	jp MLM_parse_command_end
 
 ; c: channel
 ; de: playback pointer
 MLMCOM_wait_ticks_nibble:
 	push hl
-	push af
-	push bc
 		; Load command ($1T) in a
 		ld h,d
 		ld l,e
@@ -1425,8 +1338,6 @@ MLMCOM_wait_ticks_nibble:
 		ld a,l
 		inc c ; 0~15 -> 1~16
 		call MLM_set_timing
-	pop bc
-	pop af
 	pop hl
 	jp MLM_parse_command_end
 
@@ -1434,63 +1345,48 @@ MLMCOM_wait_ticks_nibble:
 ; ix: $MLM_playback_pointers[channel]+1
 ; de: source (playback pointer)
 MLMCOM_return_from_sub_el:
-	push hl
-	push af
-	push bc
-		; Load playback pointer in WRAM
-		; and store it into MLM_playback_pointers[channel]
-		ld b,0
-		ld hl,MLM_sub_el_return_pointers
-		add hl,bc
-		add hl,bc
-		ld a,(hl)   ; - Load and store address LSB
-		ld (ix-1),a ; /
-		inc hl		; \
-		ld a,(hl)   ; | Load and store address MSB
-		ld (ix-0),a ; /
+	; Load playback pointer in WRAM
+	; and store it into MLM_playback_pointers[channel]
+	ld b,0
+	ld hl,MLM_sub_el_return_pointers
+	add hl,bc
+	add hl,bc
+	ld a,(hl)   ; - Load and store address LSB
+	ld (ix-1),a ; /
+	inc hl		; \
+	ld a,(hl)   ; | Load and store address MSB
+	ld (ix-0),a ; /
 
-		; Set timing to 0
-		; (Execute next command immediately)
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
-	pop hl
+	; Set timing to 0
+	; (Execute next command immediately)
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
 
 ; c: channel
 ; de: playback pointer
 MLMCOM_set_channel_volume_byte:
-	push af
-	push bc
+	ld a,c
+	cp a,MLM_CH_FM1
+	jp c,MLMCOM_set_channel_volume_byte_ADPCMA
 
-		ld a,c
-		cp a,MLM_CH_FM1
-		jp c,MLMCOM_set_channel_volume_byte_ADPCMA
+	cp a,MLM_CH_SSG1
+	jp c,MLMCOM_set_channel_volume_byte_FM
 
-		cp a,MLM_CH_SSG1
-		jp c,MLMCOM_set_channel_volume_byte_FM
-
-		jp MLMCOM_set_channel_volume_byte_SSG
-
+	jp MLMCOM_set_channel_volume_byte_SSG
 MLMCOM_set_channel_volume_byte_ret:
-
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
-	pop bc
-	pop af
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
 	jp MLM_parse_command_end
 
 ; a: channel
 ; c: channel
 ; de: playback pointer
 MLMCOM_set_channel_volume_byte_ADPCMA:
-	push af
 	push hl
-	push bc
 	push de
 		; Load command byte in l
 		ex de,hl
@@ -1527,18 +1423,14 @@ MLMCOM_set_channel_volume_byte_ADPCMA_pos:
 		add a,(hl)
 		call MLM_set_channel_volume
 	pop de
-	pop bc
 	pop hl
-	pop af
 	jp MLMCOM_set_channel_volume_byte_ret
 
 ; a: channel
 ; c: channel
 ; de: playback pointer
 MLMCOM_set_channel_volume_byte_FM:
-	push af
 	push hl
-	push bc
 	push de
 		; Load command byte in l
 		ex de,hl
@@ -1573,9 +1465,7 @@ MLMCOM_set_channel_volume_byte_FM_pos:
 		add a,(hl)
 		call MLM_set_channel_volume
 	pop de
-	pop bc
 	pop hl
-	pop af
 	jp MLMCOM_set_channel_volume_byte_ret
 
 
@@ -1583,7 +1473,6 @@ MLMCOM_set_channel_volume_byte_FM_pos:
 ; c: channel
 ; de: playback pointer
 MLMCOM_set_channel_volume_byte_SSG:
-	push af
 	push de
 		; Load command byte in a, and 
 		; then get the volume from the 
@@ -1603,7 +1492,6 @@ MLMCOM_set_channel_volume_byte_SSG:
 
 		call MLM_set_channel_volume
 	pop de
-	pop af
 	jp MLMCOM_set_channel_volume_byte_ret
 
 ; invalid command, plays a noisy beep

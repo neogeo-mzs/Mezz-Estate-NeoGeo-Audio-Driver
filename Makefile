@@ -39,7 +39,7 @@ build: srom croms vrom m1rom prom
 	$(CP) $(BUILD_PATH)/vrom.bin $(BUILD_PATH)/202-v1.v1
 
 build_driver: m1rom
-	$(DD) if=./z80/m1rom.bin of=./driver.m1 bs=1024 count=2
+	$(DD) if=./z80/m1rom.bin of=./driver.m1 bs=1024 count=16
 
 prom: 
 	$(MAKE) -C $(PROM_PATH)
@@ -54,9 +54,9 @@ croms:
 	$(MAKE) -C $(CROMS_PATH)
 
 vrom:
-	#$(MAKE) -C $(VROM_PATH)
-	#$(CP) $(VROM_PATH)/adpcma_sample_lut.bin $(M1ROM_PATH)/adpcma_sample_lut.bin
-	$(CP) vrom.bin $(VROM_PATH)
+	$(MAKE) -C $(VROM_PATH)
+	$(CP) $(VROM_PATH)/adpcma_sample_lut.bin $(M1ROM_PATH)/adpcma_sample_lut.bin
+	#$(CP) vrom.bin $(VROM_PATH)
 .PHONY: clean prom m1rom srom croms mame mame_debug gngeo gngeo_debug build_driver
 
 clean:
