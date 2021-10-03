@@ -47,71 +47,71 @@ MLM_update_channel_playback:
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
 	ret nz
 
-	brk
-	
+	push iy
 MLM_update_channel_playback_exec_check:
-	push hl
-		; ======== Update events ========
-		; de = MLM_playback_pointers[ch]
-		ld h,0
-		ld l,c
-		add hl,hl
-		ld de,MLM_playback_pointers
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-
-		; If the first byte's most significant bit is 0, then
-		; parse it and evaluate it as a note, else parse 
-		; and evaluate it as a command
-		ex de,hl
-		ld a,(hl)
-		bit 7,a
-		jp z,MLM_parse_command
-
-		; ======== Parse note ========
-		push bc
-			ld a,(hl)
-			and a,$7F ; Clear bit 7 of the note's first byte
-			ld b,a
-			ld a,c    ; move channel in a
+		push hl
+			; ======== Update events ========
+			; de = MLM_playback_pointers[ch]
+			ld h,0
+			ld l,c
+			add hl,hl
+			ld de,MLM_playback_pointers
+			add hl,de
+			ld e,(hl)
 			inc hl
-			ld c,(hl)
-			inc hl
-			
-			; if (channel < 6) MLM_parse_note_pa()
-			cp a,MLM_CH_FM1
-			jp c,MLM_play_sample_pa
+			ld d,(hl)
 
-			cp a,MLM_CH_SSG1
-			jp c,MLM_play_note_fm
-			
-			; Else, Play note SSG...
-			sub a,MLM_CH_SSG1
-			call SSGCNT_set_note
-			call SSGCNT_enable_channel
-			call SSGCNT_start_channel_macros
-
-			add a,MLM_CH_SSG1
-			ld c,b
-			call MLM_set_timing
-MLM_parse_note_end:
-			; store playback pointer into WRAM
+			; If the first byte's most significant bit is 0, then
+			; parse it and evaluate it as a note, else parse 
+			; and evaluate it as a command
 			ex de,hl
-			ld (hl),d
-			dec hl
-			ld (hl),e
-		pop bc
+			ld a,(hl)
+			bit 7,a
+			jp z,MLM_parse_command ; hl, de, c
+
+			; ======== Parse note ========
+			push bc
+				ld a,(hl)
+				and a,$7F ; Clear bit 7 of the note's first byte
+				ld b,a
+				ld a,c    ; move channel in a
+				inc hl
+				ld c,(hl)
+				inc hl
+				
+				; if (channel < 6) MLM_parse_note_pa()
+				cp a,MLM_CH_FM1
+				jp c,MLM_play_sample_pa
+
+				cp a,MLM_CH_SSG1
+				jp c,MLM_play_note_fm
+				
+				; Else, Play note SSG...
+				sub a,MLM_CH_SSG1
+				call SSGCNT_set_note
+				call SSGCNT_enable_channel
+				call SSGCNT_start_channel_macros
+
+				add a,MLM_CH_SSG1
+				ld c,b
+				call MLM_set_timing
+MLM_parse_note_end:
+				; store playback pointer into WRAM
+				ex de,hl
+				ld (hl),d
+				dec hl
+				ld (hl),e
+			pop bc
 
 MLM_update_channel_playback_check_set_t:
-	pop hl
+		pop hl
 
-	; if MLM_playback_set_timings[ch] == 0
-	; update events again
-	xor a,a
-	cp a,(hl) ; cp 0,(hl)
-	jr z,MLM_update_channel_playback_exec_check
+		; if MLM_playback_set_timings[ch] == 0
+		; update events again
+		xor a,a
+		cp a,(hl) ; cp 0,(hl)
+		jr z,MLM_update_channel_playback_exec_check
+	pop iy
 	ret
 
 ; c: channel
@@ -857,12 +857,9 @@ MLM_set_ch_pan_FM:
 ;   hl: source (playback pointer)
 ;   de: $MLM_playback_pointers[channel]+1
 MLM_parse_command:
-	push af
 	push bc
-	push ix
 	push hl
 	push de
-	push iy
 		; Backup $MLM_playback_pointers[channel]+1
 		; into ix
 		ld ixl,e
@@ -930,12 +927,9 @@ MLM_parse_command_end:
 		ld (hl),e
 
 MLM_parse_command_end_skip_playback_pointer_set:
-	pop iy
 	pop de
 	pop hl
-	pop ix
 	pop bc
-	pop af
 	jp MLM_update_channel_playback_check_set_t
 
 ; commands only need to backup HL, DE and IX unless 
