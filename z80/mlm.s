@@ -47,6 +47,8 @@ MLM_update_channel_playback:
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
 	ret nz
 
+	brk
+	
 MLM_update_channel_playback_exec_check:
 	push hl
 		; ======== Update events ========
@@ -936,7 +938,7 @@ MLM_parse_command_end_skip_playback_pointer_set:
 	pop af
 	jp MLM_update_channel_playback_check_set_t
 
-; commands only need to backup HL and DE, unless 
+; commands only need to backup HL, DE and IX unless 
 ; they set the playback pointer, then they don't
 ; need to backup anything.
 MLM_command_vectors:
@@ -1040,8 +1042,6 @@ MLMCOM_wait_ticks_byte:
 MLMCOM_wait_ticks_word:
 	jp softlock
 	push hl
-	push bc
-	push af
 	push ix
 		ld ix,MLM_event_arg_buffer
 		ld a,c
@@ -1049,8 +1049,6 @@ MLMCOM_wait_ticks_word:
 		ld c,(ix+0)
 		call MLM_set_timing
 	pop ix
-	pop af
-	pop bc
 	pop hl
 	jp MLM_parse_command_end
 
@@ -1059,21 +1057,21 @@ MLMCOM_wait_ticks_word:
 ;   1. Volume
 MLMCOM_set_channel_volume:
 	push hl
-		ld ix,MLM_event_arg_buffer
-		ld a,c ; backup channel into a
-
+	push de
 		; Store volume in 
 		; MLM_channel_volumes[channel]
 		ld h,0
-		ld l,a
-		ld bc,MLM_channel_volumes
-		add hl,bc
-		ld c,(ix+0)
-		ld (hl),c
+		ld l,c
+		ld de,MLM_channel_volumes
+		add hl,de
+		ld a,(MLM_event_arg_buffer)
+		ld (hl),a
 
 		; Set timing
+		ld a,c
 		ld bc,0
 		call MLM_set_timing
+	pop de
 	pop hl
 	jp MLM_parse_command_end
 
@@ -1107,10 +1105,8 @@ MLMCOM_set_channel_panning_set_timing:
 ;   1. %VVVVVVTT (Volume; Timing MSB)
 MLMCOM_set_master_volume:
 	push de
-		ld ix,MLM_event_arg_buffer
-
 		; Set master volume
-		ld a,(ix+0)
+		ld a,(MLM_event_arg_buffer)
 		srl a ; %VVVVVV-- -> %-VVVVVV-
 		srl a ; %-VVVVVV- -> %--VVVVVV
 		ld d,REG_PA_MVOL
@@ -1118,7 +1114,7 @@ MLMCOM_set_master_volume:
 		rst RST_YM_WRITEB
 
 		; Set timing
-		ld a,(ix+0)
+		ld a,(MLM_event_arg_buffer)
 		and a,%00000011
 		ld b,a
 		ld a,c
@@ -1248,10 +1244,10 @@ MLMCOM_portamento_slide:
 ;   2. %DDDDDDDD (Data)
 MLMCOM_porta_write:
 	push de
-		ld ix,MLM_event_arg_buffer
-
-		ld d,(ix+0)
-		ld e,(ix+1)
+		ld a,(MLM_event_arg_buffer)
+		ld d,a
+		ld a,(MLM_event_arg_buffer+1)
+		ld e,a
 		rst RST_YM_WRITEA
 
 		ld a,c
@@ -1280,10 +1276,10 @@ MLMCOM_porta_write_return:
 ;   2. %DDDDDDDD (Data)
 MLMCOM_portb_write:
 	push de
-		ld ix,MLM_event_arg_buffer
-
-		ld d,(ix+0)
-		ld e,(ix+1)
+		ld a,(MLM_event_arg_buffer)
+		ld d,a
+		ld a,(MLM_event_arg_buffer+1)
+		ld e,a
 		rst RST_YM_WRITEB
 
 		ld a,c
@@ -1298,21 +1294,22 @@ MLMCOM_portb_write:
 ;   2. %TTTTTTAA (Timing; timer A LSB)
 MLMCOM_set_timer_a:
 	push de
-		ld ix,MLM_event_arg_buffer
 		ld e,c ; backup channel in e
 
 		; Set timer a counter load
 		ld d,REG_TMA_COUNTER_MSB
-		ld e,(ix+0)
+		ld a,(MLM_event_arg_buffer)
+		ld e,a
 		rst RST_YM_WRITEA
 		inc d
-		ld e,(ix+1)
+		ld a,(MLM_event_arg_buffer+1)
+		ld e,a
 		rst RST_YM_WRITEA
 		ld de,REG_TIMER_CNT<<8 | %10101
 		RST RST_YM_WRITEA
 
 		ld b,0
-		ld a,(ix+1)
+		ld a,(MLM_event_arg_buffer+1)
 		srl a
 		srl a
 		ld c,a
