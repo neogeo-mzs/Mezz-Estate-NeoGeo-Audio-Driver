@@ -110,7 +110,7 @@ MLM_song_fm4:
 
 MLM_el_fm:
 	db $02,2 ; Set instrument to 2
-	db $05,$F8 ; THINGS FUCK UP HEREEE
+	db $05,$F8 
 	db $80 | (8*3), 0 | (5 << 4) ; Play FM note C4 and wait 8*3 ticks
 	db $80 | (8*3), 2 | (5 << 4) ; Play FM note D4 and wait 8*3 ticks
 	
