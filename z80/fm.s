@@ -51,8 +51,8 @@ FMCNT_init_loop:
 
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
-	ld b,FM_CHANNEL_COUNT
-	ld hl,FM_channel_enable+FM_CHANNEL_COUNT-1
+	ld b,0
+	ld hl,FM_channel_enable
 
 	dup FM_CHANNEL_COUNT
 		; If FM_channel_enable[channel] is 0,
@@ -65,20 +65,17 @@ FMCNT_irq:
 		call FMCNT_update_total_levels
 		call FMCNT_update_key_on
 
-		dec hl
-		dec b
+		inc hl
+		inc b
 	edup
 	ret
 
-; b: channel (1~4)
+; b: channel (0~3)
 FMCNT_update_frequencies:
-	push de
 	push hl
 	push bc
-	push af		
 		; Calculate address to
 		; FM_channel_frequencies[channel]+1
-		dec b
 		ld l,b
 		ld h,0
 		ld de,FM_channel_frequencies+1
@@ -109,93 +106,114 @@ FMCNT_update_frequencies_even_ch:
 		bit 1,b
 		call z,port_write_a
 		call nz,port_write_b
-	pop af
 	pop bc
 	pop hl
-	pop de
 	ret
 
-; b: channel (1~4)
+; b: channel (0~3)
 FMCNT_update_total_levels:
 	push bc
 	push hl
-	push de
-	push af
 		; Load channel algorithm in e
-		ld hl,FM_channel_algos-1
+		ld hl,FM_channel_algos
 		ld e,b
 		ld d,0
 		add hl,de
 		ld e,(hl)
 
-		; Calculate address to the
-		; correct FMCNT_optype_LUT entry
-		ld hl,FMCNT_optype_LUT
-		add hl,de
-		add hl,de 
-		add hl,de 
-		add hl,de
+		ld c,1 ; Prepare operator value
 
-		xor a,a ; ld a,0
-		ld c,b
-		dec c
-		ld b,FM_OP_COUNT
+		; Since algorithms below ALGO4 are treated
+		; the same, they can quickly be dealt with,
+		; without indexing the vector table
+		bit 3,e ; It'd normally check bit 2, but the algorithm is multiplied by two
+		jp z,FMCNT_update_total_levels_algo_0_1_2_3
 
-		; Depending on the FMCNT_optype_LUT 
-		; entry, either modify the op TL
-		; based on the channel volume or don't.
-FMCNT_update_total_levels_loop:
-		cp a,(hl)
-		call z,FMCNT_update_modulator_tl
-		call nz,FMCNT_update_carrier_tl
-		inc hl
-		djnz FMCNT_update_total_levels_loop
-	pop af
-	pop de
+		; for all the other algorithms, you have
+		; to index the vector table.
+		ld hl,FMCNT_tlupdate_vectors-4
+		add hl,de
+		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
+		jp (hl)
+FMCNT_update_total_levels_ret:
 	pop hl
 	pop bc
 	ret
 
-; Specifies whether or not the operator is
-; a carrier (1) or a modulator (0).
-; The order is OP4, OP3, OP2, OP1.
-FMCNT_optype_LUT:
-	db 1, 0, 0, 0 ; Algorithm 0
-	db 1, 0, 0, 0 ; Algorithm 1
-	db 1, 0, 0, 0 ; Algorithm 2
-	db 1, 0, 0, 0 ; Algorithm 3
-	db 1, 0, 1, 0 ; Algorithm 4
-	db 1, 1, 1, 0 ; Algorithm 5
-	db 1, 1, 1, 0 ; Algorithm 6
-	db 1, 1, 1, 1 ; Algorithm 7
+FMCNT_update_total_levels_algo_0_1_2_3:
+		call FMCNT_update_modulator_tl ; OP1
+		inc c
+		call FMCNT_update_modulator_tl ; OP2
+		inc c
+		call FMCNT_update_modulator_tl ; OP3
+		inc c
+		call FMCNT_update_carrier_tl   ; OP4
+	pop hl
+	pop bc
+	ret
 
-; b: operator (1~4)
-; c: channel (0~3)
+; b: channel (0~3)
+;   Indexed by FM channel algorithm
+FMCNT_tlupdate_vectors:
+	dw FMCNT_tlupdate_algo4,       FMCNT_tlupdate_algo5_6
+	dw FMCNT_tlupdate_algo5_6,     FMCNT_tlupdate_algo7
+
+FMCNT_tlupdate_algo4:
+	call FMCNT_update_modulator_tl ; OP1
+	inc c
+	call FMCNT_update_carrier_tl   ; OP2
+	inc c
+	call FMCNT_update_modulator_tl ; OP3
+	inc c
+	call FMCNT_update_carrier_tl   ; OP4
+	jp FMCNT_update_total_levels_ret
+
+FMCNT_tlupdate_algo5_6:
+	call FMCNT_update_modulator_tl ; OP1
+	inc c
+	call FMCNT_update_carrier_tl   ; OP2
+	inc c
+	call FMCNT_update_carrier_tl   ; OP3
+	inc c
+	call FMCNT_update_carrier_tl   ; OP4
+	jp FMCNT_update_total_levels_ret
+
+FMCNT_tlupdate_algo7:
+	call FMCNT_update_carrier_tl   ; OP1
+	inc c
+	call FMCNT_update_carrier_tl   ; OP2
+	inc c
+	call FMCNT_update_carrier_tl   ; OP3
+	inc c
+	call FMCNT_update_carrier_tl   ; OP4
+	jp FMCNT_update_total_levels_ret
+
+; c: operator (1~4)
+; b: channel (0~3)
 ;	This calculates the Total Level
 ;   relative to the channel volume,
 ;   and then sets the register based
 ;   on the result of said calculation.
 FMCNT_update_carrier_tl:
 	push hl
-	push de
 	push af
 		; Load current op's TL from WRAM
 		; into a, then invert its least
 		; significant 7 bits
 		ld h,0
-		ld l,c
+		ld l,b
 		ld de,FM_operator_TLs-1 ; Operator indexing starts from 1 instead than 0
 		add hl,hl               ; - hl *= 4
 		add hl,hl               ; /
 		add hl,de               ; calculate address to FM_operator_TLs[channel]-1
-		ld e,b
+		ld e,c
 		ld d,0
 		add hl,de               ; calculate address to FM_operator_TLs[channel][operator]
 		ld a,(hl)
 		xor a,$7F               ; lowest 127 highest 0 -> lowest 0 highest 127
 
 		; Load volume from WRAM into e
-		ld l,c
+		ld l,b
 		ld h,0
 		ld de,FM_channel_volumes
 		add hl,de
@@ -219,7 +237,7 @@ FMCNT_update_carrier_tl:
 
 		; Load OP register offset in d
 		ld h,0
-		ld l,b
+		ld l,c
 		ld de,FM_op_register_offsets_LUT-1
 		add hl,de
 		ld d,(hl)
@@ -229,7 +247,7 @@ FMCNT_update_carrier_tl:
 		; Finally, proceed to add
 		; TL register address ($41)
 		ld e,a ; Move TL in E
-		ld a,c
+		ld a,b
 		and a,1
 		add a,d
 		add a,REG_FM_CH1_OP1_TVOL
@@ -237,37 +255,35 @@ FMCNT_update_carrier_tl:
 
 		; If the channel is 0 and 1 write 
 		; to port a, else write to port b
-		bit 1,c              
+		bit 1,b              
 		call z,port_write_a  
-		call nz,port_write_b 
+		call nz,port_write_b
 	pop af
-	pop de
 	pop hl
 	ret
 
-; b: operator (1~4)
-; c: channel (0~3)
+; c: operator (1~4)
+; b: channel (0~3)
 ;	This just sets the operator's
 ;   Total Level without modifying it.
 FMCNT_update_modulator_tl:
 	push hl
-	push de
 	push af
 		; Load current op's TL from WRAM into a
 		ld h,0
-		ld l,c
+		ld l,b
 		ld de,FM_operator_TLs-1 ; Operator indexing starts from 1 instead than 0
 		add hl,hl               ; - hl *= 4
 		add hl,hl               ; /
 		add hl,de               ; calculate address to FM_operator_TLs[channel]-1
-		ld e,b
+		ld e,c
 		ld d,0
 		add hl,de               ; calculate address to FM_operator_TLs[channel][operator]
 		ld a,(hl)
 
 		; Load OP register offset in d
 		ld h,0
-		ld l,b
+		ld l,c
 		ld de,FM_op_register_offsets_LUT-1
 		add hl,de
 		ld d,(hl)
@@ -277,7 +293,7 @@ FMCNT_update_modulator_tl:
 		; Finally, proceed to add
 		; TL register address ($41)
 		ld e,a ; Move TL in E
-		ld a,c
+		ld a,b
 		and a,1
 		add a,d
 		add a,REG_FM_CH1_OP1_TVOL
@@ -285,25 +301,22 @@ FMCNT_update_modulator_tl:
 
 		; If the channel is 0 and 1 write 
 		; to port a, else write to port b
-		bit 1,c              
+		bit 1,b              
 		call z,port_write_a  
-		call nz,port_write_b 
+		call nz,port_write_b
 	pop af
-	pop de
 	pop hl
 	ret
 
 FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
-; b: channel (1~4)
+; b: channel (0~3)
 FMCNT_update_key_on:
 	push hl
-	push de
-	push af
 		; Load channel's key on enable
 		; from WRAM, then clear it
-		ld hl,FM_channel_key_on-1
+		ld hl,FM_channel_key_on
 		ld e,b
 		ld d,0
 		add hl,de
@@ -319,14 +332,14 @@ FMCNT_update_key_on:
 
 		; Else, do write to the key on register.
 		; Load OP enable from WRAM in a
-		ld hl,FM_channel_op_enable-1
+		ld hl,FM_channel_op_enable
 		ld e,b
 		add hl,de
 		ld a,(hl)
 		and a,$F0 ; Clear the lower nibble just in case
 
 		; Calculate address to correct FM channel id
-		ld hl,FM_channel_LUT-1
+		ld hl,FM_channel_LUT
 		add hl,de
 
 		; Proceed to stop the FM channel
@@ -343,8 +356,6 @@ FMCNT_update_key_on:
 		rst RST_YM_WRITEA
 
 FMCNT_update_key_on_ret:
-	pop af
-	pop de
 	pop hl
 	ret
 
@@ -372,11 +383,13 @@ FMCNT_set_fbalgo_even_ch:
 		call nz,port_write_b
 
 		; Store algorithm in WRAM
+		; (It's multiplied by 2 to make some other code faster)
 		and a,%00000111 ; --FFFAAA -> 00000AAA
 		ld hl,FM_channel_algos
 		ld e,c
 		ld d,0
 		add hl,de
+		sla a ; algorithm *= 2
 		ld (hl),a
 	pop hl
 	pop af
