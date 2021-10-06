@@ -51,25 +51,23 @@ FMCNT_init_loop:
 
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
-	;ret
 	ld b,FM_CHANNEL_COUNT
-FMCNT_irq_loop:
-	; If FM_channel_enable[channel] is 0,
-	; then continue to the next channel
-	ld hl,FM_channel_enable-1
-	ld e,b
-	ld d,0
-	add hl,de
-	ld a,(hl)
-	or a,a ; cp a,0
-	jr z,FMCNT_irq_loop_continue
+	ld hl,FM_channel_enable+FM_CHANNEL_COUNT-1
 
-	call FMCNT_update_frequencies
-	call FMCNT_update_total_levels
-	call FMCNT_update_key_on
+	dup FM_CHANNEL_COUNT
+		; If FM_channel_enable[channel] is 0,
+		; then continue to the next channel
+		ld a,(hl)
+		or a,a ; cp a,0
+		jr z,$+6
 
-FMCNT_irq_loop_continue:
-	djnz FMCNT_irq_loop
+		call FMCNT_update_frequencies
+		call FMCNT_update_total_levels
+		call FMCNT_update_key_on
+
+		dec hl
+		dec b
+	edup
 	ret
 
 ; b: channel (1~4)
