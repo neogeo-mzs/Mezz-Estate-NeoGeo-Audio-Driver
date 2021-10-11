@@ -178,6 +178,14 @@ MLM_update_ch_vol_FM:
 	ld hl,FM_channel_volumes-MLM_CH_FM1
 	add hl,bc
 	ld (hl),a
+
+	; Set channel's update volume control flag
+	ld hl,FM_channel_enable-MLM_CH_FM1
+	add hl,bc
+	ld a,(hl) 
+	or a,%010 ; update Volume control bit
+	ld (hl),a
+
 	ret
 
 ; stop song

@@ -18,7 +18,7 @@ const char* INSTRUCTION_BOX_STRING =
     "\x83\x80\x80\x80\x80\x80\x80\x80\x80\x80\x81""MZS test program\x82\x80\x80\x80\x80\x80\x80\x80\x80\x80\x84"
     "\x87                                    \x87"
     "\x87  \x88 Play   \x89 Stop   \x8E\x8F Song Select  \x87"
-    "\x87  \x8A Pan.   \x8B Play SFX   \x8C\x8D Priority \x87"
+    "\x87  \x8A Pan.    \x8B Play SFX   \x8C\x8D Sample  \x87"
     "\x87                                    \x87"
     "\x85\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x86"
 };
@@ -49,7 +49,7 @@ void print_gui()
     FIX_SetCursor(1, 7);
     FIX_PrintString("Song: $");
     FIX_SetCursor(1, 8);
-    FIX_PrintString("Prio: $");
+    FIX_PrintString("Smp.: $");
     FIX_SetCursor(1, 9);
     FIX_PrintString("Pan.:");
 }   
@@ -62,7 +62,7 @@ int main()
     const int SONG_COUNT = 13;
     const char* PAN_LABELS[] = { "NONE  ", "RIGHT ", "LEFT  ", "CENTER"};
     int selected_song = 6;
-    int priority = 0;
+    int smp_id = 0;
     int panning = 3; // 0 = None, 1 = Right, 2 = Left, 3 = Center
     
     while(1)
@@ -77,15 +77,9 @@ int main()
         if (BIOS_P1CHANGE->down)
             selected_song = WRAP(selected_song-1, 0, SONG_COUNT);
         if (BIOS_P1CHANGE->left)
-        {
-            priority = WRAP(priority-1, 0, 128);
-            Z80_UCOM_BUFFER_SFXPS_PRIO(priority);
-        }
+            smp_id = WRAP(smp_id-1, 0, 128);
         if (BIOS_P1CHANGE->right)
-        {
-            priority = WRAP(priority+1, 0, 128);
-            Z80_UCOM_BUFFER_SFXPS_PRIO(priority);
-        }
+            smp_id = WRAP(smp_id+1, 0, 128);
 
         if (BIOS_P1CHANGE->A)
             Z80_UCOM_PLAY_SONG(selected_song);
@@ -97,14 +91,14 @@ int main()
             Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<5, 0x1F);
         }
         if (BIOS_P1CHANGE->D)
-            Z80_UCOM_PLAY_SFXPS_SMP(12);
+            Z80_UCOM_PLAY_SFXPS_SMP(smp_id);
             
         FIX_SetCursor(8, 7);
         FIX_PrintNibble(selected_song >> 4);
         FIX_PrintNibble(selected_song & 0x0F);
         FIX_SetCursor(8, 8);
-        FIX_PrintNibble(priority >> 4);
-        FIX_PrintNibble(priority & 0x0F);
+        FIX_PrintNibble(smp_id >> 4);
+        FIX_PrintNibble(smp_id & 0x0F);
         FIX_SetCursor(7, 9);
         FIX_PrintString(PAN_LABELS[panning]);
 

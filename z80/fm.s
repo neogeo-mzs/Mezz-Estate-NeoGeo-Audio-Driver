@@ -59,12 +59,17 @@ FMCNT_irq:
 		; then continue to the next channel
 		ld a,(hl)
 		or a,a ; cp a,0
-		jr z,$+6
-
-		call FMCNT_update_frequencies
-		call FMCNT_update_total_levels
+		jr z,$+13
+		
+		bit 2,a ; Check for update Frequency flag
+		;call nz, FMCNT_update_frequencies ; If it's set call...
+		call FMCNT_update_frequencies      ; For now update frequency here regardless
+		bit 1,a ; Check for update Volume flag
+		call nz, FMCNT_update_total_levels ; If it's set call...
 		call FMCNT_update_key_on
 
+		and a,1   ; Only keep the enable channel flag
+		ld (hl),a ; and store the bitflags back in WRAM
 		inc hl
 		inc b
 	edup
@@ -110,7 +115,9 @@ FMCNT_update_frequencies_even_ch:
 	pop hl
 	ret
 
+
 ; b: channel (0~3)
+; (FM_channel_volumes[channel]): volume (0~7F)
 FMCNT_update_total_levels:
 	push bc
 	push hl
