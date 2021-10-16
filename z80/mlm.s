@@ -257,20 +257,22 @@ MLM_play_song:
 		sla a
 		ld d,0
 		ld e,a
-		add hl,de
+		add hl,de ; Calculate song offset
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
 		ld hl,MLM_HEADER
-		add hl,de
+		add hl,de ; Get pointer from offset
 
 		;     For each channel...
 		ld de,MLM_playback_pointers
 		ld ix,MLM_playback_control
-		ld b,CHANNEL_COUNT
-MLM_play_song_loop:
-		call MLM_playback_init
-		djnz MLM_play_song_loop
+		ld b,1
+
+		dup CHANNEL_COUNT
+			call MLM_playback_init
+			inc b
+		edup
 
 		; Load timer a counter load
 		; from song header and set it
@@ -346,14 +348,18 @@ MLM_play_song_loop2:
 ;	b:	channel+1
 ;	de:	$MLM_playback_pointers[ch]
 ;	ix:	$MLM_playback_control[ch]
+;   hl: song_header[ch]
 ; [OUTPUT]
 ;	de:	$MLM_playback_pointers[ch+1]
 ;	ix:	$MLM_playback_control[ch+1]
+;   hl: song_header[ch+1]
 MLM_playback_init:
 	push bc
 	push af
 	push iy
-		; Set all channel timings to 1
+		brk
+
+		; Set the channel timing to 1
 		ld a,b
 		dec a
 		ld iyl,a ; backup channel in iyl
