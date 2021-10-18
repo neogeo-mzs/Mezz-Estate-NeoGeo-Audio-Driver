@@ -17,9 +17,9 @@ com_buffer_byte_significance:  ds 1                   ; u8
 MLM_wram_start:
 MLM_playback_pointers:        ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_playback_start_pointers:  ds 2*CHANNEL_COUNT     ; void*[13]
-MLM_playback_control:         ds CHANNEL_COUNT       ; bool[13] \
-MLM_playback_timings:         ds CHANNEL_COUNT       ; u8[13]   | KEEP THIS THREE TOGETHER. 'MLM_update_channel_playback' ASSUMES THIS ORDER
-MLM_playback_set_timings:     ds CHANNEL_COUNT       ; u8[13]   /
+MLM_playback_control:         ds CHANNEL_COUNT       ; u8[13]   
+MLM_playback_timings:         ds CHANNEL_COUNT       ; u8[13]   
+MLM_playback_set_timings:     ds CHANNEL_COUNT       ; u8[13]   
 MLM_event_arg_buffer:         ds 32                  ; u8[32]
 MLM_channel_instruments:      ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
