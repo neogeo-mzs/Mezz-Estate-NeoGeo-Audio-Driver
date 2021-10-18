@@ -408,7 +408,7 @@ MLM_playback_init:
 			or a,a ; Clear carry flag
 			sbc hl,bc
 			jr z,MLM_playback_init_no_playback
-			ld (ix+0),$FF
+			ld (ix+0),1 ; Set playback control channel enable flag
 
 			; Even if the channel is invalid,
 			; the function detects that and
@@ -993,12 +993,12 @@ MLM_command_argc:
 MLMCOM_end_of_list:
 	push hl
 	push de
-		; Set playback control to 0
+		; Clear all channel playback control flags
 		ld h,0
 		ld l,c
 		ld de,MLM_playback_control
 		add hl,de
-		ld (hl),0
+		ld (hl),0 
 
 		; Set timing to 1
 		; (This is done to be sure that
