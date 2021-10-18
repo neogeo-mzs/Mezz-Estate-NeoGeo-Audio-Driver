@@ -4,12 +4,22 @@ MLM_irq:
 
 	ld c,0
 	ld hl,MLM_playback_control
+
 	dup CHANNEL_COUNT
 		bit 0,(hl)
-		push hl
-			call nz,MLM_update_channel_playback
-			call MLM_update_channel_volume
-		pop hl
+		jr z,$+10                            ; +2 = 2b
+
+		push hl                              ; +1 = 3b
+			call MLM_update_channel_playback ; +3 = 6b
+			call MLM_update_channel_volume   ; +3 = 9b
+		pop hl                               ; +1 = 10b
+
+		; Clear every flag except the
+		; channel enable one
+		ld a,(hl)
+		and a,1
+		ld (hl),a
+
 		inc c
 		inc hl
 	edup
@@ -357,8 +367,6 @@ MLM_playback_init:
 	push bc
 	push af
 	push iy
-		brk
-
 		; Set the channel timing to 1
 		ld a,b
 		dec a
