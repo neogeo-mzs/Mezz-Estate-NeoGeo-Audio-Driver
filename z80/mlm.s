@@ -3,10 +3,15 @@ MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
 	ld c,0
+	ld hl,MLM_playback_control
 	dup CHANNEL_COUNT
-		call MLM_update_channel_playback
-		call MLM_update_channel_volume
+		bit 0,(hl)
+		push hl
+			call nz,MLM_update_channel_playback
+			call MLM_update_channel_volume
+		pop hl
 		inc c
+		inc hl
 	edup
 
 	; if active mlm channel counter is 0,
@@ -26,15 +31,6 @@ MLM_update_skip:
 ; Doesn't backup AF, HL, DE, B, IX, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
-	; if MLM_playback_control[ch] == 0 then
-	; do not update this channel
-	ld hl,MLM_playback_control
-	ld b,0
-	add hl,bc
-	xor a,a   ; a = 0
-	cp a,(hl) ; compare 0 to (hl)
-	ret z
-
 	inc iyl ; increment active mlm channel counter
 
 	; decrement MLM_playback_timings[ch],
@@ -47,6 +43,7 @@ MLM_update_channel_playback:
 	ld b,(hl)
 	ld hl,MLM_playback_set_timings
 	add hl,de ; get pointer to MLM_playback_set_timings[ch]
+	xor a,a   ; ld a,0
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
 	ret nz
 
