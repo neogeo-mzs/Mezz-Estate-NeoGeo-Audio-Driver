@@ -39,10 +39,13 @@ MLM_update_channel_playback:
 
 	; decrement MLM_playback_timings[ch],
 	; if afterwards it isn't 0 return
-	ld de,MLM_playback_timings-MLM_playback_control
+	ld hl,MLM_playback_timings
+	ld d,0 
+	ld e,c 
 	add hl,de
 	dec (hl)
 	ld b,(hl)
+	ld hl,MLM_playback_set_timings
 	add hl,de ; get pointer to MLM_playback_set_timings[ch]
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
 	ret nz
