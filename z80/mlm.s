@@ -7,12 +7,15 @@ MLM_irq:
 
 	dup CHANNEL_COUNT
 		bit 0,(hl)
-		jr z,$+10                            ; +2 = 2b
+		jr z,$+14                             ; +2 = 2b
 
-		push hl                              ; +1 = 3b
-			call MLM_update_channel_playback ; +3 = 6b
-			call MLM_update_channel_volume   ; +3 = 9b
-		pop hl                               ; +1 = 10b
+		push hl                               ; +1 = 3b
+			call MLM_update_channel_playback  ; +3 = 6b
+		pop hl                                ; +1 = 7b
+		bit 1,(hl)                            ; +2 = 10b
+		ex de,hl                              ; +1 = 8b
+			call MLM_update_channel_volume    ; +3 = 13b
+		ex de,hl                              ; +1 = 14b
 
 		; Clear every flag except the
 		; channel enable one
@@ -408,7 +411,7 @@ MLM_playback_init:
 			or a,a ; Clear carry flag
 			sbc hl,bc
 			jr z,MLM_playback_init_no_playback
-			ld (ix+0),1 ; Set playback control channel enable flag
+			ld (ix+0),MLM_PBCNT_CH_ENABLE ; Set playback control channel enable flag
 
 			; Even if the channel is invalid,
 			; the function detects that and
@@ -998,7 +1001,7 @@ MLMCOM_end_of_list:
 		ld l,c
 		ld de,MLM_playback_control
 		add hl,de
-		ld (hl),0 
+		ld (hl),0
 
 		; Set timing to 1
 		; (This is done to be sure that
