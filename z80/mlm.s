@@ -7,14 +7,16 @@ MLM_irq:
 
 	dup CHANNEL_COUNT
 		bit 0,(hl)
-		jr z,$+14                             ; +2 = 2b
+		jr z,$+14+7                             ; +2 = 2b
+
+		brk ; +7b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
 		pop hl                                ; +1 = 7b
 		bit 1,(hl)                            ; +2 = 10b
 		ex de,hl                              ; +1 = 8b
-			call MLM_update_channel_volume    ; +3 = 13b
+			call nz,MLM_update_channel_volume ; +3 = 13b
 		ex de,hl                              ; +1 = 14b
 
 		; Clear every flag except the

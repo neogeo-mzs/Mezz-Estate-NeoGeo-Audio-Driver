@@ -27,7 +27,7 @@ MLM_song_pa2
 	dw MLM_el_pa-MLM_header
 	ds 11*2,0
 	dw 98 ; Timer A frequency
-	db 2  ; base time (0 is invalid)
+	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
 MLM_song_pa3:
@@ -68,7 +68,7 @@ MLM_el_pa: ; Start in Zone 3
 	db $09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /
 
-	db $30 | (6-1) ; Offset volume by +6
+	db $30 | (8-1) ; Offset volume by +8
 	db $80 | 30, 2 ; Play ADPCM-A sample 2 (D)
 	db $00 ; End of song
 
