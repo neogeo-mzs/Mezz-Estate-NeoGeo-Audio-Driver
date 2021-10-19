@@ -832,7 +832,7 @@ MLM_set_channel_volume:
 		ld a,(hl)
 		or a,MLM_PBCNT_VOL_UPDATE
 		ld (hl),a
-		
+
 MLM_set_channel_volume_return:
 	pop af
 	pop bc
@@ -1085,14 +1085,8 @@ MLMCOM_wait_ticks_word:
 MLMCOM_set_channel_volume:
 	push hl
 	push de
-		; Store volume in 
-		; MLM_channel_volumes[channel]
-		ld h,0
-		ld l,c
-		ld de,MLM_channel_volumes
-		add hl,de
 		ld a,(MLM_event_arg_buffer)
-		ld (hl),a
+		call MLM_set_channel_volume
 
 		; Set timing
 		ld a,c
