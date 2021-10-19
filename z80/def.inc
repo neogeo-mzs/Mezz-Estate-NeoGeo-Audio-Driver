@@ -188,6 +188,9 @@ MLM_CH_SSG1 equ 10
 MLM_CH_SSG2 equ 11
 MLM_CH_SSG3 equ 12
 
+MLM_PBCNT_CH_ENABLE  equ 1
+MLM_PBCNT_VOL_UPDATE equ 2
+
 ; Should always be a multiple of 2
 ; and also be smaller than 128
 COM_BUFFER_LENGTH equ 32
