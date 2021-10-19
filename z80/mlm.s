@@ -825,6 +825,14 @@ MLM_set_channel_volume:
 		ld b,0
 		add hl,bc
 		ld (hl),a
+
+		; Set channel volume update flag
+		ld hl,MLM_playback_control
+		add hl,bc
+		ld a,(hl)
+		or a,MLM_PBCNT_VOL_UPDATE
+		ld (hl),a
+		
 MLM_set_channel_volume_return:
 	pop af
 	pop bc
