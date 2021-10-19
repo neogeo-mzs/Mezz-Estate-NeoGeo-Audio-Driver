@@ -639,6 +639,14 @@ MLM_set_instrument_fm:
 		; Set OP 4
 		call FMCNT_set_operator
 		add hl,de
+
+		; Set volume update flag
+		ld hl,MLM_playback_control+MLM_CH_FM1
+		ld b,0
+		add hl,bc
+		ld a,(hl)
+		or a,MLM_PBCNT_VOL_UPDATE
+		ld (hl),a
 	pop af
 	pop bc
 	pop de
