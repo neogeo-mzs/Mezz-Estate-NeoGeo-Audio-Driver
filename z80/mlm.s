@@ -7,9 +7,9 @@ MLM_irq:
 
 	dup CHANNEL_COUNT
 		bit 0,(hl)
-		jr z,$+14+7                             ; +2 = 2b
+		jr z,$+14                             ; +2 = 2b
 
-		brk ; +7b
+		;b_rk ; +7b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
@@ -544,6 +544,7 @@ MLM_play_note_fm:
 	add a,MLM_CH_FM1
 	ld c,b
 	call MLM_set_timing
+
 	jp MLM_parse_note_end
 
 ; a: instrument

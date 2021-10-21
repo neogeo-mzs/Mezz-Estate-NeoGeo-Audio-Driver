@@ -58,16 +58,17 @@ FMCNT_irq:
 		; If FM_channel_enable[channel] is 0,
 		; then continue to the next channel
 		ld a,(hl)
-		or a,a ; cp a,0
-		jr z,$+13
+		bit 0,a
+		jr z,$+15                          ; +2 = 2b
 		
-		bit 2,a ; Check for update Frequency flag
+		bit 2,a                            ; +2 = 4b  | Check for update Frequency flag
 		;call nz, FMCNT_update_frequencies ; If it's set call...
-		call FMCNT_update_frequencies      ; For now update frequency here regardless
-		bit 1,a ; Check for update Volume flag
-		call nz, FMCNT_update_total_levels ; If it's set call...
-		call FMCNT_update_key_on
-
+		call FMCNT_update_frequencies      ; +3 = 7b  | For now update frequency here regardless
+		bit 1,a                            ; +2 = 9b  | Check for update Volume flag
+		call nz, FMCNT_update_total_levels ; +3 = 12b | If it's set call...
+		call FMCNT_update_key_on           ; +3 = 15b
+		
+		ld a,(hl)
 		and a,1   ; Only keep the enable channel flag
 		ld (hl),a ; and store the bitflags back in WRAM
 		inc hl
@@ -319,17 +320,14 @@ FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
 ; b: channel (0~3)
-FMCNT_update_key_on:
+FMCNT_update_key_on: ; When this is called for FM CH2 (b = 1), instead than working the intended 4 times it only does 2 times, why?
 	push hl
-		; Load channel's key on enable
-		; from WRAM, then clear it
+		; Load channel's key on enable from WRAM
 		ld hl,FM_channel_key_on
 		ld e,b
 		ld d,0
 		add hl,de
 		ld e,(hl)
-		xor a,a ; ld a,0
-		ld (hl),a
 
 		; If the value is 0, then don't
 		; write to the key on register
@@ -337,26 +335,30 @@ FMCNT_update_key_on:
 		or a,a ; cp a,0
 		jr z,FMCNT_update_key_on_ret
 
-		; Else, do write to the key on register.
-		; Load OP enable from WRAM in a
+		; Else, set channel key on enable to 0 and...
+		xor a,a ; ld a,0
+		ld (hl),a
+
+		; write to the YM2610 key on register...
+		;   Load OP enable from WRAM in a
 		ld hl,FM_channel_op_enable
 		ld e,b
 		add hl,de
 		ld a,(hl)
 		and a,$F0 ; Clear the lower nibble just in case
 
-		; Calculate address to correct FM channel id
+		;   Calculate address to correct FM channel id
 		ld hl,FM_channel_LUT
 		add hl,de
 
-		; Proceed to stop the FM channel
+		;   Proceed to stop the FM channel
 		ld e,(hl)
 		ld d,REG_FM_KEY_ON
 		rst RST_YM_WRITEA
 		
-		; OR the FM channel id and the OP enable 
-		; nibble, then store the result in e and
-		; write it to the FM Key On YM2610 register
+		;   OR the FM channel id and the OP enable 
+		;   nibble, then store the result in e and
+		;   write it to the FM Key On YM2610 register
 		or a,(hl)
 		ld e,a
 		ld d,REG_FM_KEY_ON
@@ -707,7 +709,7 @@ FM_enable_channel:
 		ld b,0
 		ld hl,FM_channel_enable
 		add hl,bc
-		ld (hl),$FF
+		ld (hl),1
 	pop hl
 	pop bc
 	pop af
