@@ -93,6 +93,6 @@ neosdconv: build
 	
 ifneq ($(strip $(NEOSD_ROM_PATH)),)
 	echo "Moving neo rom to SD card"
-	rm -f $(NEOSD_ROM_PATH)/build.neo
-	$(CP) $(BUILD_PATH)/build.neo $(NEOSD_ROM_PATH)/build.neo
+	rm -f "$(NEOSD_ROM_PATH)/build.neo"
+	$(CP) "$(BUILD_PATH)/build.neo" "$(NEOSD_ROM_PATH)/build.neo"
 endif
