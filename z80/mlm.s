@@ -62,6 +62,8 @@ MLM_update_channel_playback:
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
 	ret nz
 
+	brk
+
 	push iy
 MLM_update_channel_playback_exec_check:
 		push hl
