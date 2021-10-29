@@ -86,3 +86,5 @@ SFXPS_WRAM_end:
 EXT_2CH_mode: ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
 IRQ_tick_base_time:                ds 1                   ; u8
 IRQ_tick_time_counter:        ds 1                   ; u8
+
+tmp2: ds 2

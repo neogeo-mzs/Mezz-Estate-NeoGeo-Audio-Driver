@@ -51,29 +51,33 @@ FMCNT_init_loop:
 
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
-	ld b,0
-	ld hl,FM_channel_enable
-
-	dup FM_CHANNEL_COUNT
+	ld b,FM_CHANNEL_COUNT
+	ld hl,FM_channel_enable+FM_CHANNEL_COUNT-1
+	
+FMCNT_irq_loop:
+	dec b
 		; If FM_channel_enable[channel] is 0,
 		; then continue to the next channel
 		ld a,(hl)
 		bit 0,a
-		jr z,$+15                          ; +2 = 2b
+		jr z,FMCNT_irq_loop_skip
 		
+		;brk ; +7
+
 		bit 2,a                            ; +2 = 4b  | Check for update Frequency flag
 		;call nz, FMCNT_update_frequencies ; If it's set call...
 		call FMCNT_update_frequencies      ; +3 = 7b  | For now update frequency here regardless
 		bit 1,a                            ; +2 = 9b  | Check for update Volume flag
 		call nz, FMCNT_update_total_levels ; +3 = 12b | If it's set call...
 		call FMCNT_update_key_on           ; +3 = 15b
-		
+
+FMCNT_irq_loop_skip:
 		ld a,(hl)
 		and a,1   ; Only keep the enable channel flag
 		ld (hl),a ; and store the bitflags back in WRAM
-		inc hl
-		inc b
-	edup
+		dec hl
+	inc b
+	djnz FMCNT_irq_loop
 	ret
 
 ; b: channel (0~3)
