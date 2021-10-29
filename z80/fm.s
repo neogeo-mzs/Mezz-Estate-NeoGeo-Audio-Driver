@@ -77,6 +77,7 @@ FMCNT_irq:
 	ret
 
 ; b: channel (0~3)
+; doesn't backup DE and Flags
 FMCNT_update_frequencies:
 	push hl
 	push bc
@@ -119,6 +120,7 @@ FMCNT_update_frequencies_even_ch:
 
 ; b: channel (0~3)
 ; (FM_channel_volumes[channel]): volume (0~7F)
+; DOESN'T BACKUP DE
 FMCNT_update_total_levels:
 	push bc
 	push hl
@@ -198,6 +200,7 @@ FMCNT_tlupdate_algo7:
 
 ; c: operator (1~4)
 ; b: channel (0~3)
+; DOESN'T BACKUP DE
 ;	This calculates the Total Level
 ;   relative to the channel volume,
 ;   and then sets the register based
@@ -272,6 +275,7 @@ FMCNT_update_carrier_tl:
 
 ; c: operator (1~4)
 ; b: channel (0~3)
+; DOESN'T BACKUP DE
 ;	This just sets the operator's
 ;   Total Level without modifying it.
 FMCNT_update_modulator_tl:
@@ -320,6 +324,7 @@ FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
 ; b: channel (0~3)
+; DOESN'T BACKUP AF and DE
 FMCNT_update_key_on: ; When this is called for FM CH2 (b = 1), instead than working the intended 4 times it only does 2 times, why?
 	push hl
 		; Load channel's key on enable from WRAM
