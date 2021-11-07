@@ -310,6 +310,7 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 
 ## BUGS
 * 70hz+ frequencies don't work correctly (LAG ISSUE)
+* Converted DMF songs have ADPCM-A sample volume issues
 
 ## TODO
 * Update MLM header parsing to allow banking
