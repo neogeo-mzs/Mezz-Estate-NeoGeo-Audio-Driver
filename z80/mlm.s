@@ -286,6 +286,10 @@ MLM_play_song:
 
 		dup CHANNEL_COUNT
 			call MLM_playback_init
+			ld a,$FF
+			ld c,b
+			dec c
+			call MLM_set_channel_volume
 			inc b
 		edup
 
@@ -324,14 +328,6 @@ MLM_play_song:
 		ld hl,MLM_playback_pointers
 		ld de,MLM_playback_start_pointers
 		ld bc,2*CHANNEL_COUNT
-		ldir
-
-		; Set all the channel's
-		; volumes to $FF
-		ld hl,MLM_channel_volumes
-		ld de,MLM_channel_volumes+1
-		ld bc,CHANNEL_COUNT-1
-		ld (hl),$FF
 		ldir
 
 		; Set ADPCM-A master volume
