@@ -141,7 +141,7 @@ execute_tma_tick:
 	ld (IRQ_tick_time_counter),a
 
 	call MLM_irq
-	call FMCNT_irq
+	;call FMCNT_irq
 	call SSGCNT_irq
 
 execute_tma_tick_skip:
