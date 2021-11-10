@@ -6,24 +6,14 @@ MLM_irq:
 	ld hl,MLM_playback_control
 
 	dup CHANNEL_COUNT
-		bit 0,(hl)
-		jr z,$+14                             ; +2 = 2b
-
-		;b_rk ; +7b
+		; If the channel is disabled, don't update playback...
+		xor a,a ; clear a
+		cp a,(hl)
+		jr z,$+7                             ; +2 = 2b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
 		pop hl                                ; +1 = 7b
-		bit 1,(hl)                            ; +2 = 10b
-		ex de,hl                              ; +1 = 8b
-			call nz,MLM_update_channel_volume ; +3 = 13b
-		ex de,hl                              ; +1 = 14b
-
-		; Clear every flag except the
-		; channel enable one
-		ld a,(hl)
-		and a,1
-		ld (hl),a
 
 		inc c
 		inc hl
@@ -144,7 +134,7 @@ MLM_update_channel_volume:
 MLM_update_ch_vol_SSG: ; Else, channel is SSG...
 	; Load channel volume
 	ld b,0
-	ld hl,MLM_channel_volumes
+;	ld hl,MLM_channel_volumes
 	add hl,bc
 	ld a,(hl)
 
@@ -165,7 +155,7 @@ MLM_update_ch_vol_SSG: ; Else, channel is SSG...
 MLM_update_ch_vol_PA:
 	; Load channel volume
 	ld b,0
-	ld hl,MLM_channel_volumes
+;	ld hl,MLM_channel_volumes
 	add hl,bc
 	ld a,(hl)
 
@@ -182,7 +172,7 @@ MLM_update_ch_vol_PA:
 MLM_update_ch_vol_FM:
 	; Load channel volume
 	ld b,0
-	ld hl,MLM_channel_volumes
+;	ld hl,MLM_channel_volumes
 	add hl,bc
 	ld a,(hl)
 
@@ -828,19 +818,50 @@ MLM_set_channel_volume:
 	push hl
 	push bc
 	push af
+		brk
+
+		; Store volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
 		add hl,bc
 		ld (hl),a
+		
+		; Swap a and c
+		ld b,a
+		ld a,c
+		ld c,b
+		
+		cp a,MLM_CH_FM1
+		jp c,MLM_set_channel_volume_PA
 
-		; Set channel volume update flag
-		ld hl,MLM_playback_control
-		add hl,bc
-		ld a,(hl)
-		or a,MLM_PBCNT_VOL_UPDATE
-		ld (hl),a
+		cp a,MLM_CH_SSG1
+		jp c,MLM_set_channel_volume_FM
 
-MLM_set_channel_volume_return:
+		; Else, Set SSG volume...
+	pop af
+	pop bc
+	pop hl
+	ret
+
+MLM_set_channel_volume_PA:
+		; Swap a and c again
+		ld b,a
+		ld a,c
+		ld c,b
+
+		; Scale down volume
+		; ($00~$FF -> $00~$1F)
+		rrca
+		rrca
+		rrca
+		and a,$1F
+		call PA_set_channel_volume
+	pop af
+	pop bc
+	pop hl
+	ret
+
+MLM_set_channel_volume_FM:
 	pop af
 	pop bc
 	pop hl
