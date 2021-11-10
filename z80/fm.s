@@ -61,8 +61,6 @@ FMCNT_irq_loop:
 		ld a,(hl)
 		bit 0,a
 		jr z,FMCNT_irq_loop_skip
-		
-		;brk ; +7
 
 		bit 2,a                            ; +2 = 4b  | Check for update Frequency flag
 		;call nz, FMCNT_update_frequencies ; If it's set call...

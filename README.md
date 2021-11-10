@@ -311,8 +311,9 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## BUGS
 * 70hz+ frequencies don't work correctly (LAG ISSUE)
 * FM Channels sound kinda odd
-
+	- The guitar (?) in bloody_tears.dmf is shorter than it should be
 ## TODO
+* Stuff like depending on FMCNT_irq is the wrong approach.
 * Update MLM header parsing to allow banking
 * Implement ADPCM-B
 
