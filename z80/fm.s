@@ -627,6 +627,7 @@ FMCNT_set_note:
 		or a,b          ; OR block with F-Num 2
 		ld b,a
 
+		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
 		; Store bc in WRAM
 		ld h,0
 		ld e,ixl
