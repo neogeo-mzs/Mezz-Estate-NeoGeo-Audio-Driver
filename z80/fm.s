@@ -16,8 +16,6 @@ FMCNT_init:
 	push de
 	push bc
 	push af
-		call fm_stop
-
 		; clear FM WRAM
 		ld hl,FM_wram_start
 		ld de,FM_wram_start+1
@@ -26,23 +24,11 @@ FMCNT_init:
 		ldir
 
 		; set all operator TLs to $7F
-		ld hl,FM_operator_TLs
-		ld de,FM_operator_TLs+1
-		ld bc,FM_CHANNEL_COUNT*FM_OP_COUNT - 1
-		ld (hl),$7F
-		ldir
-		
-		ld b,4
-
-FMCNT_init_loop:
-		ld c,b
-		dec c
-		ld a,$7F ; default volume
-		call FMCNT_set_volume
-
-		ld a,PANNING_CENTER
-		call FMCNT_set_panning
-		djnz FMCNT_init_loop
+		;ld hl,FM_operator_TLs
+		;ld de,FM_operator_TLs+1
+		;ld bc,FM_CHANNEL_COUNT*FM_OP_COUNT - 1
+		;ld (hl),$7F
+		;ldir
 	pop af
 	pop bc
 	pop de
@@ -67,12 +53,13 @@ FMCNT_irq_loop:
 		call FMCNT_update_frequencies      ; +3 = 7b  | For now update frequency here regardless
 		bit 1,a                            ; +2 = 9b  | Check for update Volume flag
 		call nz, FMCNT_update_total_levels ; +3 = 12b | If it's set call...
-		;call FMCNT_update_key_on           ; +3 = 15b
+
+		; Clear all bitflags except the enable channel flag
+		ld a,(hl)
+		and a,1 
+		ld (hl),a ; and store the bitflags back in WRAM
 
 FMCNT_irq_loop_skip:
-		ld a,(hl)
-		and a,1   ; Only keep the enable channel flag
-		ld (hl),a ; and store the bitflags back in WRAM
 		dec hl
 	inc b
 	djnz FMCNT_irq_loop
@@ -742,7 +729,7 @@ FMCNT_stop_channel:
 	ret
 
 ; c: channel (0~3)
-FM_enable_channel:
+FMCNT_enable_channel:
 	push af
 	push bc
 	push hl
@@ -756,7 +743,7 @@ FM_enable_channel:
 	ret
 
 ; c: channel (0~3)
-FM_disable_channel:
+FMCNT_disable_channel:
 	push af
 	push bc
 	push hl

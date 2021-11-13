@@ -222,9 +222,9 @@ PA_channel_neg_masks:
 pb_stop:
 	push de
 		ld de,REG_PB_CTRL<<8 | $01
-		rst RST_YM_WRITEB
+		rst RST_YM_WRITEA
 
 		dec e
-		rst RST_YM_WRITEB
+		rst RST_YM_WRITEA
 	pop de
 	ret
