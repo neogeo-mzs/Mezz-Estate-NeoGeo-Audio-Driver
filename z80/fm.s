@@ -67,7 +67,7 @@ FMCNT_irq_loop:
 		call FMCNT_update_frequencies      ; +3 = 7b  | For now update frequency here regardless
 		bit 1,a                            ; +2 = 9b  | Check for update Volume flag
 		call nz, FMCNT_update_total_levels ; +3 = 12b | If it's set call...
-		call FMCNT_update_key_on           ; +3 = 15b
+		;call FMCNT_update_key_on           ; +3 = 15b
 
 FMCNT_irq_loop_skip:
 		ld a,(hl)
@@ -692,15 +692,32 @@ FMCNT_set_volume:
 ; c: channel
 FMCNT_play_channel:
 	push af
-	push bc
 	push hl
-		ld hl,FM_channel_key_on
-		ld b,0
-		add hl,bc
-		ld a,$FF
-		ld (hl),a
+	push de
+		; Load from WRAM the enabled operators
+		ld hl,FM_channel_op_enable
+		ld e,c
+		ld d,0
+		add hl,de
+		ld a,(hl)
+
+		; Calculate address to correct FM channel id
+		ld hl,FM_channel_LUT
+		add hl,de
+
+		; Proceed to stop the FM channel
+		ld e,(hl)
+		ld d,REG_FM_KEY_ON
+		rst RST_YM_WRITEA
+
+		; OR the FM channel id and the OP enable 
+		; nibble, then store the result in e and
+		; write it to the FM Key On YM2610 register
+		or a,(hl)
+		ld e,a
+		rst RST_YM_WRITEA
+	pop de
 	pop hl
-	pop bc
 	pop af
 	ret
 
@@ -709,21 +726,13 @@ FMCNT_stop_channel:
 	push af
 	push de
 	push hl
-		; Clear channel's key on value in WRAM
-		ld hl,FM_channel_key_on
-		ld e,c
+		; Load channel bit from LUT 
+		ld hl,FM_channel_LUT
+		ld e,c 
 		ld d,0
 		add hl,de
-		xor a,a ; ld a,0
-		ld (hl),a
 
-		; Calculate address to correct FM channel id
-		ld hl,FM_channel_LUT
-		add hl,de
-
-		; Load the FM channel id in e and
-		; write it to the FM Key On YM2610 
-		; register (OP enable is all cleared)
+		; Stop FM channel
 		ld e,(hl)
 		ld d,REG_FM_KEY_ON
 		rst RST_YM_WRITEA
