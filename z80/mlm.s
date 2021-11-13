@@ -531,7 +531,7 @@ MLM_play_note_fm:
 		ld d,0
 		add hl,de
 
-		;   Stop FM channel
+		;   Write to the YM2610 FM registers
 		ld e,(hl)
 		ld d,REG_FM_KEY_ON
 		rst RST_YM_WRITEA
