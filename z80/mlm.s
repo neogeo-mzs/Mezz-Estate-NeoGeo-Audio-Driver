@@ -862,6 +862,15 @@ MLM_set_channel_volume_PA:
 	ret
 
 MLM_set_channel_volume_FM:
+		sub a,MLM_CH_FM1 ; Transform into FMCNT channel range (6~9 -> 0~3)
+		
+		; Swap a and c again
+		ld b,a
+		ld a,c
+		ld c,b
+
+		sla a ; $00~$FF -> $00~$7F
+		call FMCNT_set_volume
 	pop af
 	pop bc
 	pop hl

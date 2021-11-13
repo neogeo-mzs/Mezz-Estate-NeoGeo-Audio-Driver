@@ -407,6 +407,13 @@ FMCNT_set_fbalgo_even_ch:
 		add hl,de
 		sla a ; algorithm *= 2
 		ld (hl),a
+
+		; Set FM volume update flag
+		ld hl,FM_channel_enable
+		add hl,de
+		ld a,(hl)
+		or a,FMCNT_VOL_UPDATE
+		ld (hl),a
 	pop hl
 	pop af
 	pop de
@@ -502,10 +509,19 @@ FMCNT_set_operator:
 	push de
 	push af
 	push bc
-		; Load OP register offset in a, then 
-		; add said offset to DTMUL base address.
-		; After that, move result to d
 		push hl
+			; Set FMCNT volume update flag
+			ld hl,FM_channel_enable
+			ld e,c
+			ld d,0
+			add hl,de 
+			ld a,(hl)
+			or a,FMCNT_VOL_UPDATE
+			ld (hl),a
+			
+			; Load OP register offset in a, then 
+			; add said offset to DTMUL base address.
+			; After that, move result to d
 			ld h,0
 			ld l,b
 			ld de,FM_op_register_offsets_LUT
@@ -655,10 +671,18 @@ FMCNT_set_volume:
 	push hl
 	push bc
 	push af
+		; Store volume in WRAM
 		ld b,0
 		ld hl,FM_channel_volumes
 		add hl,bc
 		and a,127 ; Wrap volume inbetween 0 and 127
+		ld (hl),a
+
+		; set channel volume update flag
+		ld hl,FM_channel_enable
+		add hl,bc
+		ld a,(hl)
+		or a,FMCNT_VOL_UPDATE
 		ld (hl),a
 	pop af
 	pop bc

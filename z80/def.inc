@@ -208,6 +208,10 @@ SFXPS_CH_TAKEN equ $02
 
 SFXPS_CHANNEL_COUNT equ PA_CHANNEL_COUNT
 
+; FMCNT defs
+FMCNT_CH_ENABLE  equ 1
+FMCNT_VOL_UPDATE equ 2
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    MACROS                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
