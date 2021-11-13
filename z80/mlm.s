@@ -326,13 +326,13 @@ MLM_play_song:
 
 		; Enable all FM channels
 		ld c,0
-		call FM_enable_channel
+		call FMCNT_enable_channel
 		ld c,1
-		call FM_enable_channel
+		call FMCNT_enable_channel
 		ld c,2
-		call FM_enable_channel
+		call FMCNT_enable_channel
 		ld c,3
-		call FM_enable_channel
+		call FMCNT_enable_channel
 
 		ld b,CHANNEL_COUNT
 MLM_play_song_loop2:
@@ -428,6 +428,9 @@ MLM_ch_parameters_init:
 		ld c,b
 		dec c
 		call MLM_set_instrument
+
+		ld a,$FF
+		call MLM_set_channel_volume
 	pop bc
 	pop af
 	ret
