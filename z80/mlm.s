@@ -520,17 +520,49 @@ MLM_play_sample_pa:
 ;   bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
 ; Doesn't backup AF, IX and C
 MLM_play_note_fm:
-	sub a,MLM_CH_FM1
-	ld ixh,c
-	ld ixl,a
-	call FMCNT_set_note
-	ld c,a
-	call FMCNT_play_channel
+	push de
+	push hl
+		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
 
-	add a,MLM_CH_FM1
-	ld c,b
-	call MLM_set_timing
+		; Stop FM channel  
+		;   Load channel bit from LUT 
+		ld hl,FM_channel_LUT
+		ld e,a
+		ld d,0
+		add hl,de
 
+		;   Stop FM channel
+		ld e,(hl)
+		ld d,REG_FM_KEY_ON
+		rst RST_YM_WRITEA
+
+		; Set pitch
+		ld ixh,c
+		ld ixl,a
+		call FMCNT_set_note
+
+		; Play FM channel
+		;   Calculate pointer enabled operators 
+		push af
+			ld e,a    ; store channel in e
+			ld a,(hl) ; Store channel bit in a
+			ld hl,FM_channel_op_enable
+			ld d,0
+			add hl,de
+		
+			;   OR enabled operators and channels
+			;   together, then proceed to play the channel 
+			or a,(hl)
+			ld e,a
+			ld d,REG_FM_KEY_ON
+			rst RST_YM_WRITEA
+		pop af
+
+		add a,MLM_CH_FM1
+		ld c,b
+		call MLM_set_timing
+	pop hl
+	pop de
 	jp MLM_parse_note_end
 
 ; a: instrument
@@ -818,8 +850,6 @@ MLM_set_channel_volume:
 	push hl
 	push bc
 	push af
-		brk
-
 		; Store volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
@@ -863,7 +893,7 @@ MLM_set_channel_volume_PA:
 
 MLM_set_channel_volume_FM:
 		sub a,MLM_CH_FM1 ; Transform into FMCNT channel range (6~9 -> 0~3)
-		
+
 		; Swap a and c again
 		ld b,a
 		ld a,c
