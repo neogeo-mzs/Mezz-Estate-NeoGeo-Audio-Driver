@@ -61,7 +61,7 @@ int main()
 
     const int SONG_COUNT = 13;
     const char* PAN_LABELS[] = { "NONE  ", "RIGHT ", "LEFT  ", "CENTER"};
-    int selected_song = 6;
+    int selected_song = 0;
     int smp_id = 0;
     int panning = 3; // 0 = None, 1 = Right, 2 = Left, 3 = Center
     
