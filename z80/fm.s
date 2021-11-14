@@ -119,8 +119,14 @@ FMCNT_update_total_levels:
 		ld d,0
 		ld e,b
 		add hl,de
-		bit 1,(hl)
+		ld a,(hl)
+		bit 1,a
 		jp z,FMCNT_update_total_levels_ret
+		
+		; If it is set, clear volume flag
+		; and proceed with the function
+		and a,(FMCNT_VOL_UPDATE ^ $FF) 
+		ld (hl),a
 		
 		; Load channel algorithm in e
 		ld hl,FM_channel_algos
