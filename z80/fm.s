@@ -48,11 +48,11 @@ FMCNT_irq_loop:
 		bit 0,a
 		jr z,FMCNT_irq_loop_skip
 
-		bit 2,a                            ; +2 = 4b  | Check for update Frequency flag
-		;call nz, FMCNT_update_frequencies ; If it's set call...
-		call FMCNT_update_frequencies      ; +3 = 7b  | For now update frequency here regardless
-		bit 1,a                            ; +2 = 9b  | Check for update Volume flag
-		call nz, FMCNT_update_total_levels ; +3 = 12b | If it's set call...
+		; If if FMCNT vol upd. flag is enabled...
+		; (This check is executed inside the function
+		;  too, this is to save time in most scenarios)
+		bit 1,a
+		call nz,FMCNT_update_total_levels
 
 		; Clear all bitflags except the enable channel flag
 		ld a,(hl)
@@ -113,6 +113,15 @@ FMCNT_update_frequencies_even_ch:
 FMCNT_update_total_levels:
 	push bc
 	push hl
+		; if the FMCNT vol enable flag
+		; isn't set, return
+		ld hl,FM_channel_enable
+		ld d,0
+		ld e,b
+		add hl,de
+		bit 1,(hl)
+		jp z,FMCNT_update_total_levels_ret
+		
 		; Load channel algorithm in e
 		ld hl,FM_channel_algos
 		ld e,b
@@ -628,16 +637,27 @@ FMCNT_set_note:
 		ld b,a
 
 		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
-		; Store bc in WRAM
-		ld h,0
-		ld e,ixl
-		ld l,e
-		ld de,FM_channel_frequencies
-		add hl,hl
-		add hl,de
-		ld (hl),c
-		inc hl
-		ld (hl),b
+		; Write Block and F-Num 2 
+		ld e,b 
+		ld d,REG_FM_CH13_FBLOCK
+		ld a,ixl
+		bit 0,a 
+		jr z,FMCNT_set_note_even_ch
+		inc d
+FMCNT_set_note_even_ch:
+		bit 1,a 
+		call z,port_write_a
+		call nz,port_write_b
+
+		; Set F-Num 1
+		ld e,c
+		dec d ; -\
+		dec d ;  | d -= 4
+		dec d ;  /
+		dec d ; /
+		bit 1,a
+		call z,port_write_a
+		call nz,port_write_b
 	pop bc
 	pop af
 	pop de

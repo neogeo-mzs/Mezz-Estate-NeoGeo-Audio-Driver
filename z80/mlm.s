@@ -527,6 +527,13 @@ MLM_play_note_fm:
 	push hl
 		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
 
+		; Make sure the OP TLs are set
+		; before playing a note
+		ld h,b ; backup timing in h
+		ld b,a
+		call FMCNT_update_total_levels
+		ld b,h ; store timing back into b
+
 		; Stop FM channel  
 		;   Load channel bit from LUT 
 		ld hl,FM_channel_LUT
