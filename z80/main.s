@@ -1,6 +1,6 @@
 ; wpset F800,1,w,wpdata==39
 ; wpset F800,1,w,wpdata==3A && bc == 0201
-; trace fm1_regrec.tr,1,noloop
+; trace fm1_regrec.tr,1
 ; wpset F800,1,w,wpdata==3A,{tracelog "A addr: 0x%02X; data: 0x%02X\n", d, e; go}
 ; wpset F800,1,w,wpdata==3B,{tracelog "B addr: 0x%02X; data: 0x%02X\n", d, e; go}
 ; wpset F800,1,w,wpdata==39&&(bc>>8)==00,{w@F9A1 = (w@F9A1) + 1; g}
@@ -296,7 +296,7 @@ softlock:
 	include "sfxps.s"
 
 	org MLM_HEADER ; block 1
-	include "mlm_test_data.s"
-	;incbin "m1rom_sdata.bin"
+	;include "mlm_test_data.s"
+	incbin "m1rom_sdata.bin"
 
 	include "wram.s"

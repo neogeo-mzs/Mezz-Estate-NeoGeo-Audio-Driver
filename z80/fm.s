@@ -114,8 +114,6 @@ FMCNT_update_total_levels:
 	push bc
 	push hl
 	push af
-		brk
-		
 		; if the FMCNT vol enable flag
 		; isn't set, return
 		ld hl,FM_channel_enable

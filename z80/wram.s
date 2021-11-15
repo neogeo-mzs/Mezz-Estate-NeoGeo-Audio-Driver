@@ -17,7 +17,7 @@ com_buffer_byte_significance:  ds 1                   ; u8
 MLM_wram_start:
 MLM_playback_pointers:        ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_playback_start_pointers:  ds 2*CHANNEL_COUNT     ; void*[13]
-MLM_playback_control:         ds CHANNEL_COUNT       ; u8[13] (%------VE; Volume update flag, channel Enable)
+MLM_playback_control:         ds CHANNEL_COUNT       ; bool[13] ($00: disabled; $FF: enabled)
 MLM_playback_timings:         ds CHANNEL_COUNT       ; u8[13]   
 MLM_playback_set_timings:     ds CHANNEL_COUNT       ; u8[13]   
 MLM_event_arg_buffer:         ds 32                  ; u8[32]
@@ -62,9 +62,8 @@ FM_channel_frequencies: ds FM_CHANNEL_COUNT*2           ; u16[4] (--BBBFFF'FFFFF
 FM_operator_TLs:		ds FM_CHANNEL_COUNT*FM_OP_COUNT ; u8[FM_CH_COUNT][FM_OP_COUNT] (0~127; 127 is lowest, 0 is highest)
 FM_channel_volumes:		ds FM_CHANNEL_COUNT             ; u8[4] (127 is lowest, 0 is highest)
 FM_channel_key_on:		ds FM_CHANNEL_COUNT             ; bool[4] (If it isn't 0, then the channel will be played next IRQ and the value will be cleared)
-FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'0FVE; update Frequency; update Volume; Enable Channel. The two most significant update flags are cleared every tick)
+FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'00VE; update Volume; Enable Channel. The two most significant update flags are cleared every tick)
 FM_channel_algos:       ds FM_CHANNEL_COUNT             ; u8[4] (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
-
 FM_wram_end:
 
 ; ======== PA ========
