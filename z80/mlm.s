@@ -878,6 +878,23 @@ MLM_set_channel_volume:
 		jp c,MLM_set_channel_volume_FM
 
 		; Else, Set SSG volume...
+		;   Swap a and c again
+		ld b,a
+		ld a,c
+		ld c,b
+
+		;   Scale down volume ($00~$FF -> $00~$0F)
+		rrca
+		rrca
+		rrca
+		rrca
+		and a,$0F
+
+		;   Store volume into SSGCNT WRAM
+		ld hl,SSGCNT_volumes-MLM_CH_SSG1
+		ld b,0
+		add hl,bc
+		ld (hl),a
 	pop af
 	pop bc
 	pop hl
