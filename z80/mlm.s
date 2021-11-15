@@ -5,16 +5,18 @@ MLM_irq:
 	ld c,0
 	ld hl,MLM_playback_control
 
+	; PA OK
+	; FM volume issue
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		xor a,a ; clear a
-		cp a,(hl)
+		cp a,(hl) ; channel is disabled if MLM_playback_control[ch] is 0
 		jr z,$+7                             ; +2 = 2b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
-		pop hl                                ; +1 = 7b
-
+		pop hl
+		
 		inc c
 		inc hl
 	edup
@@ -276,10 +278,6 @@ MLM_play_song:
 
 		dup CHANNEL_COUNT
 			call MLM_playback_init
-			ld a,$FF
-			ld c,b
-			dec c
-			call MLM_set_channel_volume
 			inc b
 		edup
 
@@ -324,19 +322,14 @@ MLM_play_song:
 		ld de,REG_PA_MVOL<<8 | $3F
 		rst RST_YM_WRITEB
 
-		; Enable all FM channels
-		ld c,0
-		call FMCNT_enable_channel
-		ld c,1
-		call FMCNT_enable_channel
-		ld c,2
-		call FMCNT_enable_channel
-		ld c,3
-		call FMCNT_enable_channel
-
+		; For each channel initialize its
+		; parameters if it is enabled.
 		ld b,CHANNEL_COUNT
 MLM_play_song_loop2:
-		call MLM_ch_parameters_init
+		xor a,a
+		cp a,(ix-1)
+		call nz,MLM_ch_parameters_init
+		dec ix
 		djnz MLM_play_song_loop2
 	pop af
 	pop ix
@@ -399,13 +392,7 @@ MLM_playback_init:
 			or a,a ; Clear carry flag
 			sbc hl,bc
 			jr z,MLM_playback_init_no_playback
-			ld (ix+0),MLM_PBCNT_CH_ENABLE ; Set playback control channel enable flag
-
-			; Even if the channel is invalid,
-			; the function detects that and
-			; just returns. nothing to worry
-			ld c,iyl
-			call SFXPS_set_channel_as_taken 
+			ld (ix+0),$FF ; Set playback control channel enable flag
 MLM_playback_init_no_playback:
 			inc ix
 		pop hl
@@ -431,6 +418,40 @@ MLM_ch_parameters_init:
 
 		ld a,$FF
 		call MLM_set_channel_volume
+
+		; If the channel is ADPCM-A, initialize 
+		; specific ADPCM-A parameters
+		ld a,c
+		cp a,MLM_CH_FM1                ; if a < MLM_CH_FM1 
+		jr c,MLM_ch_parameters_init_pa ; then ...
+
+		; If the channel is FM, initialize
+		; specific FM parameters
+		cp a,MLM_CH_SSG1               ; if a < MLM_CH_SSG1
+		jr c,MLM_ch_parameters_init_fm     ; then ...
+
+		; Else the channel is SSG, there's
+		; no specific SSG parameters to set.
+	pop bc
+	pop af
+	ret
+
+; a: channel
+MLM_ch_parameters_init_pa:
+		; Tell SFXPS that this channel  
+		; is reserved for music playback
+		ld c,a
+		call SFXPS_set_channel_as_taken 
+	pop bc
+	pop af
+	ret
+
+; a: channel
+MLM_ch_parameters_init_fm:
+		; Enable FMCNT for the channel
+		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
+		ld c,a
+		call FMCNT_enable_channel
 	pop bc
 	pop af
 	ret
@@ -577,6 +598,7 @@ MLM_play_note_fm:
 
 ; a: instrument
 ; c: channel
+; COULD OPTIMIZE
 MLM_set_instrument:
 	push bc
 	push hl
@@ -599,7 +621,7 @@ MLM_set_instrument:
 
 		; Else the channel is SSG, branch
 		jr MLM_set_instrument_ssg
-MLM_set_instrument_return:
+MLM_set_instrument_return: ;MLM_playback_init_no_playback:
 	pop af
 	pop hl
 	pop bc
@@ -672,11 +694,11 @@ MLM_set_instrument_fm:
 		add hl,de
 
 		; Set volume update flag
-		ld hl,MLM_playback_control+MLM_CH_FM1
+		ld hl,FM_channel_enable
 		ld b,0
 		add hl,bc
 		ld a,(hl)
-		or a,MLM_PBCNT_VOL_UPDATE
+		or a,FMCNT_VOL_UPDATE
 		ld (hl),a
 	pop af
 	pop bc
