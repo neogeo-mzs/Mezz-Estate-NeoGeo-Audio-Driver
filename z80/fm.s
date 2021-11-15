@@ -113,6 +113,9 @@ FMCNT_update_frequencies_even_ch:
 FMCNT_update_total_levels:
 	push bc
 	push hl
+	push af
+		brk
+		
 		; if the FMCNT vol enable flag
 		; isn't set, return
 		ld hl,FM_channel_enable
@@ -125,7 +128,7 @@ FMCNT_update_total_levels:
 		
 		; If it is set, clear volume flag
 		; and proceed with the function
-		and a,(FMCNT_VOL_UPDATE ^ $FF) 
+		and a,FMCNT_VOL_UPDATE ^ $FF
 		ld (hl),a
 		
 		; Load channel algorithm in e
@@ -150,6 +153,7 @@ FMCNT_update_total_levels:
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
 		jp (hl)
 FMCNT_update_total_levels_ret:
+	pop af
 	pop hl
 	pop bc
 	ret
@@ -162,6 +166,7 @@ FMCNT_update_total_levels_algo_0_1_2_3:
 		call FMCNT_update_modulator_tl ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
+	pop af
 	pop hl
 	pop bc
 	ret
@@ -173,34 +178,43 @@ FMCNT_tlupdate_vectors:
 	dw FMCNT_tlupdate_algo5_6,     FMCNT_tlupdate_algo7
 
 FMCNT_tlupdate_algo4:
-	call FMCNT_update_modulator_tl ; OP1
-	inc c
-	call FMCNT_update_carrier_tl   ; OP2
-	inc c
-	call FMCNT_update_modulator_tl ; OP3
-	inc c
-	call FMCNT_update_carrier_tl   ; OP4
-	jp FMCNT_update_total_levels_ret
+		call FMCNT_update_modulator_tl ; OP1
+		inc c
+		call FMCNT_update_carrier_tl   ; OP2
+		inc c
+		call FMCNT_update_modulator_tl ; OP3
+		inc c
+		call FMCNT_update_carrier_tl   ; OP4
+	pop af
+	pop hl
+	pop bc
+	ret
 
 FMCNT_tlupdate_algo5_6:
-	call FMCNT_update_modulator_tl ; OP1
-	inc c
-	call FMCNT_update_carrier_tl   ; OP2
-	inc c
-	call FMCNT_update_carrier_tl   ; OP3
-	inc c
-	call FMCNT_update_carrier_tl   ; OP4
-	jp FMCNT_update_total_levels_ret
+		call FMCNT_update_modulator_tl ; OP1
+		inc c
+		call FMCNT_update_carrier_tl   ; OP2
+		inc c
+		call FMCNT_update_carrier_tl   ; OP3
+		inc c
+		call FMCNT_update_carrier_tl   ; OP4
+	pop af
+	pop hl
+	pop bc
+	ret
 
 FMCNT_tlupdate_algo7:
-	call FMCNT_update_carrier_tl   ; OP1
-	inc c
-	call FMCNT_update_carrier_tl   ; OP2
-	inc c
-	call FMCNT_update_carrier_tl   ; OP3
-	inc c
-	call FMCNT_update_carrier_tl   ; OP4
-	jp FMCNT_update_total_levels_ret
+		call FMCNT_update_carrier_tl   ; OP1
+		inc c
+		call FMCNT_update_carrier_tl   ; OP2
+		inc c
+		call FMCNT_update_carrier_tl   ; OP3
+		inc c
+		call FMCNT_update_carrier_tl   ; OP4
+	pop af
+	pop hl
+	pop bc
+	ret
 
 ; c: operator (1~4)
 ; b: channel (0~3)
