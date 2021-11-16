@@ -4,9 +4,6 @@ MLM_irq:
 
 	ld c,0
 	ld hl,MLM_playback_control
-
-	; PA OK
-	; FM volume issue
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		xor a,a ; clear a
@@ -119,80 +116,6 @@ MLM_update_channel_playback_check_set_t:
 		cp a,(hl) ; cp 0,(hl)
 		jr z,MLM_update_channel_playback_exec_check
 	pop iy
-	ret
-
-; c: channel
-; Doesn't backup AF, HL and B registers
-; OPTIMIZED
-MLM_update_channel_volume:
-	ld a,c
-
-	cp a,MLM_CH_FM1  ; if channel is ADPCMA...
-	jp c,MLM_update_ch_vol_PA
-
-	cp a,MLM_CH_SSG1 ; if channel is FM...
-	jp c,MLM_update_ch_vol_FM
-
-MLM_update_ch_vol_SSG: ; Else, channel is SSG...
-	; Load channel volume
-	ld b,0
-;	ld hl,MLM_channel_volumes
-	add hl,bc
-	ld a,(hl)
-
-	; Scale down volume
-	; ($00~$FF -> $00~$0F)
-	rrca
-	rrca
-	rrca
-	rrca
-	and a,$0F
-
-	; Store volume into SSGCNT WRAM
-	ld hl,SSGCNT_volumes-MLM_CH_SSG1
-	add hl,bc
-	ld (hl),a
-	ret
-
-MLM_update_ch_vol_PA:
-	; Load channel volume
-	ld b,0
-;	ld hl,MLM_channel_volumes
-	add hl,bc
-	ld a,(hl)
-
-	; Scale down volume
-	; ($00~$FF -> $00~$1F)
-	rrca
-	rrca
-	rrca
-	and a,$1F
-
-	call PA_set_channel_volume
-	ret
-
-MLM_update_ch_vol_FM:
-	; Load channel volume
-	ld b,0
-;	ld hl,MLM_channel_volumes
-	add hl,bc
-	ld a,(hl)
-
-	; Scale down volume ($00~$FF -> $00 $7F)
-	srl a
-
-	; Store volume into FMCNT WRAM
-	ld hl,FM_channel_volumes-MLM_CH_FM1
-	add hl,bc
-	ld (hl),a
-
-	; Set channel's update volume control flag
-	ld hl,FM_channel_enable-MLM_CH_FM1
-	add hl,bc
-	ld a,(hl) 
-	or a,%010 ; update Volume control bit
-	ld (hl),a
-
 	ret
 
 ; stop song
