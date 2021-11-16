@@ -948,7 +948,7 @@ MLM_set_channel_volume_FM:
 		ld a,c
 		ld c,b
 
-		sla a ; $00~$FF -> $00~$7F
+		srl a ; $00~$FF -> $00~$7F
 		call FMCNT_set_volume
 	pop af
 	pop bc
