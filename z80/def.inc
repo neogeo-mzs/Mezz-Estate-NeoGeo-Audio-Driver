@@ -239,6 +239,26 @@ FMCNT_VOL_UPDATE equ 2
 		pop af
 	endm
 
+	macro brk4c
+		push hl
+		push bc
+			ld c,$3C
+			ld hl,breakpoint
+			ld (hl),c
+		pop bc
+		pop hl
+	endm
+
+	macro brk5c
+		push hl
+		push bc
+			ld c,$3D
+			ld hl,breakpoint
+			ld (hl),c
+		pop bc
+		pop hl
+	endm
+
 	macro fm_ch_data fb,algo,ams,pms
 		.db \algo | (\fb << 3)
 		.db \pms | (\ams << 4)

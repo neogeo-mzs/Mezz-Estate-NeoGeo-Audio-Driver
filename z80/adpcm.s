@@ -186,14 +186,14 @@ PA_play_sample:
 		ld a,(hl)
 
 		; Stop sample if one's playing first
-		ld d,REG_PA_CTRL
-		or a,%10000000 ; Set dump bit
-		ld e,a
-		rst RST_YM_WRITEB
+		;ld d,REG_PA_CTRL
+		;or a,%10000000 ; Set dump bit
+		;ld e,a
+		;rst RST_YM_WRITEB
 
 		; Reset and mask channel status flag
 		;ld d,REG_P_FLAGS_W
-		and a,%01111111 ; Clear 7th bit
+		;and a,%01111111 ; Clear 7th bit
 		;ld e,a
 		;rst RST_YM_WRITEA
 
