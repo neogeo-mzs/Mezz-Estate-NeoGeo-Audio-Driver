@@ -124,10 +124,9 @@ MLM_el_fm2:
 
 MLM_el_fm:
 	db $02,2   ; Set instrument to 2
-	db $21,8  ; Set Pitch upward slide
-	db $80 | (127), 0 | (4 << 4) ; Play FM note C4 and wait 127 ticks
-	db $03, 255
-	db $03, 255
+	db $21,255  ; Set Pitch upward slide
+	db $80 | 127, 0 | (4 << 4) ; Play FM note C4 and wait 2 ticks
+	db $03, 254
 	db $00
 
 MLM_song_ssg1:

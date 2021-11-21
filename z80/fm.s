@@ -301,9 +301,10 @@ FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
 ; b: channel (0~3)
+; DOESN'T BACKUP DE, IX, AF
 FMCNT_update_pitch_slide:
 	push hl
-	push de
+	push bc
 		brk
 
 		; Load pitch slide offset from WRAM into hl
@@ -314,6 +315,7 @@ FMCNT_update_pitch_slide:
 		add ix,bc
 		ld e,(ix+0)
 		ld d,(ix+1)
+		ld a,d ; Load MSB in a to check sign of offset later
 		ex hl,de
 		
 		; Load current pitch from WRAM into de
@@ -323,9 +325,12 @@ FMCNT_update_pitch_slide:
 		ld e,(ix+0)
 		ld d,(ix+1)
 
-		; Offset the pitch and store it back into WRAM
+		; Offset pitch 
 		add hl,de
 		ex hl,de
+		call FMCNT_check_fnum_overflow
+
+		; Store pitch back into WRAM
 		ld (ix+0),e
 		ld (ix+1),d
 		ex hl,de
@@ -350,9 +355,44 @@ FMCNT_update_pitch_slide_even_ch:
 		bit 1,c
 		call z,port_write_a
 		call nz,port_write_b
-	pop de
+	pop bc
 	pop hl
 	ret
+
+; [INPUT]
+;   bc: channel
+;   de: new pitch
+;   ix: &FM_channel_frequencies[ch]
+; [OUTPUT]
+;   de: clamped pitch
+; DOESN'T BACKUP AF
+FMCNT_check_fnum_overflow:
+	push hl
+		; Load original frequency MSB,
+		; then AND away the fnum2 to 
+		; obtain the block, store it into l
+		ld a,(ix+1)
+		and a,%00111000 ; $00BBBFFF -> $00BBB000
+		ld l,a
+		
+		; Obtain block of the new pitch, store it in a
+		ld a,d
+		and a,%00111000 ; $00BBBFFF -> $00BBB000
+
+		; If old_block == new_block return
+		cp a,l
+		jp z,FMCNT_check_fnum_overflow_ret
+
+		; Else, assume overflow happened
+		; Set pitch to $7FF with the old block
+		ld de,$07FF
+		ld a,d ; -- return $7FF | old_block
+		or a,l ;  /
+		ld d,a ; /
+
+FMCNT_check_fnum_overflow_ret:
+	pop hl
+	ret	
 
 ; a: fbalgo (--FFFAAA; Feedback, Algorithm)
 ; c: channel (0~3)
