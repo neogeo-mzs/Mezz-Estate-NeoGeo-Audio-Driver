@@ -106,11 +106,6 @@ this command ends the playback for the current channel
 
 This command's range is 1\~256
 
-###### Command 4: Wait ticks (word)
-**format: `$04 %TTTTTTTT (Timing LSB) %TTTTTTTT (Timing MSB)`**
-
-This command's range is 0\~65536
-
 ###### Command 5: Set channel volume
 **format: `$05 %VVVVVVVV (Volume)`**
 
@@ -162,6 +157,12 @@ one tick will be waited.
 
 ###### Command 32: Return from sub event list
 **format: `$20`**
+
+###### Command 33: Pitch Upward slide
+**format: `$21 $OO (unsigned pitch Offset per tick)`**
+
+###### Command 34: Pitch Downward slide
+**format: `$22 $OO (unsigned pitch Offset per tick)`**
 
 ###### Command 48\~63: Set Volume (byte)
 

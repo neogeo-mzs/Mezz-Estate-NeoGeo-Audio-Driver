@@ -1014,13 +1014,13 @@ MLM_command_vectors:
 	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
 	dw MLMCOM_set_base_time,       MLMCOM_jump_to_sub_el
 	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
-	dw MLMCOM_portamento_slide,    MLMCOM_porta_write
+	dw MLMCOM_invalid,             MLMCOM_porta_write
 	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
 	dup 16
 		dw MLMCOM_wait_ticks_nibble
 	edup
-	dw MLMCOM_return_from_sub_el
-	dup 15
+	dw MLMCOM_return_from_sub_el,  MLMCOM_upward_pitch_slide
+	dup 14
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 	dup 16
@@ -1034,8 +1034,8 @@ MLM_command_argc:
 	db $00, $01, $01, $01, $02, $01, $01, $01
 	db $01, $02, $01, $02, $01, $02, $02, $02
 	ds 16, $00 ; Wait ticks nibble
-	db $00
-	ds 15, 0   ; Invalid commands all have no arguments
+	db $00, $01
+	ds 14, 0   ; Invalid commands all have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
 	ds 64, 0   ; Invalid commands all have no arguments
 
@@ -1294,12 +1294,6 @@ MLMCOM_big_position_jump:
 
 ; c: channel
 ; Arguments:
-;   1. %SSSSSSSS (Signed pitch offset per tick)
-MLMCOM_portamento_slide:
-	jp MLM_parse_command_end
-
-; c: channel
-; Arguments:
 ;   1. %AAAAAAAA (Address)
 ;   2. %DDDDDDDD (Data)
 MLMCOM_porta_write:
@@ -1421,6 +1415,42 @@ MLMCOM_return_from_sub_el:
 	call MLM_set_timing
 	jp MLM_parse_command_end_skip_playback_pointer_set
 
+; c: channel
+MLMCOM_upward_pitch_slide:
+	; ADPCM-A channels have no pitch, return
+	ld a,c
+	cp a,MLM_CH_FM1
+	jp c,MLM_parse_command_end
+
+	; Else if FM, update FMCNT accordingly
+	cp a,MLM_CH_SSG1
+	jp c,MLMCOM_upward_pitch_slide_FM
+
+	; Else, update SSGCNT...
+	jp MLM_parse_command_end
+
+MLMCOM_upward_pitch_slide_FM:
+	push hl
+		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
+		
+		; Store pitch offset per tick in WRAM
+		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
+		ld b,0
+		add hl,bc
+		add hl,bc
+		ld (hl),a
+		inc hl
+		ld (hl),0
+
+		; Enable pitch slides
+		ld hl,FM_channel_enable-MLM_CH_FM1
+		add hl,bc
+		ld a,(hl)
+		or a,FMCNT_PITCH_SLIDE_ENABLE
+		ld (hl),a
+	pop hl
+	
+	jp MLM_parse_command_end
 
 ; c: channel
 ; de: playback pointer

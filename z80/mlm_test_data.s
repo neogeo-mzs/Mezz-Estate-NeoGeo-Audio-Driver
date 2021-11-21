@@ -108,18 +108,26 @@ MLM_song_fm4:
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
-MLM_el_fm:
+MLM_el_fm2:
 	db $02,2   ; Set instrument to 2
 	db $05,$FF ; Set channel volume
-	db $80 | (8*3), 0 | (5 << 4) ; Play FM note C4 and wait 8*3 ticks
-	db $80 | (8*3), 2 | (5 << 4) ; Play FM note D4 and wait 8*3 ticks
+	db $80 | (8*3), 0 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
+	db $80 | (8*3), 2 | (4 << 4) ; Play FM note D4 and wait 8*3 ticks
 	
 	db $09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /
 
 	db $05,$F0 ; Set channel volume
-	db $80 | (8*3), 4 | (5 << 4) ; Play FM note E4 and wait 8*3 ticks
-	db $80 | (8*3), 5 | (5 << 4) ; Play FM note C4 and wait 8*3 ticks
+	db $80 | (8*3), 4 | (4 << 4) ; Play FM note E4 and wait 8*3 ticks
+	db $80 | (8*3), 5 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
+	db $00
+
+MLM_el_fm:
+	db $02,2   ; Set instrument to 2
+	db $21,8  ; Set Pitch upward slide
+	db $80 | (127), 0 | (4 << 4) ; Play FM note C4 and wait 127 ticks
+	db $03, 255
+	db $03, 255
 	db $00
 
 MLM_song_ssg1:
