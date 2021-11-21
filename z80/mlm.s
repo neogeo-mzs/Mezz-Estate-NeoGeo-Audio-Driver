@@ -1008,19 +1008,20 @@ MLM_parse_command_end_skip_playback_pointer_set:
 ; they set the playback pointer, then they don't
 ; need to backup anything.
 MLM_command_vectors:
-	dw MLMCOM_end_of_list,         MLMCOM_note_off
-	dw MLMCOM_set_instrument,      MLMCOM_wait_ticks_byte
-	dw MLMCOM_wait_ticks_word,     MLMCOM_set_channel_volume
-	dw MLMCOM_set_channel_panning, MLMCOM_set_master_volume
-	dw MLMCOM_set_base_time,       MLMCOM_jump_to_sub_el
-	dw MLMCOM_small_position_jump, MLMCOM_big_position_jump
-	dw MLMCOM_invalid,             MLMCOM_porta_write
-	dw MLMCOM_portb_write,         MLMCOM_set_timer_a
+	dw MLMCOM_end_of_list,          MLMCOM_note_off
+	dw MLMCOM_set_instrument,       MLMCOM_wait_ticks_byte
+	dw MLMCOM_wait_ticks_word,      MLMCOM_set_channel_volume
+	dw MLMCOM_set_channel_panning,  MLMCOM_set_master_volume
+	dw MLMCOM_set_base_time,        MLMCOM_jump_to_sub_el
+	dw MLMCOM_small_position_jump,  MLMCOM_big_position_jump
+	dw MLMCOM_invalid,              MLMCOM_porta_write
+	dw MLMCOM_portb_write,          MLMCOM_set_timer_a
 	dup 16
 		dw MLMCOM_wait_ticks_nibble
 	edup
-	dw MLMCOM_return_from_sub_el,  MLMCOM_upward_pitch_slide
-	dup 14
+	dw MLMCOM_return_from_sub_el,   MLMCOM_upward_pitch_slide
+	dw MLMCOM_downward_pitch_slide, MLMCOM_reset_pitch_slide_FM
+	dup 12
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 	dup 16
@@ -1034,8 +1035,8 @@ MLM_command_argc:
 	db $00, $01, $01, $01, $02, $01, $01, $01
 	db $01, $02, $01, $02, $01, $02, $02, $02
 	ds 16, $00 ; Wait ticks nibble
-	db $00, $01
-	ds 14, 0   ; Invalid commands all have no arguments
+	db $00, $01, $01, $00
+	ds 12, 0   ; Invalid commands all have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
 	ds 64, 0   ; Invalid commands all have no arguments
 
@@ -1425,7 +1426,7 @@ MLMCOM_upward_pitch_slide:
 	; Else if FM, update FMCNT accordingly
 	cp a,MLM_CH_SSG1
 	jp c,MLMCOM_upward_pitch_slide_FM
-
+	
 	; Else, update SSGCNT...
 	jp MLM_parse_command_end
 
@@ -1448,8 +1449,99 @@ MLMCOM_upward_pitch_slide_FM:
 		ld a,(hl)
 		or a,FMCNT_PITCH_SLIDE_ENABLE
 		ld (hl),a
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
 	pop hl
-	
+	jp MLM_parse_command_end
+
+; c: channel
+MLMCOM_downward_pitch_slide:
+	; ADPCM-A channels have no pitch, return
+	ld a,c
+	cp a,MLM_CH_FM1
+	jp c,MLM_parse_command_end
+
+	; Else if FM, update FMCNT accordingly
+	cp a,MLM_CH_SSG1
+	jp c,MLMCOM_downward_pitch_slide_FM
+
+	; Else, update SSGCNT...
+	jp MLM_parse_command_end
+
+MLMCOM_downward_pitch_slide_FM:
+	push hl
+	push de
+		brk
+
+		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
+		
+		; Convert 8bit ofs to a negative 
+		; 16bit ofs, then store it into de
+		xor a,$FF
+		ld l,a
+		ld h,$FF
+		inc hl
+		ex hl,de
+		
+		; Store pitch offset per tick in WRAM
+		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
+		ld b,0
+		add hl,bc
+		add hl,bc
+		ld (hl),e
+		inc hl
+		ld (hl),d
+
+		; Enable pitch slides
+		ld hl,FM_channel_enable-MLM_CH_FM1
+		add hl,bc
+		ld a,(hl)
+		or a,FMCNT_PITCH_SLIDE_ENABLE
+		ld (hl),a
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop de
+	pop hl
+	jp MLM_parse_command_end
+
+; c: channel
+MLMCOM_reset_pitch_slide:
+	; ADPCM-A channels have no pitch, return
+	ld a,c
+	cp a,MLM_CH_FM1
+	jp c,MLM_parse_command_end
+
+	; Else if FM, update FMCNT accordingly
+	cp a,MLM_CH_SSG1
+	jp c,MLMCOM_reset_pitch_slide_FM
+
+	; Else, update SSGCNT...
+	jp MLM_parse_command_end
+
+MLMCOM_reset_pitch_slide_FM:
+	push hl
+		; Clear pitch slide enable flag
+		ld hl,FM_channel_enable-MLM_CH_FM1
+		ld b,0
+		add hl,bc
+		ld a,(hl)
+		and a,FMCNT_PITCH_SLIDE_ENABLE ^ $FF
+		ld (hl),a
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop hl
 	jp MLM_parse_command_end
 
 ; c: channel
