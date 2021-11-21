@@ -54,58 +54,19 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		; Clear all bitflags except the enable channel flag
+		bit 2,a
+		call nz,FMCNT_update_pitch_slide
+
+		; Clear all the update bitflags
 		ld a,(hl)
-		and a,1 
-		ld (hl),a ; and store the bitflags back in WRAM
+		and a,FMCNT_VOL_UPDATE ^ $FF
+		ld (hl),a 
 
 FMCNT_irq_loop_skip:
 		dec hl
 	inc b
 	djnz FMCNT_irq_loop
 	ret
-
-; b: channel (0~3)
-; doesn't backup DE and Flags
-FMCNT_update_frequencies:
-	push hl
-	push bc
-		; Calculate address to
-		; FM_channel_frequencies[channel]+1
-		ld l,b
-		ld h,0
-		ld de,FM_channel_frequencies+1
-		add hl,hl
-		add hl,de
-
-		; Set Block and F-Num 2
-		ld e,(hl)
-		ld d,REG_FM_CH13_FBLOCK
-		bit 0,b
-		jr z,FMCNT_update_frequencies_even_ch
-		inc d
-FMCNT_update_frequencies_even_ch:
-		; If the channel is 0 and 1,
-		; use port A, else (channel
-		; is 2 and 3) use port B
-		bit 1,b
-		call z,port_write_a
-		call nz,port_write_b
-
-		; Set F-Num 1
-		dec hl
-		ld e,(hl)
-		dec d ; -\
-		dec d ;  | d -= 4
-		dec d ;  /
-		dec d ; /
-		bit 1,b
-		call z,port_write_a
-		call nz,port_write_b
-	pop bc
-	pop hl
-	ret
-
 
 ; b: channel (0~3)
 ; (FM_channel_volumes[channel]): volume (0~7F)
@@ -340,52 +301,56 @@ FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
 ; b: channel (0~3)
-; DOESN'T BACKUP AF and DE
-FMCNT_update_key_on: ; When this is called for FM CH2 (b = 1), instead than working the intended 4 times it only does 2 times, why?
+FMCNT_update_pitch_slide:
 	push hl
-		; Load channel's key on enable from WRAM
-		ld hl,FM_channel_key_on
-		ld e,b
-		ld d,0
-		add hl,de
-		ld e,(hl)
+	push de
+		brk
 
-		; If the value is 0, then don't
-		; write to the key on register
-		ld a,e
-		or a,a ; cp a,0
-		jr z,FMCNT_update_key_on_ret
-
-		; Else, set channel key on enable to 0 and...
-		xor a,a ; ld a,0
-		ld (hl),a
-
-		; write to the YM2610 key on register...
-		;   Load OP enable from WRAM in a
-		ld hl,FM_channel_op_enable
-		ld e,b
-		add hl,de
-		ld a,(hl)
-		and a,$F0 ; Clear the lower nibble just in case
-
-		;   Calculate address to correct FM channel id
-		ld hl,FM_channel_LUT
-		add hl,de
-
-		;   Proceed to stop the FM channel
-		ld e,(hl)
-		ld d,REG_FM_KEY_ON
-		rst RST_YM_WRITEA
+		; Load pitch slide offset from WRAM into hl
+		ld ix,FM_pitch_slide_ofs
+		ld c,b
+		ld b,0
+		add ix,bc
+		add ix,bc
+		ld e,(ix+0)
+		ld d,(ix+1)
+		ex hl,de
 		
-		;   OR the FM channel id and the OP enable 
-		;   nibble, then store the result in e and
-		;   write it to the FM Key On YM2610 register
-		or a,(hl)
-		ld e,a
-		ld d,REG_FM_KEY_ON
-		rst RST_YM_WRITEA
+		; Load current pitch from WRAM into de
+		ld ix,FM_channel_frequencies
+		add ix,bc
+		add ix,bc
+		ld e,(ix+0)
+		ld d,(ix+1)
 
-FMCNT_update_key_on_ret:
+		; Offset the pitch and store it back into WRAM
+		add hl,de
+		ex hl,de
+		ld (ix+0),e
+		ld (ix+1),d
+		ex hl,de
+		
+		; Write Block and F-Num 2 to YM2610
+		ld e,h
+		ld d,REG_FM_CH13_FBLOCK
+		bit 0,c
+		jr z,FMCNT_update_pitch_slide_even_ch
+		inc d
+FMCNT_update_pitch_slide_even_ch:
+		bit 1,c
+		call z,port_write_a
+		call nz,port_write_b
+
+		; Write F-Num 1 to YM2610
+		ld e,l
+		dec d ; -\
+		dec d ;  | d -= 4
+		dec d ;  /
+		dec d ; /
+		bit 1,c
+		call z,port_write_a
+		call nz,port_write_b
+	pop de
 	pop hl
 	ret
 
@@ -633,7 +598,15 @@ FMCNT_set_note:
 	push de
 	push af
 	push bc
+	push iy
 		ld c,ixl
+
+		; Calculate pointer to FM_channel_frequencies[ch]
+		ld iy,FM_channel_frequencies
+		ld b,0
+		add iy,bc
+		add iy,bc
+
 		; Load base pitch from FMCNT_pitch_LUT in bc
 		ld a,ixh
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
@@ -653,6 +626,10 @@ FMCNT_set_note:
 		srl a           ; Get octave in the right position (block needs to be set to octave)
 		or a,b          ; OR block with F-Num 2
 		ld b,a
+
+		; Store pitch in WRAM
+		ld (iy+0),c ; F-Num 1
+		ld (iy+1),b ; Block and F-Num 2 
 
 		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
 		; Write Block and F-Num 2 
@@ -676,6 +653,7 @@ FMCNT_set_note_even_ch:
 		bit 1,a
 		call z,port_write_a
 		call nz,port_write_b
+	pop iy
 	pop bc
 	pop af
 	pop de
