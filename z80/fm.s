@@ -305,8 +305,6 @@ FM_op_register_offsets_LUT:
 FMCNT_update_pitch_slide:
 	push hl
 	push bc
-		brk
-
 		; Load pitch slide offset from WRAM into hl
 		ld ix,FM_pitch_slide_ofs
 		ld c,b
@@ -328,7 +326,7 @@ FMCNT_update_pitch_slide:
 		; Offset pitch 
 		add hl,de
 		ex hl,de
-		call FMCNT_check_fnum_overflow
+		call FMCNT_check_fnum_overunderflow
 
 		; Store pitch back into WRAM
 		ld (ix+0),e
@@ -366,7 +364,7 @@ FMCNT_update_pitch_slide_even_ch:
 ; [OUTPUT]
 ;   de: clamped pitch
 ; DOESN'T BACKUP AF
-FMCNT_check_fnum_overflow:
+FMCNT_check_fnum_overunderflow:
 	push hl
 		; Load original frequency MSB,
 		; then AND away the fnum2 to 
@@ -379,21 +377,31 @@ FMCNT_check_fnum_overflow:
 		ld a,d
 		and a,%00111000 ; $00BBBFFF -> $00BBB000
 
-		; If old_block == new_block return
+		; If new_block == old_block return
 		cp a,l
-		jp z,FMCNT_check_fnum_overflow_ret
+		jp z,FMCNT_check_fnum_overunderflow_ret
 
-		; Else, assume overflow happened
+		; If new_block < old_block, then
+		; an underflow happened.
+		jp c,FMCNT_solve_fnum_underflow
+
+		; Else, an overflow happened
 		; Set pitch to $7FF with the old block
 		ld de,$07FF
 		ld a,d ; -- return $7FF | old_block
 		or a,l ;  /
 		ld d,a ; /
 
-FMCNT_check_fnum_overflow_ret:
+FMCNT_check_fnum_overunderflow_ret:
 	pop hl
 	ret	
 
+FMCNT_solve_fnum_underflow:
+		; Return $000 with old block
+		ld e,0
+		ld d,l
+	pop hl
+	ret
 ; a: fbalgo (--FFFAAA; Feedback, Algorithm)
 ; c: channel (0~3)
 FMCNT_set_fbalgo:

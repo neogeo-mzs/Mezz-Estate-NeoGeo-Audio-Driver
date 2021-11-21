@@ -164,6 +164,9 @@ one tick will be waited.
 ###### Command 34: Pitch Downward slide
 **format: `$22 $OO (unsigned pitch Offset per tick)`**
 
+###### Command 35: Reset pitch slide
+**format: `$23`**
+
 ###### Command 48\~63: Set Volume (byte)
 
 FM, ADPCM:
