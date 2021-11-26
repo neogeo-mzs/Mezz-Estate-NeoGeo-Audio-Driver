@@ -158,7 +158,7 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db $02,1             ; Set instrument to 1
 	db $38               ; Set SSG volume to 8
-	db $21,64             ; Set pitch slide to +1    
+	db $22,255             ; Set pitch slide to +1    
 	db $80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
 	db $09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /

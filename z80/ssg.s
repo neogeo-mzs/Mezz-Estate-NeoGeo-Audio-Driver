@@ -230,6 +230,21 @@ SSGCNT_update_note_macro_disabled:
 		ld d,(ix+1)
 		add hl,de ; Add offset to loaded pitch
 
+		; Check for underflow (upward pitch slide)
+		;   SSG tune values go inbetween $0000 and $0FFF,
+		;   if the most significant nibble isn't 0, then
+		;   an over/underflow has happened. Assume an 
+		;   underflow happened for now.
+		ld a,h
+		rrca      ; \
+		rrca      ;  \
+		rrca      ;  | a >>= 4
+		rrca      ;  /
+		and a,$0F ; /
+		or a,a    ; cp a,0
+		jp nz,SSGCNT_update_note_solve_overunderflow
+
+SSGCNT_update_note_solve_overunderflow_ret:
 		; Load fine tune and write
 		; it to correct register
 		ld a,REG_SSG_CHA_FINE_TUNE
@@ -249,6 +264,24 @@ SSGCNT_update_note_macro_disabled:
 	pop de
 	pop hl
 	ret
+
+; [INPUT]
+;   de: pitch slide offset
+; [OUTPUT]
+;   hl: pitch offset
+SSGCNT_update_note_solve_overunderflow:
+	; If pitch slide offset is 
+	; positive, solve overflow
+	bit 7,d
+	jp z,SSGCNT_update_note_solve_overflow
+
+	; Else, solve underflow
+	ld hl,$0000
+	jp SSGCNT_update_note_solve_overunderflow_ret
+
+SSGCNT_update_note_solve_overflow:
+	ld hl,$0FFF
+	jp SSGCNT_update_note_solve_overunderflow_ret
 
 ; b: channel (0~2)
 SSGCNT_update_pitch_ofs:
