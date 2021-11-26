@@ -1419,7 +1419,7 @@ MLMCOM_return_from_sub_el:
 ; c: channel
 MLMCOM_upward_pitch_slide:
 	; ADPCM-A channels have no pitch, return
-	ld a,c
+	ld a,c 
 	cp a,MLM_CH_FM1
 	jp c,MLM_parse_command_end
 
@@ -1428,6 +1428,36 @@ MLMCOM_upward_pitch_slide:
 	jp c,MLMCOM_upward_pitch_slide_FM
 	
 	; Else, update SSGCNT...
+	push hl
+	push de
+		brk
+		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
+
+		; Convert 8bit ofs to a negative
+		; 16bit ofs, then store it into de
+		xor a,$FF
+		ld l,a
+		ld h,$FF
+		inc hl
+		ex hl,de
+
+		; (The lower "tune" is, the higher the pitch)
+		; Store pitch offset per tick in WRAM
+		ld hl,SSGCNT_pitch_slide_ofs-(MLM_CH_SSG1*2)
+		ld b,0
+		add hl,bc
+		add hl,bc
+		ld (hl),e
+		inc hl
+		ld (hl),d
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop de
+	pop hl
 	jp MLM_parse_command_end
 
 MLMCOM_upward_pitch_slide_FM:
@@ -1475,8 +1505,6 @@ MLMCOM_downward_pitch_slide:
 MLMCOM_downward_pitch_slide_FM:
 	push hl
 	push de
-		brk
-
 		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
 		
 		; Convert 8bit ofs to a negative 

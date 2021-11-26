@@ -30,11 +30,13 @@ MLM_wram_end:
 
 ; ======== SSG Controller variables ========
 SSGCNT_wram_start:
-SSGCNT_volumes:			ds 3 ; u8[3]
-SSGCNT_mix_flags:    	ds 1 ; u8 (Buffer for the YM2610's $07 Port A register)
-SSGCNT_noise_tune:		ds 1 ; u8
-SSGCNT_channel_enable:	ds 3 ; bool[3]
-SSGCNT_notes:			ds 3 ; u8[3]
+SSGCNT_volumes:			ds SSG_CHANNEL_COUNT   ; u8[3]
+SSGCNT_mix_flags:    	ds 1                   ; u8 (Buffer for the YM2610's $07 Port A register)
+SSGCNT_noise_tune:		ds 1                   ; u8
+SSGCNT_channel_enable:	ds SSG_CHANNEL_COUNT   ; bool[3]
+SSGCNT_notes:			ds SSG_CHANNEL_COUNT   ; u8[3]
+SSGCNT_pitch_ofs:       ds SSG_CHANNEL_COUNT*2 ; s16[3]
+SSGCNT_pitch_slide_ofs: ds SSG_CHANNEL_COUNT*2 ; s16[3]
 
 ; IF THE ORDER OF THESE MACROS IS 
 ; CHANGED THEN "MLM_set_instrument_ssg"

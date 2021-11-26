@@ -48,6 +48,7 @@ SSGCNT_irq_vol_loop:
 	dec b
 	call SSGCNT_update_volume
 	call SSGCNT_update_note
+	call SSGCNT_update_pitch_ofs
 	call SSGCNT_update_channels_mix
 	inc b
 	djnz SSGCNT_irq_vol_loop
@@ -170,6 +171,7 @@ SSGCNT_update_note:
 	push de
 	push af
 	push ix
+		brk3
 		; Load SSGCNT_notes[channel]
 		; into l
 		ld hl,SSGCNT_notes
@@ -205,14 +207,28 @@ SSGCNT_update_note:
 		call SSGCNT_BMACRO_read ; Load macro value in a
 		add a,l
 		ld l,a
+		;ld ixl,a
 
 SSGCNT_update_note_macro_disabled:
-		; Calculate pointer to
-		; SSGCNT_note_LUT[note]
+		; Load tune from LUT into hl
 		ld h,0
 		ld de,SSGCNT_note_LUT
 		add hl,hl
 		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		ex hl,de
+
+		; Load pitch ofs from WRAM into de
+		ld ix,SSGCNT_pitch_ofs
+		ld d,0
+		ld e,b
+		add ix,de
+		add ix,de
+		ld e,(ix+0)
+		ld d,(ix+1)
+		add hl,de ; Add offset to loaded pitch
 
 		; Load fine tune and write
 		; it to correct register
@@ -220,14 +236,13 @@ SSGCNT_update_note_macro_disabled:
 		add a,b ; - a += b*2
 		add a,b ; /
 		ld d,a
-		ld e,(hl)
+		ld e,l
 		rst RST_YM_WRITEA
 
 		; Load coarse tune and write
 		; it to the correct register
 		inc d
-		inc hl
-		ld e,(hl)
+		ld e,h
 		rst RST_YM_WRITEA
 	pop ix
 	pop af
@@ -235,6 +250,41 @@ SSGCNT_update_note_macro_disabled:
 	pop hl
 	ret
 
+; b: channel (0~2)
+SSGCNT_update_pitch_ofs:
+	push ix
+	push de
+	push hl
+		brk2
+		; Load pitch slide offset in hl
+		ld ix,SSGCNT_pitch_slide_ofs
+		ld e,b
+		ld d,0
+		add ix,de
+		add ix,de
+		ld e,(ix+0)
+		ld d,(ix+1)
+		ex hl,de
+
+		; Load pitch offset in de
+		ld ix,SSGCNT_pitch_ofs
+		ld e,b
+		ld d,0
+		add ix,de
+		add ix,de
+		ld e,(ix+0)
+		ld d,(ix+1)
+
+		; Add together pitch offset and pitch slide, 
+		; then store everything back into WRAM
+		add hl,de
+		ex hl,de
+		ld (ix+0),e
+		ld (ix+1),d
+	pop hl
+	pop de
+	pop ix
+	ret
 ; b: channel (0~2)
 ;	Updates the channel's mixing according to the macros,
 ;   if the channel's mix macros are disabled this won't
@@ -360,6 +410,7 @@ SSGCNT_set_noise_tune:
 
 ; a: channel
 ; c: note
+; Also resets any pitch offset modified by a pitch slide
 SSGCNT_set_note:
 	push bc
 	push hl
@@ -368,10 +419,19 @@ SSGCNT_set_note:
 		ld a,c ; | Swap a and c
 		ld c,b ; /
 
+		; Store note into WRAM
 		ld b,0
 		ld hl,SSGCNT_notes
 		add hl,bc
 		ld (hl),a
+
+		; Reset pitch offset
+		ld hl,SSGCNT_pitch_ofs
+		add hl,bc
+		add hl,bc
+		ld (hl),0
+		inc hl
+		ld (hl),0
 	pop af
 	pop hl
 	pop bc

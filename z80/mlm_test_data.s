@@ -156,8 +156,9 @@ MLM_song_ssg3:
 	dw MLM_song_instruments-MLM_header
 	
 MLM_el_ssg:
-	db $02,1                  ; Set instrument to 1
-	db $38 ; Set SSG volume to 8
+	db $02,1             ; Set instrument to 1
+	db $38               ; Set SSG volume to 8
+	db $21,64             ; Set pitch slide to +1    
 	db $80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
 	db $09                        ; - Jump to sub event list
 	dw MLM_sub_el_wait-MLM_HEADER ; /
@@ -177,7 +178,7 @@ MLM_song_instruments:
 	ds 3                               ; Skip EG information since EG is disabled
 	dw $0000                           ; Mix macro      | MLM_odata_mix_macro1-MLM_header
 	dw $0000                           ; Volume macro   | MLM_odata_vol_macro1-MLM_header
-	dw MLM_odata_arp_macro1-MLM_header ; Arpeggio macro | 
+	dw $0000                           ; Arpeggio macro | MLM_odata_arp_macro1-MLM_header
 	ds 21 ; Padding
 	
 	; Instrument 2 (FM)
