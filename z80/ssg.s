@@ -171,7 +171,6 @@ SSGCNT_update_note:
 	push de
 	push af
 	push ix
-		brk3
 		; Load SSGCNT_notes[channel]
 		; into l
 		ld hl,SSGCNT_notes
@@ -288,7 +287,6 @@ SSGCNT_update_pitch_ofs:
 	push ix
 	push de
 	push hl
-		brk2
 		; Load pitch slide offset in hl
 		ld ix,SSGCNT_pitch_slide_ofs
 		ld e,b

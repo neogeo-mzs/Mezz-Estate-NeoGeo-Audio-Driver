@@ -164,6 +164,7 @@ MLM_el_ssg:
 	dw MLM_sub_el_wait-MLM_HEADER ; /
 
 	db $3F ; Set SSG volume to F
+	db $23
 	db $80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db $00 ; End of song
 
