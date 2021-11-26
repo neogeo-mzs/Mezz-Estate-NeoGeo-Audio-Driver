@@ -1020,7 +1020,7 @@ MLM_command_vectors:
 		dw MLMCOM_wait_ticks_nibble
 	edup
 	dw MLMCOM_return_from_sub_el,   MLMCOM_upward_pitch_slide
-	dw MLMCOM_downward_pitch_slide, MLMCOM_reset_pitch_slide_FM
+	dw MLMCOM_downward_pitch_slide, MLMCOM_reset_pitch_slide
 	dup 12
 		dw MLMCOM_invalid ; Invalid commands
 	edup
@@ -1430,7 +1430,6 @@ MLMCOM_upward_pitch_slide:
 	; Else, update SSGCNT...
 	push hl
 	push de
-		brk
 		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
 
 		; Convert 8bit ofs to a negative
@@ -1571,6 +1570,22 @@ MLMCOM_reset_pitch_slide:
 	jp c,MLMCOM_reset_pitch_slide_FM
 
 	; Else, update SSGCNT...
+	push hl
+		; Clear pitch slide offset
+		ld hl,SSGCNT_pitch_slide_ofs-(MLM_CH_SSG1*2)
+		ld b,0
+		add hl,bc
+		add hl,bc
+		ld (hl),b
+		inc hl
+		ld (hl),b
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop hl
 	jp MLM_parse_command_end
 
 MLMCOM_reset_pitch_slide_FM:
