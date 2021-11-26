@@ -1435,13 +1435,14 @@ MLMCOM_upward_pitch_slide:
 
 		; Convert 8bit ofs to a negative
 		; 16bit ofs, then store it into de
+		; (The lower the tune value is, 
+		; the higher the pitch)
 		xor a,$FF
 		ld l,a
 		ld h,$FF
 		inc hl
 		ex hl,de
 
-		; (The lower "tune" is, the higher the pitch)
 		; Store pitch offset per tick in WRAM
 		ld hl,SSGCNT_pitch_slide_ofs-(MLM_CH_SSG1*2)
 		ld b,0
@@ -1500,6 +1501,24 @@ MLMCOM_downward_pitch_slide:
 	jp c,MLMCOM_downward_pitch_slide_FM
 
 	; Else, update SSGCNT...
+	push hl
+		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
+		
+		; Store pitch offset per tick in WRAM
+		ld hl,SSGCNT_pitch_slide_ofs-(MLM_CH_SSG1*2)
+		ld b,0
+		add hl,bc
+		add hl,bc
+		ld (hl),a
+		inc hl
+		ld (hl),0
+
+		; Set timing to 0
+		; (Execute next command immediately)
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop hl
 	jp MLM_parse_command_end
 
 MLMCOM_downward_pitch_slide_FM:
