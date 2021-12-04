@@ -2,21 +2,21 @@
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
-	ld c,0
-	ld hl,MLM_playback_control
-	dup CHANNEL_COUNT
+	ld c,0+6
+	ld hl,MLM_playback_control+6
+	;dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		xor a,a ; clear a
 		cp a,(hl) ; channel is disabled if MLM_playback_control[ch] is 0
-		jr z,$+7                             ; +2 = 2b
+		jr z,$+7                              ; +2 = 2b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
-		pop hl
+		pop hl                                ; +1 = 7b
 		
 		inc c
 		inc hl
-	edup
+	;edup
 
 	; if active mlm channel counter is 0,
 	; then all channels have stopped, proceed
@@ -64,7 +64,7 @@ MLM_update_channel_playback_exec_check:
 			ld e,(hl)
 			inc hl
 			ld d,(hl)
-
+			
 			; If the first byte's most significant bit is 0, then
 			; parse it and evaluate it as a note, else parse 
 			; and evaluate it as a command
@@ -87,6 +87,7 @@ MLM_update_channel_playback_exec_check:
 				cp a,MLM_CH_FM1
 				jp c,MLM_play_sample_pa
 
+				brk
 				cp a,MLM_CH_SSG1
 				jp c,MLM_play_note_fm
 				
@@ -475,7 +476,7 @@ MLM_play_note_fm:
 		; before playing a note
 		ld h,b ; backup timing in h
 		ld b,a
-		call FMCNT_update_total_levels
+		call FMCNT_update_total_levels ;????
 		ld b,h ; store timing back into b
 
 		; Stop FM channel  
