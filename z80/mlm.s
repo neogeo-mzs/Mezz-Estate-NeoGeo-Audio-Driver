@@ -2,9 +2,9 @@
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
-	ld c,0+6
-	ld hl,MLM_playback_control+6
-	;dup CHANNEL_COUNT
+	ld c,0
+	ld hl,MLM_playback_control
+	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		xor a,a ; clear a
 		cp a,(hl) ; channel is disabled if MLM_playback_control[ch] is 0
@@ -16,7 +16,7 @@ MLM_irq:
 		
 		inc c
 		inc hl
-	;edup
+	edup
 
 	; if active mlm channel counter is 0,
 	; then all channels have stopped, proceed
