@@ -87,7 +87,6 @@ MLM_update_channel_playback_exec_check:
 				cp a,MLM_CH_FM1
 				jp c,MLM_play_sample_pa
 
-				brk
 				cp a,MLM_CH_SSG1
 				jp c,MLM_play_note_fm
 				
@@ -476,7 +475,7 @@ MLM_play_note_fm:
 		; before playing a note
 		ld h,b ; backup timing in h
 		ld b,a
-		call FMCNT_update_total_levels ;????
+		call FMCNT_update_total_levels
 		ld b,h ; store timing back into b
 
 		; Stop FM channel  
