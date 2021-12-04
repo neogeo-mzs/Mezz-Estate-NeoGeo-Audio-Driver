@@ -675,7 +675,7 @@ FMCNT_set_note:
 		; Set block/octave
 		ld a,ixh
 		and a,%01110000 ; Get octave (-OOONNNN -> 0OOO0000)
-		add a,%00010000 ; Increment octave by 1
+		;add a,%00010000 ; Increment octave by 1
 		srl a           ; Get octave in the right position (block needs to be set to octave)
 		or a,b          ; OR block with F-Num 2
 		ld b,a
@@ -716,12 +716,20 @@ FMCNT_set_note_even_ch:
 ; to set the octave you just need to set "block".
 ; octave 0 = block 1, etc...
 ; If the note number exceeds the valid maximum, play a B
-FMCNT_pitch_LUT:
+_FMCNT_pitch_LUT:
 	;  C    C#   D    D#   E    F    F#   G
 	dw 309, 327, 346, 367, 389, 412, 436, 462
 	;  G#   A    A#   B
  	dw 490, 519, 550, 583, 583, 583, 583, 583
 
+; Taken straight from deflemask's vgm output
+; octave 0 = block 0, etc...
+FMCNT_pitch_LUT:
+	;  C     C#    D     D#    E     F     F#    G     
+	dw $269, $28E, $2B5, $2DE, $30A, $338, $369, $39D 
+	;  G#    A     A#    B
+	dw $3D4, $40E, $44C, $48D, $48D, $48D, $48D, $48D
+	; 
 ; a: volume (0 is lowest, 127 is highest)
 ; c: channel (0~3)
 FMCNT_set_volume:
