@@ -107,7 +107,7 @@ FMCNT_update_total_levels:
 
 		; for all the other algorithms, you have
 		; to index the vector table.
-		ld hl,FMCNT_tlupdate_vectors-4
+		ld hl,FMCNT_tlupdate_vectors-8
 		add hl,de
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
 		jp (hl)
@@ -132,9 +132,12 @@ FMCNT_update_total_levels_algo_0_1_2_3:
 
 ; b: channel (0~3)
 ;   Indexed by FM channel algorithm
+;   COULD BE MADE FASTER WITH JP INSTRUCTIONS
 FMCNT_tlupdate_vectors:
-	dw FMCNT_tlupdate_algo4,       FMCNT_tlupdate_algo5_6
-	dw FMCNT_tlupdate_algo5_6,     FMCNT_tlupdate_algo7
+	jr FMCNT_tlupdate_algo4
+	jr FMCNT_tlupdate_algo5_6
+	jr FMCNT_tlupdate_algo5_6
+	jr FMCNT_tlupdate_algo7
 
 FMCNT_tlupdate_algo4:
 		call FMCNT_update_modulator_tl ; OP1
