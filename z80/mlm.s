@@ -163,7 +163,7 @@ MLM_play_song:
 	push ix
 	push af
 		call MLM_stop
-		call set_default_banks 
+		;call set_default_banks 
 
 		; First song index validity check
 		;	If the song is bigger or equal to 128

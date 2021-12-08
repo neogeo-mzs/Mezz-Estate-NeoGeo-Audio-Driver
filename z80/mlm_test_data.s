@@ -1,4 +1,4 @@
-#code SDATA_BANK0,$4000,$C000
+#code SDATA_FBANK,$4000,$4000
 MLM_header:
 	dw MLM_odata_smp_lut-MLM_header ; Point to ADPCM-A sample table
 	db 13 ; Song count
@@ -61,6 +61,7 @@ MLM_odata_arp_macro1:
 	db 2    ; Loop point
 	db -2,-2,-1,-1, 0, 0, 1, 1, 2, 2
 
+#code SDATA_BANK0,$8000,$8000
 MLM_song_pa1:
 	dw MLM_el_pa-MLM_header
 	ds 12*2, 0
