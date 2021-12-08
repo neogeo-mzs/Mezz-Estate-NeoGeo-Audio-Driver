@@ -6,10 +6,15 @@
 ; wpset F800,1,w,wpdata==3C,{tracelog "WA addr: 0x%02X;", a; go}
 ; wpset F800,1,w,wpdata==3D,{tracelog " data: 0x%02X\n", a; go}
 ; wpset F800,1,w,wpdata==39&&(bc>>8)==00,{w@F9A1 = (w@F9A1) + 1; g}
-
 	include "def.inc"
 
-	org $0000
+#target rom
+
+#data WRAM,$F800,$800
+	include "wram.s"
+
+#code DRIVER_CODE,$0000,$4000
+	;org $0000
 j_startup:
 	di
 	jp startup
@@ -297,8 +302,6 @@ softlock:
 	include "math.s"
 	include "sfxps.s"
 
-	org MLM_HEADER ; block 1
-	;include "mlm_test_data.s"
-	incbin "m1rom_sdata.bin"
-
-	include "wram.s"
+	;org MLM_HEADER ; block 1
+	;incbin "m1rom_sdata.bin"
+	include "mlm_test_data.s"
