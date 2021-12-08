@@ -104,7 +104,7 @@ startup:
 	out ($C0),a
 	
 	;call set_default_banks
-	ld b,1
+	ld b,2
 	call set_banks
 	call SFXPS_init
 	call UCOM_init

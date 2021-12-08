@@ -43,7 +43,9 @@ This should be located at address $4000, in the static bank
 |$03FF   | Song 255 offset                          | 2
 |$0401   | Song 255 padding                         | 1
 
-* Only the first 128 songs can be played as of right now.
+### Banks
+Each bank is 32kb big, with their last 2kb being unreadable.
+The bank counting starts from $8000, thus bank 0 points to $8000~$F7FF, bank 1 to $10000~177FF, etc...
 
 ### Song Data
 

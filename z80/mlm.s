@@ -163,7 +163,6 @@ MLM_play_song:
 	push ix
 	push af
 		call MLM_stop
-		;call set_default_banks 
 
 		; First song index validity check
 		;	If the song is bigger or equal to 128
@@ -179,15 +178,23 @@ MLM_play_song:
 		cp a,c
 		call nc,softlock ; if a >= c then ...
 
-		; Load song header offset 
-		; from MLM header into de,
-		; then add MLM_songs to it
-		; to obtain a pointer.
+		; Index song offset list
 		inc hl
+		sla a
 		sla a
 		ld d,0
 		ld e,a
 		add hl,de ; Calculate song offset
+
+		; Switch to the bank specified 
+		; in the offset
+		ld b,(hl)
+		inc b
+		call set_banks
+
+		; Load offset to song and
+		; increment it to obtain pointer
+		inc hl
 		ld e,(hl)
 		inc hl
 		ld d,(hl)
