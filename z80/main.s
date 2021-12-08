@@ -103,7 +103,9 @@ startup:
 	ld a,1
 	out ($C0),a
 	
-	call set_default_banks
+	;call set_default_banks
+	ld b,1
+	call set_banks
 	call SFXPS_init
 	call UCOM_init
 
@@ -197,20 +199,41 @@ play_sample:
 	pop de
 	ret
 
-set_default_banks:
+; b: 32kb bank
+set_banks:
 	push af
-		; Set $F000-$F7FF bank to bank $16 (30 *  2K; $F000~$F7FF)
-		ld a,$1E
-		in a,($08)
-		; Set $E000-$EFFF bank to bank $0A (14 *  4K; $E000~$EFFF)
-		ld a,$0E
-		in a,($09)
-		; Set $C000-$DFFF bank to bank $04 ( 6 *  8K; $C000~$DFFF)
-		ld a,$06
-		in a,($0A)
-		; Set $8000-$BFFF bank to bank $02 ( 2 * 16K; $8000~$BFFF)
-		ld a,$02
+		brk
+
+		; If the selected bank has already
+		; been switched into place, return
+		ld a,(current_bank)
+		cp a,b
+		jp z,set_banks_ret
+
+		; Store bank in WRAM
+		ld a,b
+		ld (current_bank),a
+
+		; z3 = b * 2
+		sla a
 		in a,($0B)
+
+		; z2 = z3 * 2 + 2
+		sla a
+		add a,2
+		in a,($0A)
+
+		; z1 = z2 * 2 + 2
+		sla a
+		add a,2
+		in a,($09)
+
+		; z0 = z1 * 2 + 2
+		sla a
+		add a,2
+		in a,($08)
+		
+set_banks_ret:
 	pop af
 	ret
 

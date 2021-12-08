@@ -384,8 +384,6 @@ FMCNT_check_fnum_overunderflow:
 		cp a,l
 		jp z,FMCNT_check_fnum_overunderflow_ret
 
-		brk
-
 		; If new_block < old_block, then
 		; an underflow happened.
 		jp c,FMCNT_solve_fnum_underflow
