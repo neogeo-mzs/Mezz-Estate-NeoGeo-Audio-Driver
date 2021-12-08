@@ -2,19 +2,19 @@
 MLM_header:
 	dw MLM_odata_smp_lut-MLM_header ; Point to ADPCM-A sample table
 	db 13 ; Song count
-	dw MLM_song_pa1-MLM_header
-	dw MLM_song_pa2-MLM_header
-	dw MLM_song_pa3-MLM_header
-	dw MLM_song_pa4-MLM_header
-	dw MLM_song_pa5-MLM_header
-	dw MLM_song_pa6-MLM_header
-	dw MLM_song_fm1-MLM_header
-	dw MLM_song_fm2-MLM_header
-	dw MLM_song_fm3-MLM_header
-	dw MLM_song_fm4-MLM_header
-	dw MLM_song_ssg1-MLM_header
-	dw MLM_song_ssg2-MLM_header
-	dw MLM_song_ssg3-MLM_header
+	.long (MLM_song_pa1-MLM_header) << 8 | 0
+	.long (MLM_song_pa2-MLM_header) << 8 | 0
+	.long (MLM_song_pa3-MLM_header) << 8 | 0
+	.long (MLM_song_pa4-MLM_header) << 8 | 0
+	.long (MLM_song_pa5-MLM_header) << 8 | 0
+	.long (MLM_song_pa6-MLM_header) << 8 | 0
+	.long (MLM_song_fm1-MLM_header) << 8 | 1
+	.long (MLM_song_fm1-MLM_header) << 8 | 1
+	.long (MLM_song_fm1-MLM_header) << 8 | 1
+	.long (MLM_song_fm1-MLM_header) << 8 | 1
+	.long (MLM_song_ssg1-MLM_header) << 8 | 2
+	.long (MLM_song_ssg2-MLM_header) << 8 | 2
+	.long (MLM_song_ssg3-MLM_header) << 8 | 2
 
 MLM_song_instruments:
 	; Instrument 0 (ADPCM-A)
