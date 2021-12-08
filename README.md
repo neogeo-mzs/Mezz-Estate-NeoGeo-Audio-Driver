@@ -35,11 +35,13 @@ This should be located at address $4000, in the static bank
 |--------|------------------------------------------|-------
 |$0000   | SFX ADPCM-A table offset                 | 2
 |$0002   | Song count                               | 1
-|$0003   | Song 0 bank (Zone3; SOON)                | 1
+|$0003   | Song 0 bank                              | 1
 |$0004   | Song 0 offset                            | 2
+|$0006   | Song 0 padding                           | 1
 |...     | ...                                      |
-|$01FF   | Last song bank (Zone3; SOON)             | 1
-|$0201   | Last song offset (maximum of 256* songs) | 2
+|$03FE   | Song 255 bank                            | 1
+|$03FF   | Song 255 offset                          | 2
+|$0401   | Song 255 padding                         | 1
 
 * Only the first 128 songs can be played as of right now.
 
