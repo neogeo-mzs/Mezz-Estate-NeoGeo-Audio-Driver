@@ -3,11 +3,10 @@ MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
 	ld c,0
-	ld hl,MLM_playback_control
+	ld hl,MLM_channel_control
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
-		xor a,a ; clear a
-		cp a,(hl) ; channel is disabled if MLM_playback_control[ch] is 0
+		bit MLM_CH_ENABLE_BIT,(hl)            ; channel is disabled if MLM_channel_control[ch]'s bit 0 is cleared
 		jr z,$+7                              ; +2 = 2b
 
 		push hl                               ; +1 = 3b
@@ -203,7 +202,7 @@ MLM_play_song:
 
 		;     For each channel...
 		ld de,MLM_playback_pointers
-		ld ix,MLM_playback_control
+		ld ix,MLM_channel_control
 		ld b,1
 
 		dup CHANNEL_COUNT
@@ -271,11 +270,11 @@ MLM_play_song_loop2:
 ; [INPUT]
 ;	b:	channel+1
 ;	de:	$MLM_playback_pointers[ch]
-;	ix:	$MLM_playback_control[ch]
+;	ix:	$MLM_channel_control[ch]
 ;   hl: song_header[ch]
 ; [OUTPUT]
 ;	de:	$MLM_playback_pointers[ch+1]
-;	ix:	$MLM_playback_control[ch+1]
+;	ix:	$MLM_channel_control[ch+1]
 ;   hl: song_header[ch+1]
 MLM_playback_init:
 	push bc
@@ -322,7 +321,7 @@ MLM_playback_init:
 			or a,a ; Clear carry flag
 			sbc hl,bc
 			jr z,MLM_playback_init_no_playback
-			ld (ix+0),$FF ; Set playback control channel enable flag
+			ld (ix+0),MLM_CH_ENABLE ; Set playback control channel enable flag
 MLM_playback_init_no_playback:
 			inc ix
 		pop hl
@@ -1054,7 +1053,7 @@ MLMCOM_end_of_list:
 		; Clear all channel playback control flags
 		ld h,0
 		ld l,c
-		ld de,MLM_playback_control
+		ld de,MLM_channel_control
 		add hl,de
 		ld (hl),0
 
