@@ -182,7 +182,9 @@ UCOM_command_vectors:
     dw UCOM_CMD_nop,               UCOM_CMD_play_song
     dw UCOM_CMD_stop_song,         UCOM_CMD_sfxps_buffer_cvol
     dw UCOM_CMD_sfxps_buffer_prio, UCOM_CMD_sfxps_play_smp
-    dup 122
+    dw UCOM_CMD_fade_in,           UCOM_CMD_fade_in
+    dw UCOM_CMD_fade_out,          UCOM_CMD_fade_out
+    dup 118
         dw UCOM_CMD_invalid
     edup
 
@@ -245,6 +247,73 @@ UCOM_CMD_sfxps_play_smp:
     pop af
     pop iy
     pop bc
+    jp UCOM_run_command_return
+
+; b: %0MMMMMMM (tmb load counter Msb)
+; c: %0000011L (tmb load counter Lsb)
+UCOM_CMD_fade_in:
+    push af
+    push bc
+    push de
+        ; tmb_load_cnt = b<<1 | (c & 1) 
+        ld a,b
+        srl a 
+        ld b,a
+        ld a,c
+        and a,1
+        or a,b
+
+        ; Set TMB Load counter
+        ld e,a
+        ld d,REG_TMB_COUNTER
+	    rst RST_YM_WRITEA
+
+        ; Load TMB load counter, reset TMB flags, and keep all irqs enabled
+        ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TA_IRQ | TM_CNT_ENABLE_TB_IRQ 
+        ld d,REG_TIMER_CNT
+        rst RST_YM_WRITEA
+
+        ; Enable fade in by setting the offset to a positive number
+        ; and setting the master volume to 0
+        ld a,1
+        ld (FDCNT_offset),a
+        xor a,a
+        ld (MLM_master_volume),a
+    pop de
+    pop bc
+    pop af
+    jp UCOM_run_command_return
+
+; b: %0MMMMMMM (tmb load counter Msb)
+; c: %0000011L (tmb load counter Lsb)
+UCOM_CMD_fade_out:
+    push af
+    push bc
+    push de
+        ; tmb_load_cnt = b<<1 | (c & 1) 
+        ld a,b
+        srl a 
+        ld b,a
+        ld a,c
+        and a,1
+        or a,b
+
+        ; Set TMB Load counter
+        ld e,a
+        ld d,REG_TMB_COUNTER
+	    rst RST_YM_WRITEA
+
+        ; Load TMB load counter, reset TMB flags, and keep all irqs enabled
+        ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TA_IRQ | TM_CNT_ENABLE_TB_IRQ 
+        ld d,REG_TIMER_CNT
+        rst RST_YM_WRITEA
+
+        ; Enable fade in by setting the offset to a positive number
+        ld a,-1
+        ld (FDCNT_offset),a
+    pop de
+    pop bc
+    pop af
     jp UCOM_run_command_return
 
 UCOM_CMD_invalid:

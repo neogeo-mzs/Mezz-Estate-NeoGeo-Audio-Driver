@@ -147,7 +147,8 @@ main_loop:
 execute_tmb_tick:
 	call FDCNT_irq
 
-	ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TB_IRQ 
+	; Load TMB load counter, reset TMB flags, and keep all irqs enabled
+	ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TA_IRQ  | TM_CNT_ENABLE_TB_IRQ 
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA
 	ret
@@ -173,7 +174,8 @@ execute_tma_tick:
 	call SSGCNT_irq
 
 execute_tma_tick_skip:
-	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ 
+	; Load TMA load counter, reset TMA flags, and keep all irqs enabled
+	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ | TM_CNT_ENABLE_TB_IRQ 
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA
 	ret
