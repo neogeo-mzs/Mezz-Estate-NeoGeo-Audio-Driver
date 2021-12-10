@@ -135,8 +135,8 @@ MLM_stop:
 		ldir
 
 		; Set WRAM variables
-		;ld a,1
-		;ld (MLM_base_time),a
+		ld a,$FF
+		ld (MLM_master_volume),a
 
 		; Clear other WRAM variables
 		xor a,a
@@ -811,12 +811,30 @@ MLM_set_channel_volume:
 	push hl
 	push bc
 	push af
-		; Store volume in WRAM
+		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
 		add hl,bc
 		ld (hl),a
-		
+
+		; If master volume is 255, there's 
+		; no need to alter the volume
+		ld hl,MLM_master_volume
+		ld b,(hl)
+		inc b ; cp b,255
+		jp z,MLM_set_channel_volume_skip_mvol_calc
+
+		; Else, since cvol : 255 = x : mvol, calculate x using 
+		; cvol*mvol / 256 (It's much faster to divide by 256 
+		; than to divide by 255, a small error to pay for speed)
+		push de
+			ld h,(hl)
+			ld e,a
+			call H_Times_E
+			ld a,h ; No division needs to be done, hl / 256 = h
+		pop de
+
+MLM_set_channel_volume_skip_mvol_calc:
 		; Swap a and c
 		ld b,a
 		ld a,c
