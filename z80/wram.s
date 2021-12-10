@@ -17,7 +17,7 @@ com_buffer_byte_significance:  ds 1                   ; u8
 MLM_wram_start:
 MLM_playback_pointers:        ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_playback_start_pointers:  ds 2*CHANNEL_COUNT     ; void*[13]
-MLM_channel_control:         ds CHANNEL_COUNT       ; bool[13] (%0000'000E; channel Enable)
+MLM_channel_control:          ds CHANNEL_COUNT       ; bool[13] (%0000'000E; channel Enable)
 MLM_playback_timings:         ds CHANNEL_COUNT       ; u8[13]   
 MLM_playback_set_timings:     ds CHANNEL_COUNT       ; u8[13]   
 MLM_event_arg_buffer:         ds 32                  ; u8[32]
@@ -26,6 +26,7 @@ MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
 MLM_sub_el_return_pointers:   ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_instruments:              ds 2                   ; void* 
+MLM_master_volume:            ds 1                   ; u8
 MLM_wram_end:
 
 ; ======== SSG Controller variables ========
@@ -83,6 +84,9 @@ SFXPS_channel_priorities:      ds PA_CHANNEL_COUNT ; u[6]
 SFXPS_channel_taken_status:    ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 taken? 1 = yes, 0 = no)
 SFXPS_channel_playback_status: ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 playing? 1 = yes, 0 = no)
 SFXPS_WRAM_end:
+
+; ======== Fade CNT ========
+FDCNT_offset: ds 1 ; s8
 
 ; ======== Others ========
 EXT_2CH_mode:          ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)

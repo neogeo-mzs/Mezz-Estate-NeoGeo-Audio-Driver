@@ -325,6 +325,6 @@ softlock:
 	include "math.s"
 	include "sfxps.s"
 
-	;org MLM_HEADER ; block 1
-	;incbin "m1rom_sdata.bin"
+;#code SDATA,$4000,$B800
+;	incbin "m1rom_sdata.bin"
 	include "mlm_test_data.s"
