@@ -137,11 +137,11 @@ execute_tma_tick:
 	; Increment base time counter, and if it's
 	; not equal to the song's base time, only
 	; update the YM2610 timer flags
-	ld a,(IRQ_tick_time_counter) ; \
+	ld a,(IRQ_TA_tick_time_counter) ; \
 	inc a                        ; | MLM_base_time_counter++
-	ld (IRQ_tick_time_counter),a ; /
+	ld (IRQ_TA_tick_time_counter),a ; /
 	ld c,a ; Backup base time counter in c
-	ld a,(IRQ_tick_base_time)
+	ld a,(IRQ_TA_tick_base_time)
 	cp a,c
 	jr nz,execute_tma_tick_skip ; If MLM_base_time_counter != MLM_base_time return
 
