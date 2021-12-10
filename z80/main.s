@@ -145,6 +145,8 @@ main_loop:
 	jr main_loop
 
 execute_tmb_tick:
+	call FDCNT_irq
+
 	ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TB_IRQ 
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA
@@ -341,6 +343,7 @@ softlock:
 	include "mlm.s"
 	include "math.s"
 	include "sfxps.s"
+	include "fade.s"
 
 ;#code SDATA,$4000,$B800
 ;	incbin "m1rom_sdata.bin"

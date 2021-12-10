@@ -302,11 +302,13 @@ Each command is a single word. the LSB is the command, the MSB is the parameter.
 **format: %1SSSSSSS'10000101 (Sample)**
 By default, the priority is $00, the panning is set to center and the volume is $1F
 
-### Internal IRQ commands
-These commands are used internally to safely give commands 
-to anything IRQ related (such as the MLM song playback),
-each command also has a fixed size of one word, except in
-this case all 16 bits are used.
+##### Command 6~7: Fade in
+**format: %1MMMMMMM'1000011L (tmb load counter Msb; tmb load counter Lsb)**
+TMB load counter = -31250/9 * (fade_time / 256) + 256
+assuming 0.074 <= fade_time <= 18.879 (in seconds)
+
+##### Command 8~9: Fade out
+**format: %1MMMMMMM'1000011L (tmb load counter Msb; tmb load counter Lsb)**
 
 #### Bankswitching
 Each song is divided in 8kb blocks. The driver has access to two of these blocks at a time, and they can be switched freely allowing up to 512 KiB of data. The blocks are switched when the other starts playing.
