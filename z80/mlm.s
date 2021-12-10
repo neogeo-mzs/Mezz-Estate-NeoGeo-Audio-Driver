@@ -141,8 +141,8 @@ MLM_stop:
 		; Clear other WRAM variables
 		xor a,a
 		ld (EXT_2CH_mode),a
-		ld (IRQ_tick_base_time),a
-		ld (IRQ_tick_time_counter),a
+		ld (IRQ_TA_tick_base_time),a
+		ld (IRQ_TA_tick_time_counter),a
 
 		call ssg_stop
 		call fm_stop
@@ -223,7 +223,7 @@ MLM_play_song:
 		; header and store it into WRAM
 		inc hl
 		ld a,(hl)
-		ld (IRQ_tick_base_time),a
+		ld (IRQ_TA_tick_base_time),a
 
 		; Load instrument offset into de
 		inc hl
@@ -1215,7 +1215,7 @@ MLMCOM_set_master_volume:
 MLMCOM_set_base_time:
 	; Set base time
 	ld a,(MLM_event_arg_buffer)
-	ld (IRQ_tick_base_time),a
+	ld (IRQ_TA_tick_base_time),a
 
 	; Set timing
 	ld a,c
