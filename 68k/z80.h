@@ -8,6 +8,8 @@
 #define Z80_UCOM_BUFFER_SFXPS_CVOL(pan, cvol) Z80_send_user_command(0x03, (pan) | ((cvol) & 0x1F))
 #define Z80_UCOM_BUFFER_SFXPS_PRIO(prio)      Z80_send_user_command(0x04, prio)
 #define Z80_UCOM_PLAY_SFXPS_SMP(smp)          Z80_send_user_command(0x05, smp)
+#define Z80_UCOM_FADE_IN(tmb_ldcnt)           Z80_send_user_command(0x06 | (tmb_ldcnt & 1), tmb_ldcnt>>1)
+#define Z80_UCOM_FADE_OUT(tmb_ldcnt)          Z80_send_user_command(0x08 | (tmb_ldcnt & 1), tmb_ldcnt>>1)
 
 typedef enum {
     PAN_NONE   = 0x00,

@@ -23,7 +23,8 @@ FDCNT_irq:
     cp a,(hl)
     jp c,FDCNT_irq_overflow_check_ret
     ld a,0 ; Else, an underflow must have happened.
-
+    xor a,a ; ld a,0
+    ld (FDCNT_offset),a
 FDCNT_irq_overflow_check_ret:
     ; Store master volume back into WRAM,
     ; and update all channel volumes
@@ -54,4 +55,6 @@ FDCNT_irq_overflow_check:
     ; If that isn't the case, an overflow happened...
     ; or math broke and the apocalypse is coming.
     ld a,$FF
+    xor a,a ; ld a,0
+    ld (FDCNT_offset),a
     jp FDCNT_irq_overflow_check_ret

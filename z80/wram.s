@@ -85,12 +85,10 @@ SFXPS_channel_taken_status:    ds 1                ; u8 (%--654321; is ADPCM-A c
 SFXPS_channel_playback_status: ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 playing? 1 = yes, 0 = no)
 SFXPS_WRAM_end:
 
-; ======== Fade CNT ========
-FDCNT_offset: ds 1 ; s8
-
 ; ======== Others ========
 EXT_2CH_mode:          ds 1    ; u8 (0: 2CH mode off; 64: 2CH mode on)
 IRQ_TA_tick_base_time:    ds 1 ; u8
 IRQ_TA_tick_time_counter: ds 1 ; u8
 current_bank:          ds 1    ; u8
+FDCNT_offset: ds 1 ; s8
 tmp2:                  ds 2

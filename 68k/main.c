@@ -59,12 +59,12 @@ int main()
 	BIOS_FixClear();
     print_gui();
 
-    const int SONG_COUNT = 13;
+    const int SONG_COUNT = 13; 
     const char* PAN_LABELS[] = { "NONE  ", "RIGHT ", "LEFT  ", "CENTER"};
     int selected_song = 0;
     int smp_id = 0;
     int panning = 3; // 0 = None, 1 = Right, 2 = Left, 3 = Center
-    
+
     while(1)
     {
         PAL_ENTRY(0, 1) = WHITE;
@@ -82,7 +82,10 @@ int main()
             smp_id = WRAP(smp_id+1, 0, 128);
 
         if (BIOS_P1CHANGE->A)
+        {
+            Z80_UCOM_FADE_IN(253); // ~0.15s
             Z80_UCOM_PLAY_SONG(selected_song);
+        }
         if (BIOS_P1CHANGE->B)
             Z80_UCOM_STOP();
         if (BIOS_P1CHANGE->C)
