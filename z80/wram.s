@@ -89,8 +89,8 @@ SFXPS_WRAM_end:
 FDCNT_offset: ds 1 ; s8
 
 ; ======== Others ========
-EXT_2CH_mode:          ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
+EXT_2CH_mode:          ds 1    ; u8 (0: 2CH mode off; 64: 2CH mode on)
 IRQ_TA_tick_base_time:    ds 1 ; u8
 IRQ_TA_tick_time_counter: ds 1 ; u8
-current_bank:          ds 1 ; u8
+current_bank:          ds 1    ; u8
 tmp2:                  ds 2

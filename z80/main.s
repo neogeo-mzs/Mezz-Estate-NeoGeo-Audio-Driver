@@ -109,22 +109,33 @@ startup:
 	call SFXPS_init
 	call UCOM_init
 
+	; Set Timer A to ~60Hz and
+	; Timer B to ~13.56Hz by default
 	ld hl,98
 	call ta_counter_load_set
+	ld de,REG_TMB_COUNTER<<8 | 0
+	rst RST_YM_WRITEA
 
 	; Reset timer counters to 0
 	ld de,REG_TIMER_CNT<<8 
 	rst RST_YM_WRITEA
 
-	; Loads Load counter to TA counter and resets TA flags
-	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ
+	; Loads load counter, enables interrupts 
+	; and resets flags of timer A and B.
+	; https://wiki.neogeodev.org/index.php?title=YM2610_timers
+	ld e,%00111111
 	rst RST_YM_WRITEA
-
 	out (ENABLE_NMI),a 
 
 main_loop:
-	; Check the timer A flag, if so, 
-	; execute the timer based functions
+	; Check the timer B flag, if so 
+	; execute tma based function
+	in a,(4)
+	bit 1,a
+	call nz,execute_tmb_tick
+
+	; Check the timer A flag, if so 
+	; execute tma based function
 	in a,(4)
 	bit 0,a
 	call nz,execute_tma_tick
@@ -132,6 +143,12 @@ main_loop:
 	call UCOM_handle_command
 	call SFXPS_update
 	jr main_loop
+
+execute_tmb_tick:
+	ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TB_IRQ 
+	ld d,REG_TIMER_CNT
+	rst RST_YM_WRITEA
+	ret
 
 execute_tma_tick:
 	; Increment base time counter, and if it's
@@ -147,7 +164,7 @@ execute_tma_tick:
 
 	; Else, clear the counter and carry on executing the tick
 	xor a,a ; ld a,0
-	ld (IRQ_tick_time_counter),a
+	ld (IRQ_TA_tick_time_counter),a
 
 	call MLM_irq
 	call FMCNT_irq
