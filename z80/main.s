@@ -120,7 +120,7 @@ startup:
 	ld de,REG_TIMER_CNT<<8 
 	rst RST_YM_WRITEA
 
-	; Loads load counter, enables interrupts 
+	; Loads load counters, enables interrupts 
 	; and resets flags of timer A and B.
 	; https://wiki.neogeodev.org/index.php?title=YM2610_timers
 	ld e,%00111111
@@ -142,18 +142,39 @@ main_loop:
 
 	call UCOM_handle_command
 	call SFXPS_update
+
+	; If at least one timer has expired, set all the 
+	; load counter and reset flags flags. Even if 
+	; the load counter flag of an unexpired timer has 
+	; been set, nothing will happen. The load counter 
+	; flag only works when the timer counter is 0.
+	ld a,(has_a_timer_expired)
+	or a,a ; cp a,0
+	jr z,main_loop ; if no timer has expired, continue
+
+	; Loads load counter, enables interrupts 
+	; and resets flags of timer A and B.
+	ld e,%00111111
+	ld d,REG_TIMER_CNT
+	rst RST_YM_WRITEA
+	xor a,a ; ld a,0
+	ld (has_a_timer_expired),a
 	jr main_loop
 
 execute_tmb_tick:
+	ld a,$FF
+	ld (has_a_timer_expired),a
 	call FDCNT_irq
-
-	; Load TMB load counter, reset TMB flags, and keep all irqs enabled
-	ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TA_IRQ  | TM_CNT_ENABLE_TB_IRQ 
-	ld d,REG_TIMER_CNT
-	rst RST_YM_WRITEA
 	ret
 
+; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
+; wpset F800,1,w,wpdata==3A,{printf "TMA TICK --------"; go}
 execute_tma_tick:
+	brk
+
+	ld a,$FF
+	ld (has_a_timer_expired),a
+	
 	; Increment base time counter, and if it's
 	; not equal to the song's base time, only
 	; update the YM2610 timer flags
@@ -164,6 +185,8 @@ execute_tma_tick:
 	ld a,(IRQ_TA_tick_base_time)
 	cp a,c
 	jr nz,execute_tma_tick_skip ; If MLM_base_time_counter != MLM_base_time return
+
+	brk2
 
 	; Else, clear the counter and carry on executing the tick
 	xor a,a ; ld a,0
@@ -223,8 +246,6 @@ play_sample:
 ; b: 32kb bank
 set_banks:
 	push af
-		brk
-
 		; If the selected bank has already
 		; been switched into place, return
 		ld a,(current_bank)

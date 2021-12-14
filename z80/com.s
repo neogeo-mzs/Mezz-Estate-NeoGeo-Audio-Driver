@@ -122,7 +122,7 @@ UCOM_handle_command:
         call UCOM_run_command
 
         ; Set the current command
-        ; word t$ $0080 (NOP)
+        ; word to $0080 (NOP)
         ld (hl),$00
         dec hl
         ld (hl),$80
@@ -257,7 +257,7 @@ UCOM_CMD_fade_in:
     push de
         ; tmb_load_cnt = b<<1 | (c & 1) 
         ld a,b
-        srl a 
+        sla a 
         ld b,a
         ld a,c
         and a,1

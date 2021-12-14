@@ -22,7 +22,8 @@ FDCNT_irq:
     ld hl,MLM_master_volume
     cp a,(hl)
     jp c,FDCNT_irq_overflow_check_ret
-    ld a,0 ; Else, an underflow must have happened.
+    
+    ; Else, an underflow must have happened.
     xor a,a ; ld a,0
     ld (FDCNT_offset),a
 FDCNT_irq_overflow_check_ret:
@@ -39,7 +40,7 @@ FDCNT_irq_overflow_check_ret:
     ld hl,MLM_channel_volumes
     dup CHANNEL_COUNT
         ld a,(hl) 
-        call MLM_set_channel_volume
+        ;call MLM_set_channel_volume
         inc hl
         inc c
     edup
@@ -54,7 +55,7 @@ FDCNT_irq_overflow_check:
 
     ; If that isn't the case, an overflow happened...
     ; or math broke and the apocalypse is coming.
-    ld a,$FF
     xor a,a ; ld a,0
     ld (FDCNT_offset),a
+    ld a,$FF
     jp FDCNT_irq_overflow_check_ret
