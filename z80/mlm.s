@@ -34,6 +34,7 @@ MLM_update_skip:
 ; Doesn't backup AF, HL, DE, B, IX, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
+	brk3
 	inc iyl ; increment active mlm channel counter
 
 	; decrement MLM_playback_timings[ch],

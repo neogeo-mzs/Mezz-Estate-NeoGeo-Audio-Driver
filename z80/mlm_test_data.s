@@ -157,7 +157,7 @@ MLM_el_fm:
 	db $80 | (8*3), 0 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
 	db $80 | (8*3), 2 | (4 << 4) ; Play FM note D4 and wait 8*3 ticks
 	db $01, 30 ; Stop note and wait 30 ticks
-	db $05,$E0 ; Set channel volume
+	db $05,$E8 ; Set channel volume
 	db $80 | (8*3), 4 | (4 << 4) ; Play FM note E4 and wait 8*3 ticks
 	db $80 | (8*3), 5 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
 	db $00
