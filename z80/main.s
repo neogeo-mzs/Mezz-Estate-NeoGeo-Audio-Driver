@@ -170,8 +170,6 @@ execute_tmb_tick:
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
 ; wpset F800,1,w,wpdata==3A,{printf "TMA TICK --------"; go}
 execute_tma_tick:
-	brk
-
 	ld a,$FF
 	ld (has_a_timer_expired),a
 	
@@ -185,8 +183,6 @@ execute_tma_tick:
 	ld a,(IRQ_TA_tick_base_time)
 	cp a,c
 	jr nz,execute_tma_tick_skip ; If MLM_base_time_counter != MLM_base_time return
-
-	brk2
 
 	; Else, clear the counter and carry on executing the tick
 	xor a,a ; ld a,0

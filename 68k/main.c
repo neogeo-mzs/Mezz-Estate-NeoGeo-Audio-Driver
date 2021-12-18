@@ -83,17 +83,15 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            //Z80_UCOM_FADE_IN(253); // ~0.15s
+            Z80_UCOM_FADE_IN(253); // ~0.15s
             Z80_UCOM_PLAY_SONG(selected_song);
         }
         if (BIOS_P1CHANGE->B)
             Z80_UCOM_STOP();
         if (BIOS_P1CHANGE->C)
         {
-            Z80_UCOM_FADE_IN(253); // ~0.15s
-            Z80_UCOM_PLAY_SONG(selected_song);
-            //panning = WRAP(panning+1, 0, 4);
-            //Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<5, 0x1F);
+            panning = WRAP(panning+1, 0, 4);
+            Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<5, 0x1F);
         }
         if (BIOS_P1CHANGE->D)
             Z80_UCOM_PLAY_SFXPS_SMP(smp_id);
