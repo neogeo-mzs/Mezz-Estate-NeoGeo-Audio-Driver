@@ -164,7 +164,7 @@ main_loop:
 execute_tmb_tick:
 	ld a,$FF
 	ld (has_a_timer_expired),a
-	call FDCNT_irq
+	call FDCNT_irqB
 	ret
 
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
