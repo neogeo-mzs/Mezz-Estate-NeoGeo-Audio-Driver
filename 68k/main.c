@@ -83,7 +83,7 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            Z80_UCOM_FADE_IN(253); // ~0.15s
+            //Z80_UCOM_FADE_IN(253); // ~0.15s
             Z80_UCOM_PLAY_SONG(selected_song);
         }
         if (BIOS_P1CHANGE->B)

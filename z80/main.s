@@ -188,6 +188,7 @@ execute_tma_tick:
 	xor a,a ; ld a,0
 	ld (IRQ_TA_tick_time_counter),a
 
+	call FDCNT_irqA
 	call MLM_irq
 	call FMCNT_irq
 	call SSGCNT_irq

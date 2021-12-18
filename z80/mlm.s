@@ -34,7 +34,6 @@ MLM_update_skip:
 ; Doesn't backup AF, HL, DE, B, IX, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
-	brk3
 	inc iyl ; increment active mlm channel counter
 
 	; decrement MLM_playback_timings[ch],
@@ -882,7 +881,28 @@ MLM_set_channel_volume_PA:
 		rrca
 		rrca
 		and a,$1F
-		call PA_set_channel_volume
+		push de
+			; Store volume in 
+			; PA_channel_volumes[channel]
+			ld hl,PA_channel_volumes
+			ld b,0
+			add hl,bc
+			ld (hl),a
+
+			; Load panning from 
+			; PA_channel_pannings[channel]
+			; and OR it with the volume
+			ld de,PA_channel_pannings-PA_channel_volumes
+			add hl,de
+			or a,(hl) ; ORs the volume and panning
+			ld e,a
+			
+			; Set CVOL register
+			ld a,c
+			add a,REG_PA_CVOL
+			ld d,a
+			rst RST_YM_WRITEB
+		pop de
 	pop af
 	pop bc
 	pop hl
@@ -897,7 +917,19 @@ MLM_set_channel_volume_FM:
 		ld c,b
 
 		srl a ; $00~$FF -> $00~$7F
-		call FMCNT_set_volume
+		; Store volume in WRAM
+		ld b,0
+		ld hl,FM_channel_volumes
+		add hl,bc
+		and a,127 ; Wrap volume inbetween 0 and 127
+		ld (hl),a
+
+		; set channel volume update flag
+		ld hl,FM_channel_enable
+		add hl,bc
+		ld a,(hl)
+		or a,FMCNT_VOL_UPDATE
+		ld (hl),a
 	pop af
 	pop bc
 	pop hl
