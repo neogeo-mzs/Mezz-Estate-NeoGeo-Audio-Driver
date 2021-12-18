@@ -3,7 +3,7 @@
 ; of the frequency of the currently playing song
 ; (Which uses Timer A)
 ; DOESN'T BACKUP REGISTERS
-FDCNT_irq:
+FDCNT_irqB:
     ; If the fade offset is 0, return
     ld a,(FDCNT_offset)
     or a,a ; cp a,0
@@ -15,18 +15,18 @@ FDCNT_irq:
     add a,(hl)
     ld hl,FDCNT_offset
     bit 7,(hl)
-    jp z,FDCNT_irq_overflow_check
+    jp z,FDCNT_irqB_overflow_check
 
     ; taking a + b = c and assuming that b < 0, 
     ; then c < a must always be true.
     ld hl,MLM_master_volume
     cp a,(hl)
-    jp c,FDCNT_irq_overflow_check_ret
+    jp c,FDCNT_irqB_overflow_check_ret
     
     ; Else, an underflow must have happened.
     xor a,a ; ld a,0
     ld (FDCNT_offset),a
-FDCNT_irq_overflow_check_ret:
+FDCNT_irqB_overflow_check_ret:
     ; Store master volume back into WRAM,
     ; and update all channel volumes
     ld (hl),a
@@ -46,16 +46,16 @@ FDCNT_irq_overflow_check_ret:
     edup
     ret
 
-FDCNT_irq_overflow_check:
+FDCNT_irqB_overflow_check:
     ; taking a + b = c and assuming b is
     ; positive, then c >= a must always be true.
     ld hl,MLM_master_volume
     cp a,(hl)
-    jp nc,FDCNT_irq_overflow_check_ret
+    jp nc,FDCNT_irqB_overflow_check_ret
 
     ; If that isn't the case, an overflow happened...
     ; or math broke and the apocalypse is coming.
     xor a,a ; ld a,0
     ld (FDCNT_offset),a
     ld a,$FF
-    jp FDCNT_irq_overflow_check_ret
+    jp FDCNT_irqB_overflow_check_ret
