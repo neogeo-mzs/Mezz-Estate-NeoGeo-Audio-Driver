@@ -39,7 +39,7 @@ build: srom croms vrom m1rom prom
 	$(CP) $(BUILD_PATH)/vrom.bin $(BUILD_PATH)/202-v1.v1
 
 build_driver: m1rom
-	$(DD) if=./z80/m1rom.bin of=./driver.m1 bs=1024 count=16
+	$(DD) if=./z80/m1rom.bin of=./driver.m1 bs=1024 count=24
 
 prom: 
 	$(MAKE) -C $(PROM_PATH)
