@@ -210,20 +210,20 @@ FMCNT_update_carrier_tl:
 		add hl,de
 		ld e,(hl)
 
-		; Multiply the op TL by the volume,
-		; store it into hl, then divide it by 127.
-		; The result is be stored in a.
-		ld h,a
-		call H_Times_E
-		push bc
-			ld c,127
-			call RoundHL_Div_C
-			ld a,l
-		pop bc
-		;ld de,64 ; This causes the division to be rounded instead than truncated.
-		;add hl,de
-		;add hl,hl       
-		;ld a,h
+		; Load scaled volume from LUT
+		ld l,a
+		ld h,0
+		xor a,a ; \
+		srl h   ;  \
+		rr l    ;   | hl *= 128
+		rra     ;   /
+		ld h,l  ;  /
+		ld l,a  ; /
+		ld d,0
+		add hl,de
+		ld de,FM_vol_LUT
+		add hl,de
+		ld a,(hl)
 
 		; Invert the result's least 
 		; significant 7 bits
@@ -837,3 +837,6 @@ FMCNT_disable_channel:
 
 FM_channel_LUT:
 	db FM_CH1, FM_CH2, FM_CH3, FM_CH4
+
+FM_vol_LUT:
+	incbin "fm_vol_lut.bin"

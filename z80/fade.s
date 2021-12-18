@@ -65,7 +65,6 @@ FDCNT_irqA:
     ld c,0
     ld ix,MLM_channel_volumes
     ld hl,MLM_channel_control
-    brk
 FDCNT_irqA_loop_cnt set 0
     dup CHANNEL_COUNT
         bit 0,(hl)
