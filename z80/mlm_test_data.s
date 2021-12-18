@@ -1,4 +1,4 @@
-#code SDATA_FBANK,$7000,$1000
+#code SDATA_FBANK,$6000,$2000
 MLM_header:
 	dw MLM_odata_smp_lut-MLM_header ; Point to ADPCM-A sample table
 	db 13 ; Song count

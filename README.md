@@ -16,8 +16,8 @@ R         | RR
 ## Z80 memory map
 Address space | Description           | Usage
 --------------|-----------------------|--------------------------
-$0000 ~ $6FFF | Static main code bank | Code
-$7000 ~ $7FFF | Static main code bank | MLM header and song data
+$0000 ~ $5FFF | Static main code bank | Code
+$6000 ~ $7FFF | Static main code bank | MLM header and song data
 $8000 ~ $F7FF | Switchable banks      | Song data
 $F800 ~ $FFFF | Work RAM              | Work RAM
 
