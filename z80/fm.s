@@ -212,18 +212,21 @@ FMCNT_update_carrier_tl:
 
 		; Multiply the op TL by the volume,
 		; store it into hl, then divide it by 127.
-		; The result will be stored in hl, but h
-		; should be always equal to zero. 
+		; The result is be stored in a.
+		ld h,a
+		call H_Times_E
 		push bc
-			ld h,a
-			call H_Times_E
 			ld c,127
 			call RoundHL_Div_C
+			ld a,l
 		pop bc
+		;ld de,64 ; This causes the division to be rounded instead than truncated.
+		;add hl,de
+		;add hl,hl       
+		;ld a,h
 
 		; Invert the result's least 
 		; significant 7 bits
-		ld a,l
 		xor a,$7F
 
 		; Load OP register offset in d

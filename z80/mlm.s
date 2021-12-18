@@ -935,6 +935,99 @@ MLM_set_channel_volume_FM:
 	pop hl
 	ret
 
+MLM_reset_active_chvols:
+	push ix
+	push hl
+	push de
+		; ==== RESET PA CHVOLS ====
+		ld ix,MLM_channel_volumes
+		ld iy,PA_channel_volumes
+		ld hl,MLM_channel_control
+MLM_reset_acvls_counter set 0
+		dup PA_CHANNEL_COUNT
+			bit 0,(hl)
+			;jr z,$+8                               ; +2  = 2b
+			push hl                                 ; +30 = 32b (max 423 cycles)
+				; Else, since cvol : 255 = x : mvol, calculate x using 
+				; cvol*mvol / 256 (It's much faster to divide by 256 
+				; than to divide by 255, a small error to pay for speed)
+				ld e,(ix+0)
+				ld a,(MLM_master_volume)
+				ld h,a
+				call H_Times_E
+				ld a,h ; No division needs to be done, hl / 256 = h
+                
+				; Scale down volume
+				; ($00~$FF -> $00~$1F)
+				rrca
+				rrca
+				rrca
+				and a,$1F
+
+				; Store volume in 
+				; PA_channel_volumes[channel]
+				ld (iy+0),a
+
+				; OR volume with
+				; PA_channel_pannings[channel]
+				or a,(iy+PA_channel_pannings-PA_channel_volumes)
+				ld e,a
+				
+				; Set CVOL register
+				ld a,MLM_reset_acvls_counter
+				add a,REG_PA_CVOL
+				ld d,a
+				rst RST_YM_WRITEB
+			pop hl                                  ; +1  = 33b
+			inc hl
+			inc ix
+			inc iy
+MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
+		edup
+
+		; ==== RESET FM CHVOLS ====
+		ld iy,FM_channel_volumes
+MLM_reset_acvls_counter set 0
+		dup FM_CHANNEL_COUNT
+			bit 0,(hl)
+			;jr z,$+8                               ; +2  = 2b
+			push hl                                 ; +29 = 31b (max 423 cycles)
+				; Else, since cvol : 255 = x : mvol, calculate x using 
+				; cvol*mvol / 256 (It's much faster to divide by 256 
+				; than to divide by 255, a small error to pay for speed)
+				ld e,(ix+0)
+				ld a,(MLM_master_volume)
+				ld h,a
+				call H_Times_E
+				ld a,h ; No division needs to be done, hl / 256 = h
+
+				; Store volume in WRAM
+				srl a     ; $00~$FF -> $00~$7F
+				and a,127 ; Wrap volume inbetween 0 and 127
+				ld (iy+MLM_reset_acvls_counter),a
+
+				; set channel volume update flag
+				ld hl,FM_channel_enable
+				add hl,bc
+				ld a,(iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes))
+				or a,FMCNT_VOL_UPDATE
+				ld (iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes)),a
+			pop hl                                  ; +1  = 32b
+			inc hl
+			inc ix
+			inc iy
+MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
+		edup
+	pop de
+	pop hl
+	pop ix
+	ret
+
+
+MLM_reset_active_chvols_apply_mvol:
+	
+	ret
+
 ; a: channel
 ; c: panning (LR------)
 MLM_set_channel_panning:
