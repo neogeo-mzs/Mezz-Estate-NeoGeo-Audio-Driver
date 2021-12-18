@@ -13,7 +13,7 @@
 #data WRAM,$F800,$800
 	include "wram.s"
 
-#code DRIVER_CODE,$0000,$4000
+#code DRIVER_CODE,$0000,$7000
 	;org $0000
 j_startup:
 	di

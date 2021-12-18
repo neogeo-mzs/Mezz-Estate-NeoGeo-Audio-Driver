@@ -1,4 +1,4 @@
-#code SDATA_FBANK,$4000,$4000
+#code SDATA_FBANK,$7000,$1000
 MLM_header:
 	dw MLM_odata_smp_lut-MLM_header ; Point to ADPCM-A sample table
 	db 13 ; Song count
@@ -122,10 +122,7 @@ MLM_el_pa: ; Start in Zone 3
 MLM_song_fm1:
 	ds 6*2,0
 	dw MLM_el_fm-MLM_header
-	dw MLM_el_fm-MLM_header
-	dw MLM_el_fm-MLM_header
-	dw MLM_el_fm-MLM_header
-	ds 3*2,0
+	ds 6*2,0
 	dw 98 ; Timer A frequency
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header

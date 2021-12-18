@@ -16,14 +16,14 @@ R         | RR
 ## Z80 memory map
 Address space | Description           | Usage
 --------------|-----------------------|--------------------------
-$0000 ~ $3FFF | Static main code bank | Code
-$4000 ~ $7FFF | Static main code bank | MLM header and song data
+$0000 ~ $6FFF | Static main code bank | Code
+$7000 ~ $7FFF | Static main code bank | MLM header and song data
 $8000 ~ $F7FF | Switchable banks      | Song data
 $F800 ~ $FFFF | Work RAM              | Work RAM
 
 ## MLM format documentation
 
-**Any address is an offset from the start of the MLM Header ($4000),
+**Any address is an offset from the start of the MLM Header ($7000),
 not the start of the Z80's address space**
 
 *For example, address $0010 in the MLM code would be treated as $4010 in the code*
