@@ -939,14 +939,15 @@ MLM_reset_active_chvols:
 	push ix
 	push hl
 	push de
+	push iy
 		; ==== RESET PA CHVOLS ====
 		ld ix,MLM_channel_volumes
-		ld iy,PA_channel_volumes
 		ld hl,MLM_channel_control
+		ld iy,PA_channel_volumes
 MLM_reset_acvls_counter set 0
 		dup PA_CHANNEL_COUNT
 			bit 0,(hl)
-			;jr z,$+8                               ; +2  = 2b
+			jr z,$+35+2                             ; +2  = 2b
 			push hl                                 ; +32 = 34b
 				; Else, since cvol : 255 = x : mvol, calculate x using 
 				; cvol*mvol / 256 (It's much faster to divide by 256 
@@ -991,7 +992,7 @@ MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
 MLM_reset_acvls_counter set 0
 		dup FM_CHANNEL_COUNT
 			bit 0,(hl)
-			;jr z,$+8                               ; +2  = 2b
+			jr z,$+36+2                             ; +2  = 2b
 			push hl                                 ; +33 = 35b 
 				; Else, since cvol : 255 = x : mvol, calculate x using 
 				; cvol*mvol / 256 (It's much faster to divide by 256 
@@ -1020,14 +1021,14 @@ MLM_reset_acvls_counter set 0
 			inc ix
 MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
 		edup
-
+		
 		; ==== RESET SSG CHVOLS ====
 		ld iy,SSGCNT_volumes
 MLM_reset_acvls_counter set 0
 		dup SSG_CHANNEL_COUNT
 			bit 0,(hl)
-			;jr z,$+8                               ; +2  = 2b
-			push hl                                 ; +25 = 27b
+			jr z,$+26+2                             
+			push hl                                 
 				; Else, since cvol : 255 = x : mvol, calculate x using 
 				; cvol*mvol / 256 (It's much faster to divide by 256 
 				; than to divide by 255, a small error to pay for speed)
@@ -1047,11 +1048,12 @@ MLM_reset_acvls_counter set 0
 				rrca
 				and a,$0F
 				ld (iy+MLM_reset_acvls_counter),a
-			pop hl                                  ; +1  = 28b
+			pop hl                                 
 			inc hl
 			inc ix
 MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
 		edup
+	pop iy
 	pop de
 	pop hl
 	pop ix
