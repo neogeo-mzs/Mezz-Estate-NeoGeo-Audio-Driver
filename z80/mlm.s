@@ -947,7 +947,7 @@ MLM_reset_acvls_counter set 0
 		dup PA_CHANNEL_COUNT
 			bit 0,(hl)
 			;jr z,$+8                               ; +2  = 2b
-			push hl                                 ; +30 = 32b (max 423 cycles)
+			push hl                                 ; +32 = 34b
 				; Else, since cvol : 255 = x : mvol, calculate x using 
 				; cvol*mvol / 256 (It's much faster to divide by 256 
 				; than to divide by 255, a small error to pay for speed)
@@ -955,7 +955,9 @@ MLM_reset_acvls_counter set 0
 				ld a,(MLM_master_volume)
 				ld h,a
 				call H_Times_E
-				ld a,h ; No division needs to be done, hl / 256 = h
+				ld de,128 ; - Rounds the next "division"
+				add hl,de ; /
+				ld a,h    ; No division needs to be done, hl / 256 = h
                 
 				; Scale down volume
 				; ($00~$FF -> $00~$1F)
@@ -978,10 +980,9 @@ MLM_reset_acvls_counter set 0
 				add a,REG_PA_CVOL
 				ld d,a
 				rst RST_YM_WRITEB
-			pop hl                                  ; +1  = 33b
+			pop hl                                  ; +1  = 35b
 			inc hl
 			inc ix
-			inc iy
 MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
 		edup
 
@@ -991,7 +992,7 @@ MLM_reset_acvls_counter set 0
 		dup FM_CHANNEL_COUNT
 			bit 0,(hl)
 			;jr z,$+8                               ; +2  = 2b
-			push hl                                 ; +29 = 31b (max 423 cycles)
+			push hl                                 ; +33 = 35b 
 				; Else, since cvol : 255 = x : mvol, calculate x using 
 				; cvol*mvol / 256 (It's much faster to divide by 256 
 				; than to divide by 255, a small error to pay for speed)
@@ -999,7 +1000,9 @@ MLM_reset_acvls_counter set 0
 				ld a,(MLM_master_volume)
 				ld h,a
 				call H_Times_E
-				ld a,h ; No division needs to be done, hl / 256 = h
+				ld de,128 ; - Rounds the next "division"
+				add hl,de ; / 
+				ld a,h    ; No division needs to be done, hl / 256 = h
 
 				; Store volume in WRAM
 				srl a     ; $00~$FF -> $00~$7F
@@ -1012,10 +1015,41 @@ MLM_reset_acvls_counter set 0
 				ld a,(iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes))
 				or a,FMCNT_VOL_UPDATE
 				ld (iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes)),a
-			pop hl                                  ; +1  = 32b
+			pop hl                                  ; +1  = 36b
 			inc hl
 			inc ix
-			inc iy
+MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
+		edup
+
+		; ==== RESET SSG CHVOLS ====
+		ld iy,SSGCNT_volumes
+MLM_reset_acvls_counter set 0
+		dup SSG_CHANNEL_COUNT
+			bit 0,(hl)
+			;jr z,$+8                               ; +2  = 2b
+			push hl                                 ; +25 = 27b
+				; Else, since cvol : 255 = x : mvol, calculate x using 
+				; cvol*mvol / 256 (It's much faster to divide by 256 
+				; than to divide by 255, a small error to pay for speed)
+				ld e,(ix+0)
+				ld a,(MLM_master_volume)
+				ld h,a
+				call H_Times_E
+				ld de,128 ; - Rounds the next "division"
+				add hl,de ; / 
+				ld a,h    ; No division needs to be done, hl / 256 = h
+
+				; Scale down volume ($00~$FF -> $00~$0F)
+				; and store result into SSGCNT WRAM
+				rrca
+				rrca
+				rrca
+				rrca
+				and a,$0F
+				ld (iy+MLM_reset_acvls_counter),a
+			pop hl                                  ; +1  = 28b
+			inc hl
+			inc ix
 MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
 		edup
 	pop de
