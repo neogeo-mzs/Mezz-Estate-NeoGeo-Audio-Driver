@@ -110,13 +110,12 @@ MLM_song_pa6:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_pa: ; Start in Zone 3
-	;db $30 | 8 | (8-1) ; Offset volume by -8
+	db $30 | 8 | (8-1) ; Offset volume by -8
 	db $05,$FF
 	db $80 | 30, 0     ; Play ADPCM-A sample 0 (C)
 	db $01, 30         ; Stop note and wait 30 ticks
 
-	;db $30 | (8-1)     ; Offset volume by +8
-	db $05,$00
+	db $30 | (8-1)     ; Offset volume by +8
 	db $80 | 30, 2     ; Play ADPCM-A sample 2 (D)
 	db $01, 30
 	db $0B
