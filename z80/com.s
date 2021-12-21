@@ -45,6 +45,8 @@ UCOM_init:
         ld (com_sfxps_buffered_cvol),a
         xor a,a ; ld a,0
         ld (com_sfxps_buffered_prio),a
+        ld a,1
+        ld (com_fdcnt_buffered_offset),a
     pop af
     ret
     
@@ -184,7 +186,8 @@ UCOM_command_vectors:
     dw UCOM_CMD_sfxps_buffer_prio, UCOM_CMD_sfxps_play_smp
     dw UCOM_CMD_fade_in,           UCOM_CMD_fade_in
     dw UCOM_CMD_fade_out,          UCOM_CMD_fade_out
-    dup 118
+    dw UCOM_CMD_buffer_fade_ofs
+    dup 117
         dw UCOM_CMD_invalid
     edup
 
@@ -268,17 +271,10 @@ UCOM_CMD_fade_in:
         ld d,REG_TMB_COUNTER
 	    rst RST_YM_WRITEA
 
-        ; Load TMB load counter, reset TMB flags, and keep all irqs enabled
-        ld e,TM_CNT_LOAD_TB | TM_CNT_TB_FLG_RESET | TM_CNT_ENABLE_TA_IRQ | TM_CNT_ENABLE_TB_IRQ 
-        ld d,REG_TIMER_CNT
-        rst RST_YM_WRITEA
-
-        ; Enable fade in by setting the offset to a positive number
-        ; and setting the master volume to 0
-        ld a,1
+        ld a,(com_fdcnt_buffered_offset)
         ld (FDCNT_offset),a
-        xor a,a
-        ld (MLM_master_volume),a
+        xor a,a ; ld a,0
+        ld (master_volume),a
     pop de
     pop bc
     pop af
@@ -309,12 +305,23 @@ UCOM_CMD_fade_out:
         rst RST_YM_WRITEA
 
         ; Enable fade in by setting the offset to a positive number
-        ld a,-1
+        ld a,(com_fdcnt_buffered_offset)
+        xor a,$FF ; - Make offset negative
+        inc a     ; /
         ld (FDCNT_offset),a
     pop de
     pop bc
     pop af
     jp UCOM_run_command_return
 
+; b: %0OOOOOOO
+; c: $0A
+UCOM_CMD_buffer_fade_ofs:
+    push af
+        ld a,b
+        ld (com_fdcnt_buffered_offset),a
+    pop af
+    jp UCOM_run_command_return
+    
 UCOM_CMD_invalid:
     call softlock

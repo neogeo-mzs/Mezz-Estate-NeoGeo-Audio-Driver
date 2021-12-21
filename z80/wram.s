@@ -6,7 +6,8 @@ com_buffer:                   ds COM_BUFFER_LENGTH*2 ; u16[COM_BUFFER_LENGTH]
 com_buffer_idx_w:             ds 1                   ; u8
 com_buffer_idx_r:             ds 1                   ; u8
 com_sfxps_buffered_cvol:      ds 1 ; u8 (%LR-VVVVV)
-com_sfxps_buffered_prio:  ds 1
+com_sfxps_buffered_prio:      ds 1 ; u8
+com_fdcnt_buffered_offset:    ds 1 ; u8
 
 ; If 0, then the z80 is waiting for the command's LSB,
 ; if 1, then the z80 is waiting for the command's MSB
@@ -25,8 +26,7 @@ MLM_channel_instruments:      ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
 MLM_sub_el_return_pointers:   ds 2*CHANNEL_COUNT     ; void*[13]
-MLM_instruments:              ds 2                   ; void* 
-MLM_master_volume:            ds 1                   ; u8
+MLM_instruments:              ds 2                   ; void*
 MLM_wram_end:
 
 ; ======== SSG Controller variables ========
@@ -96,4 +96,5 @@ IRQ_TA_tick_base_time:    ds 1 ; u8
 IRQ_TA_tick_time_counter: ds 1 ; u8
 current_bank:             ds 1 ; u8
 has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has expired)
+master_volume:            ds 1 ; u8
 tmp2:                     ds 2
