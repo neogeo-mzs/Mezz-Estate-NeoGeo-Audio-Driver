@@ -714,15 +714,6 @@ FMCNT_set_note_even_ch:
 	pop hl
 	ret
 
-; to set the octave you just need to set "block".
-; octave 0 = block 1, etc...
-; If the note number exceeds the valid maximum, play a B
-_FMCNT_pitch_LUT:
-	;  C    C#   D    D#   E    F    F#   G
-	dw 309, 327, 346, 367, 389, 412, 436, 462
-	;  G#   A    A#   B
- 	dw 490, 519, 550, 583, 583, 583, 583, 583
-
 ; Taken straight from deflemask's vgm output
 ; octave 0 = block 0, etc...
 FMCNT_pitch_LUT:
