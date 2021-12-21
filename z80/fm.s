@@ -714,7 +714,7 @@ FMCNT_set_note_even_ch:
 	pop hl
 	ret
 
-; Taken straight from deflemask's vgm output
+; Compatible with deflemask
 ; octave 0 = block 0, etc...
 FMCNT_pitch_LUT:
 	;  C     C#    D     D#    E     F     F#    G     
