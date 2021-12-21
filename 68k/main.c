@@ -65,6 +65,8 @@ int main()
     int smp_id = 0;
     int panning = 3; // 0 = None, 1 = Right, 2 = Left, 3 = Center
 
+    Z80_UCOM_BUFFER_FADE_OFS(16); // +16 
+    
     while(1)
     {
         PAL_ENTRY(0, 1) = WHITE;
@@ -83,11 +85,14 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            //Z80_UCOM_FADE_IN(253); // ~0.15s
+            Z80_UCOM_FADE_IN(202);  // ~64.3Hz (~0.15s)
             Z80_UCOM_PLAY_SONG(selected_song);
         }
         if (BIOS_P1CHANGE->B)
-            Z80_UCOM_STOP();
+        {
+            Z80_UCOM_FADE_OUT(202); // ~64.3Hz (~0.15s)
+            //Z80_UCOM_STOP();
+        }
         if (BIOS_P1CHANGE->C)
         {
             panning = WRAP(panning+1, 0, 4);

@@ -93,6 +93,10 @@ startup:
 	ld (hl),0
 	ldir
 
+	; Set WRAM variables
+	ld a,$FF
+	ld (master_volume),a
+
 	; Silence YM2610
 	call fm_stop
 	call PA_reset
@@ -110,10 +114,10 @@ startup:
 	call UCOM_init
 
 	; Set Timer A to ~60Hz and
-	; Timer B to ~13.56Hz by default
+	; Timer B to ~60Hz by default
 	ld hl,98
 	call ta_counter_load_set
-	ld de,REG_TMB_COUNTER<<8 | 0
+	ld de,REG_TMB_COUNTER<<8 | 198
 	rst RST_YM_WRITEA
 
 	; Reset timer counters to 0
@@ -161,10 +165,11 @@ main_loop:
 	ld (has_a_timer_expired),a
 	jr main_loop
 
+; Only backs up AF
 execute_tmb_tick:
 	ld a,$FF
 	ld (has_a_timer_expired),a
-	;call FDCNT_irqB
+	call FDCNT_irqB
 	ret
 
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
@@ -182,23 +187,16 @@ execute_tma_tick:
 	ld c,a ; Backup base time counter in c
 	ld a,(IRQ_TA_tick_base_time)
 	cp a,c
-	jr nz,execute_tma_tick_skip ; If MLM_base_time_counter != MLM_base_time return
+	ret nz ; If MLM_base_time_counter != MLM_base_time return
 
 	; Else, clear the counter and carry on executing the tick
 	xor a,a ; ld a,0
 	ld (IRQ_TA_tick_time_counter),a
 
 	call MLM_irq
-	;call FDCNT_irqA
-	call MLM_reset_active_chvols
+	call FDCNT_irqA
 	call FMCNT_irq
 	call SSGCNT_irq
-
-execute_tma_tick_skip:
-	; Load TMA load counter, reset TMA flags, and keep all irqs enabled
-	ld e,TM_CNT_LOAD_TA | TM_CNT_TA_FLG_RESET | TM_CNT_ENABLE_TA_IRQ | TM_CNT_ENABLE_TB_IRQ 
-	ld d,REG_TIMER_CNT
-	rst RST_YM_WRITEA
 	ret
 
 fast_beep:

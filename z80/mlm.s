@@ -134,10 +134,6 @@ MLM_stop:
 		ld (hl),0
 		ldir
 
-		; Set WRAM variables
-		ld a,$FF
-		ld (MLM_master_volume),a
-
 		; Clear other WRAM variables
 		xor a,a
 		ld (EXT_2CH_mode),a
@@ -811,6 +807,7 @@ MLM_set_channel_volume:
 	push hl
 	push bc
 	push af
+	push ix
 		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
@@ -819,7 +816,7 @@ MLM_set_channel_volume:
 
 		; If master volume is 255, there's 
 		; no need to alter the volume
-		ld hl,MLM_master_volume
+		ld hl,master_volume
 		ld b,(hl)
 		inc b ; cp b,255
 		jp z,MLM_set_channel_volume_skip_mvol_calc
@@ -835,6 +832,8 @@ MLM_set_channel_volume:
 		pop de
 
 MLM_set_channel_volume_skip_mvol_calc:
+		ld ixl,a ; Backup scaled MLM chvol 
+
 		; Swap a and c
 		ld b,a
 		ld a,c
@@ -864,6 +863,7 @@ MLM_set_channel_volume_skip_mvol_calc:
 		ld b,0
 		add hl,bc
 		ld (hl),a
+	pop ix
 	pop af
 	pop bc
 	pop hl
@@ -889,11 +889,15 @@ MLM_set_channel_volume_PA:
 			add hl,bc
 			ld (hl),a
 
-			; Load panning from 
-			; PA_channel_pannings[channel]
+			; if the scaled MLM chvol isn't 0, load 
+			; panning from PA_channel_pannings[channel]
 			; and OR it with the volume
+			dec ixl ; - cp ixl,0
+			inc ixl ; /
+			jp z,MLM_set_channel_volume_PA_no_pan
 			ld de,PA_channel_pannings-PA_channel_volumes
 			add hl,de
+MLM_set_channel_volume_PA_no_pan:
 			or a,(hl) ; ORs the volume and panning
 			ld e,a
 			
@@ -903,6 +907,7 @@ MLM_set_channel_volume_PA:
 			ld d,a
 			rst RST_YM_WRITEB
 		pop de
+	pop ix
 	pop af
 	pop bc
 	pop hl
@@ -930,6 +935,7 @@ MLM_set_channel_volume_FM:
 		ld a,(hl)
 		or a,FMCNT_VOL_UPDATE
 		ld (hl),a
+	pop ix
 	pop af
 	pop bc
 	pop hl
@@ -947,13 +953,13 @@ MLM_reset_active_chvols:
 MLM_reset_acvls_counter set 0
 		dup PA_CHANNEL_COUNT
 			bit 0,(hl)
-			jr z,$+35+2                             ; +2  = 2b
-			push hl                                 ; +32 = 34b
+			jr z,$+40+2                             ; +2  = 2b
+			push hl                                 ; +37 = 39b
 				; Else, since cvol : 255 = x : mvol, calculate x using 
 				; cvol*mvol / 256 (It's much faster to divide by 256 
 				; than to divide by 255, a small error to pay for speed)
 				ld e,(ix+0)
-				ld a,(MLM_master_volume)
+				ld a,(master_volume)
 				ld h,a
 				call H_Times_E
 				ld de,128 ; - Rounds the next "division"
@@ -971,17 +977,20 @@ MLM_reset_acvls_counter set 0
 				; PA_channel_volumes[channel]
 				ld (iy+0),a
 
-				; OR volume with
-				; PA_channel_pannings[channel]
-				or a,(iy+PA_channel_pannings-PA_channel_volumes)
-				ld e,a
+				; If MLM_volume isn't 0, OR volume 
+				; with PA_channel_pannings[channel]
+				dec h ; - cp h,0
+				inc h ; /
+				jr z,$+2+3                                       ; +2b
+				or a,(iy+PA_channel_pannings-PA_channel_volumes) ; +3b                                         
 				
 				; Set CVOL register
+				ld e,a 
 				ld a,MLM_reset_acvls_counter
 				add a,REG_PA_CVOL
 				ld d,a
 				rst RST_YM_WRITEB
-			pop hl                                  ; +1  = 35b
+			pop hl                                  ; +1  = 40b
 			inc hl
 			inc ix
 MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
@@ -998,7 +1007,7 @@ MLM_reset_acvls_counter set 0
 				; cvol*mvol / 256 (It's much faster to divide by 256 
 				; than to divide by 255, a small error to pay for speed)
 				ld e,(ix+0)
-				ld a,(MLM_master_volume)
+				ld a,(master_volume)
 				ld h,a
 				call H_Times_E
 				ld de,128 ; - Rounds the next "division"
@@ -1033,7 +1042,7 @@ MLM_reset_acvls_counter set 0
 				; cvol*mvol / 256 (It's much faster to divide by 256 
 				; than to divide by 255, a small error to pay for speed)
 				ld e,(ix+0)
-				ld a,(MLM_master_volume)
+				ld a,(master_volume)
 				ld h,a
 				call H_Times_E
 				ld de,128 ; - Rounds the next "division"

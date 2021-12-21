@@ -310,6 +310,21 @@ assuming 0.074 <= fade_time <= 18.879 (in seconds)
 ##### Command 8~9: Fade out
 **format: %1MMMMMMM'1000011L (tmb load counter Msb; tmb load counter Lsb)**
 
+##### Command 10: Buffer fade offset per TMB tick 
+**format: %1OOOOOOO'10001010 (Unsigned volume offset)
+Buffers the fade offset, it'll be set when the next fade in/out command is sent.
+
+###### Fade example
+To have a fade-in that lasts ~0.5 seconds, you could for example do:
+* +1 fade offset at 512Hz (BAD APPROACH. WILL CAUSE LAG)
+* +8 fade offset at 64Hz (👍)
+
+For the last approach, the following commands will have to be issued:
+```c
+Z80_UCOM_BUFFER_FADE_OFS(8);
+Z80_UCOM_FADE_IN(202); // ~64.3Hz
+```
+
 #### Bankswitching
 Each song is divided in 8kb blocks. The driver has access to two of these blocks at a time, and they can be switched freely allowing up to 512 KiB of data. The blocks are switched when the other starts playing.
 The z80 memory zones used are zone 3 and zone 2. The driver starts playing zone 3 first.

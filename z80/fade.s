@@ -11,7 +11,7 @@ FDCNT_irqB:
 
     ; Add offset to MLM master volume,
     ; then clamp it inbetween 0 and 255
-    ld hl,MLM_master_volume
+    ld hl,master_volume
     add a,(hl)
     ld hl,FDCNT_offset
     bit 7,(hl)
@@ -19,7 +19,7 @@ FDCNT_irqB:
 
     ; taking a + b = c and assuming that b < 0, 
     ; then c < a must always be true.
-    ld hl,MLM_master_volume
+    ld hl,master_volume
     cp a,(hl)
     jp c,FDCNT_irqB_overflow_check_ret
     
@@ -37,12 +37,11 @@ FDCNT_irqB_overflow_check_ret:
 FDCNT_irqB_overflow_check:
     ; taking a + b = c and assuming b is
     ; positive, then c >= a must always be true.
-    ld hl,MLM_master_volume
+    ld hl,master_volume
     cp a,(hl)
     jp nc,FDCNT_irqB_overflow_check_ret
 
     ; If that isn't the case, an overflow happened...
-    ; or math broke and the apocalypse is coming.
     xor a,a ; ld a,0
     ld (FDCNT_offset),a
     ld a,$FF
@@ -56,24 +55,5 @@ FDCNT_irqA:
 
     xor a,a
     ld (FDCNT_do_reset_chvols),a
-
-    ; MLM_set_channel_volume handles scaling
-    ; the volume based on the master volume
-    ; by itself, while saving the original 
-    ; channelvolume in WRAM, not the scaled 
-    ; one (that'd cause issues).
-    ld c,0
-    ld ix,MLM_channel_volumes
-    ld hl,MLM_channel_control
-FDCNT_irqA_loop_cnt set 0
-    dup CHANNEL_COUNT
-        bit 0,(hl)
-        jr z,$+8                      ; +2 = 2b
-        ld a,(ix+FDCNT_irqA_loop_cnt) ; +3 = 5b
-        call MLM_set_channel_volume   ; +3 = 8b
-
-        inc hl
-        inc c
-FDCNT_irqA_loop_cnt set FDCNT_irqA_loop_cnt+1
-    edup
+    call MLM_reset_active_chvols
     ret
