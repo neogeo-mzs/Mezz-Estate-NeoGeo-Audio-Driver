@@ -808,6 +808,8 @@ MLM_set_channel_volume:
 	push bc
 	push af
 	push ix
+		brk 
+		
 		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0

@@ -7,7 +7,7 @@ SFXPS_init:
     push bc
     push af
         ld hl,SFXPS_WRAM_start
-        ld de,SFXPS_WRAM_end+1
+        ld de,SFXPS_WRAM_start+1
         ld bc,SFXPS_WRAM_end-SFXPS_WRAM_start-1
         ldir
 
