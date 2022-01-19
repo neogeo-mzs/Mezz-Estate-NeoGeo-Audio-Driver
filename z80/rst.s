@@ -11,7 +11,6 @@ port_write_delay2:
 	ret
 
 port_write_a:
-	;brk2
 	push af
 		ld     a,d
 		out    (YM2610_A0),a
@@ -25,7 +24,6 @@ port_write_a:
 	ret
 
 port_write_b:
-	;brk3
 	push af
 		ld     a,d
 		out    (YM2610_B0),a
