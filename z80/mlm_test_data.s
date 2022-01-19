@@ -111,7 +111,6 @@ MLM_song_pa6:
 
 MLM_el_pa: ; Start in Zone 3
 	db $30 | 8 | (8-1) ; Offset volume by -8
-	db $05,$FF
 	db $80 | 30, 0     ; Play ADPCM-A sample 0 (C)
 	db $01, 30         ; Stop note and wait 30 ticks
 
@@ -121,7 +120,7 @@ MLM_el_pa: ; Start in Zone 3
 	db $0B
 	dw MLM_el_pa-MLM_header
 
-	;db $00 ; End of song
+	db $00 ; End of song
 
 #code SDATA_BANK1,$8000,$8000
 MLM_song_fm1:

@@ -808,8 +808,6 @@ MLM_set_channel_volume:
 	push bc
 	push af
 	push ix
-		brk 
-		
 		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
@@ -830,7 +828,8 @@ MLM_set_channel_volume:
 			ld h,(hl)
 			ld e,a
 			call H_Times_E
-			ld a,h ; No division needs to be done, hl / 256 = h
+			add a,$80 ; Makes next "division" more accurate
+			ld a,h    ; No division needs to be done, hl / 256 = h
 		pop de
 
 MLM_set_channel_volume_skip_mvol_calc:
@@ -1826,6 +1825,8 @@ MLMCOM_set_channel_volume_byte_ret:
 MLMCOM_set_channel_volume_byte_ADPCMA:
 	push hl
 	push de
+		brk
+
 		; Load command byte in l
 		ex de,hl
 		dec hl
@@ -1839,7 +1840,7 @@ MLMCOM_set_channel_volume_byte_ADPCMA:
 		inc a
 
 		; Shift offset to the left
-		; to adjust the offset to
+		; to adjust the offset to fit 
 		; the ADPCM-A range ($00~$1F)
 		sla a
 		sla a
