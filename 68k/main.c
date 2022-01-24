@@ -85,13 +85,13 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            Z80_UCOM_FADE_IN(202);  // ~64.3Hz (~0.15s)
+            //Z80_UCOM_FADE_IN(202);  // ~64.3Hz (~0.15s)
             Z80_UCOM_PLAY_SONG(selected_song);
         }
         if (BIOS_P1CHANGE->B)
         {
-            Z80_UCOM_FADE_OUT(202); // ~64.3Hz (~0.15s)
-            //Z80_UCOM_STOP();
+            //Z80_UCOM_FADE_OUT(202); // ~64.3Hz (~0.15s)
+            Z80_UCOM_STOP();
         }
         if (BIOS_P1CHANGE->C)
         {
