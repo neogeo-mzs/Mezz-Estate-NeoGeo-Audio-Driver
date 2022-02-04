@@ -9,7 +9,9 @@ build: m1rom.bin
 
 m1rom.bin: $(SRC)
 	zasm -i $< -o m1rom.tmp.bin -uwy -l listing.txt
-	$(ROMWAK) /p m1rom.tmp.bin $@ 128 0
+	$(ROMWAK) /p m1rom.tmp.bin $@ 24 0
+	cat m1rom_sdata.bin >> $@
+	#$(ROMWAK) /p m1rom.tmp.bin $@ 128 0
 	rm -fv m1rom.tmp.bin
 
 .PHONY: clean
