@@ -127,7 +127,8 @@ startup:
 	; Loads load counters, enables interrupts 
 	; and resets flags of timer A and B.
 	; https://wiki.neogeodev.org/index.php?title=YM2610_timers
-	ld e,%00111111
+	;ld e,%00111111 ; ADDING TMB CAUSES LAG ISSUES EVERY ~7.8s ?
+	ld e,%00010101
 	rst RST_YM_WRITEA
 	out (ENABLE_NMI),a 
 
@@ -158,7 +159,8 @@ main_loop:
 
 	; Loads load counter, enables interrupts 
 	; and resets flags of timer A and B.
-	ld e,%00111111
+	;ld e,%00111111
+	ld e,%00010101
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA
 	xor a,a ; ld a,0

@@ -1825,8 +1825,6 @@ MLMCOM_set_channel_volume_byte_ret:
 MLMCOM_set_channel_volume_byte_ADPCMA:
 	push hl
 	push de
-		brk
-
 		; Load command byte in l
 		ex de,hl
 		dec hl
