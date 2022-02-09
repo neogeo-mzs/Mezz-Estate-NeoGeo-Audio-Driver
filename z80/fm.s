@@ -454,25 +454,34 @@ FMCNT_set_fbalgo_even_ch:
 
 ; a: amspms (--AA-PPP; Ams, Pms)
 ; c: channel (0~3)
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_set_amspms:
 	push de
 	push af
 	push hl
-		; Load channel's Panning, 
-		; AMS and PMS from WRAM
-		ld hl,FM_channel_lramspms
-		ld e,c
-		ld d,0
-		add hl,de
+	push ix
+		; [TEMPORARY] Calculate FMStruct address
+		push af
+			ld a,c
+			sla a
+			sla a
+			sla a
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
 
 		; Clear channel's AMS and PMS,
 		; And OR the desired AMS and PMS.
 		; then load OR result in e
 		ld e,a
-		ld a,(hl)
-		and a,%11001000 ; LR??-??? -> LR00-000
-		or a,e          ; LR00-000 -> LRAA-PPP
-		ld (hl),a       ; Store register value in WRAM
+		ld a,(ix+FM_Channel.lramspms)
+		and a,%11001000               ; LR??-??? -> LR00-000
+		or a,e                        ; LR00-000 -> LRAA-PPP
+		ld (ix+FM_Channel.lramspms),a ; Store register value in WRAM
 		ld e,a
 
 		; If the channel is even then
@@ -489,6 +498,7 @@ FMCNT_set_amspms_even_ch:
 		bit 1,c
 		call z,port_write_a
 		call nz,port_write_b
+	pop ix
 	pop hl
 	pop af
 	pop de
@@ -496,24 +506,33 @@ FMCNT_set_amspms_even_ch:
 
 ; a: panning (LR------; Left and Right)
 ; c: channel (0~3)
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_set_panning:
 	push de
 	push af
 	push hl
-		; Load channel's Panning, 
-		; AMS and PMS from WRAM
-		ld hl,FM_channel_lramspms
-		ld e,c
-		ld d,0
-		add hl,de
+	push ix
+		; [TEMPORARY] Calculate FMStruct address
+		push af
+			ld a,c
+			sla a
+			sla a
+			sla a
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
 
 		; Clear channel's AMS and PMS,
 		; And OR the desired AMS and PMS
 		ld e,a
-		ld a,(hl)
-		and a,%00111111 ; ??AA-PPP -> 00AA-PPP
-		or a,e          ; 00AA-PPP -> LRAA-PPP
-		ld (hl),a       ; Store register value in WRAM
+		ld a,(ix+FM_Channel.lramspms)
+		and a,%00111111               ; ??AA-PPP -> 00AA-PPP
+		or a,e                        ; 00AA-PPP -> LRAA-PPP
+		ld (ix+FM_Channel.lramspms),a ; Store register value in WRAM
 
 		; If the channel is even then
 		; use register $B1, else use $B2
@@ -529,6 +548,7 @@ FMCNT_set_panning_even_ch:
 		bit 1,c
 		call z,port_write_a
 		call nz,port_write_b
+	pop ix
 	pop hl
 	pop af
 	pop de

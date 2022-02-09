@@ -283,6 +283,10 @@ FMCNT_PITCH_SLIDE_ENABLE   equ 4
 ;;                    STRUCT                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+	macro ControlMacro
+	.ds 1+1+2+1+1+2
+	endm
+
 ControlMacro.enable  equ 0
 ControlMacro.length  equ 1
 ControlMacro.data    equ 2
@@ -290,15 +294,12 @@ ControlMacro.loop_pt equ 4
 ControlMacro.curr_pt equ 5
 ControlMacro.SIZE    equ 8
 
-;	macro ControlMacro
-;enable 	.ds 1 ; u8
-;length 	.ds 1 ; u8
-;data 	.ds 2 ; void*
-;loop_pt	.ds 1 ; u8
-;curr_pt	.ds 1 ; u8 (Current point)
-;pad 	.ds 2 ; u8[2] 
-;	endm
-
-	macro ControlMacro
-	.ds 1+1+2+1+1+2
-	endm
+FM_Channel.lramspms:    equ 0 ; u8[4] (LRAA-PPP; Left & Right, Ams, Pms)
+FM_Channel.op_enable:   equ 1 ; u8[4] (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
+FM_Channel.frequencies: equ 2 ; u16[4] (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
+FM_Channel.volumes:     equ 4 ; u8[4] (127 is lowest, 0 is highest)
+FM_Channel.key_on:      equ 5 ; bool[4] (If it isn't 0, then the channel will be played next IRQ and the value will be cleared)
+FM_Channel.enable:      equ 6 ; u8[4] (%0000'FPVE; Freeze pitch slide; Pitch slide enable; update Volume; Enable Channel. every update flag is cleared every tick)
+FM_Channel.algos:       equ 7 ; u8[4] (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
+FM_Channel.pslide_ofs:  equ 9 ; s16[4]
+FM_Channel.SIZE         equ 10+6 ; size + padding
