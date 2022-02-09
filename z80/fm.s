@@ -68,10 +68,27 @@ FMCNT_irq_loop_skip:
 ; b: channel (0~3)
 ; (FM_channel_volumes[channel]): volume (0~7F)
 ; DOESN'T BACKUP DE
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_update_total_levels:
 	push bc
 	push hl
 	push af
+	push ix
+		; [TEMPORARY] Calculate ix
+		push af
+			ld a,b
+			sla a
+			sla a
+			sla a
+			sla a
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
+
 		; if the FMCNT vol enable flag
 		; isn't set, return
 		ld hl,FM_channel_enable
@@ -86,14 +103,8 @@ FMCNT_update_total_levels:
 		; and proceed with the function
 		and a,FMCNT_VOL_UPDATE ^ $FF
 		ld (hl),a
-		
-		; Load channel algorithm in e
-		ld hl,FM_channel_algos
-		ld e,b
-		ld d,0
-		add hl,de
-		ld e,(hl)
 
+		ld e,(ix+FM_Channel.algo)
 		ld c,1 ; Prepare operator value
 
 		; Since algorithms below ALGO4 are treated
@@ -109,6 +120,7 @@ FMCNT_update_total_levels:
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
 		jp (hl)
 FMCNT_update_total_levels_ret:
+	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -122,6 +134,7 @@ FMCNT_update_total_levels_algo_0_1_2_3:
 		call FMCNT_update_modulator_tl ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
+	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -144,6 +157,7 @@ FMCNT_tlupdate_algo4:
 		call FMCNT_update_modulator_tl ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
+	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -157,6 +171,7 @@ FMCNT_tlupdate_algo5_6:
 		call FMCNT_update_carrier_tl   ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
+	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -170,6 +185,7 @@ FMCNT_tlupdate_algo7:
 		call FMCNT_update_carrier_tl   ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
+	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -305,10 +321,27 @@ FM_op_register_offsets_LUT:
 
 ; a: fbalgo (--FFFAAA; Feedback, Algorithm)
 ; c: channel (0~3)
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_set_fbalgo:
 	push de
 	push af
 	push hl
+	push ix
+		; [TEMPORARY] Calculate ix
+		push af
+			ld a,c
+			sla a
+			sla a
+			sla a
+			sla a
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
+
 		ld e,a ; Store value in e
 
 		; If the channel is even then
@@ -329,7 +362,7 @@ FMCNT_set_fbalgo_even_ch:
 		; Store algorithm in WRAM
 		; (It's multiplied by 2 to make some other code faster)
 		and a,%00000111 ; --FFFAAA -> 00000AAA
-		ld hl,FM_channel_algos
+		ld hl,(ix+FM_Channel.algo)
 		ld e,c
 		ld d,0
 		add hl,de
@@ -342,6 +375,7 @@ FMCNT_set_fbalgo_even_ch:
 		ld a,(hl)
 		or a,FMCNT_VOL_UPDATE
 		ld (hl),a
+	pop ix
 	pop hl
 	pop af
 	pop de
@@ -358,6 +392,7 @@ FMCNT_set_amspms:
 	push hl
 	push ix
 		; [TEMPORARY] Calculate FMStruct address
+
 		push af
 			ld a,c
 			sla a
