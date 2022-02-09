@@ -65,9 +65,10 @@ FM_channel_frequencies: ds FM_CHANNEL_COUNT*2           ; u16[4] (--BBBFFF'FFFFF
 FM_operator_TLs:		ds FM_CHANNEL_COUNT*FM_OP_COUNT ; u8[FM_CH_COUNT][FM_OP_COUNT] (0~127; 127 is lowest, 0 is highest)
 FM_channel_volumes:		ds FM_CHANNEL_COUNT             ; u8[4] (127 is lowest, 0 is highest)
 FM_channel_key_on:		ds FM_CHANNEL_COUNT             ; bool[4] (If it isn't 0, then the channel will be played next IRQ and the value will be cleared)
-FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'0PVE; Pitch slide enable; update Volume; Enable Channel. every update flag is cleared every tick)
+FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'FPVE; Freeze pitch slide; Pitch slide enable; update Volume; Enable Channel. every update flag is cleared every tick)
 FM_channel_algos:       ds FM_CHANNEL_COUNT             ; u8[4] (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
 FM_pitch_slide_ofs:     ds FM_CHANNEL_COUNT*2           ; s16[4]
+FM_pitch_offset:        ds FM_CHANNEL_COUNT*2           ; s16[4]
 FM_wram_end:
 
 ; ======== PA ========
