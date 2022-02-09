@@ -344,7 +344,6 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 ## BUGS
 
 ## TODO
-* Rearrange FM WRAM (use one array of structs instead than multiple arrays)
 * Redo FM pitch offset and slide implementation
 
 ## IDEAS
