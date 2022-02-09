@@ -468,6 +468,7 @@ FMCNT_set_amspms:
 			sla a
 			sla a
 			sla a
+			sla a
 			ld ixl,a
 			ld ixh,0
 			ld de,FM_ch1
@@ -517,6 +518,7 @@ FMCNT_set_panning:
 		; [TEMPORARY] Calculate FMStruct address
 		push af
 			ld a,c
+			sla a
 			sla a
 			sla a
 			sla a
@@ -651,18 +653,25 @@ FMCNT_set_operator_loop:
 
 ; a: operator enable (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
 ; c: channel (0~3)
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_set_op_enable:
-	push hl
+	push de
 	push bc
-	push af
+		push af
+			ld a,c
+			sla a
+			sla a
+			sla a
+		pop af
 		; Store OP enable in WRAM
 		ld hl,FM_channel_op_enable
 		ld b,0
 		add hl,bc
 		ld (hl),a
-	pop af
 	pop bc
-	pop hl
+	pop de
 	ret
 
 ; ixh: note (-OOONNNN; Octave, Note)
