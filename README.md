@@ -345,6 +345,7 @@ The z80 code is based on an empty driver made by freem. I've personally found it
 
 ## TODO
 * Rearrange WRAM (use one array of structs instead than multiple arrays)
+* Redo FM pitch offset and slide implementation
 
 ## IDEAS
 * If an SFX sample is playing in an ADPCM-A channel the song needs, search a free ADPCM-A channel, if there isn't one just stop the sample, else use the found free channel; all PA channels are equal
