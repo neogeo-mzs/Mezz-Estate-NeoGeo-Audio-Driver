@@ -173,7 +173,9 @@ MLM_el_fm:
 	db $21,32   ; Set Pitch upward slide
 	db $03, 16
 	db $23
-	db $03,254
+	db $03,64
+	db $0B
+	dw MLM_el_fm-MLM_header
 	db $00
 
 #code SDATA_BANK2,$8000,$8000
