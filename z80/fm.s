@@ -700,17 +700,9 @@ FMCNT_set_note:
 		ld ixh,0
 		ld de,FM_ch1
 		add ix,de
-		
-		ld c,iyl
-
-		; Calculate pointer to FM_channel_frequencies[ch]
-		ld iy,FM_channel_frequencies
-		ld b,0
-		add iy,bc
-		add iy,bc
 
 		; Load base pitch from FMCNT_pitch_LUT in bc
-		ld a,ixh
+		ld a,iyh
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
 		ld l,a
 		ld h,0
@@ -722,9 +714,8 @@ FMCNT_set_note:
 		ld b,(hl)
 
 		; Set block/octave
-		ld a,ixh
+		ld a,iyh
 		and a,%01110000 ; Get octave (-OOONNNN -> 0OOO0000)
-		;add a,%00010000 ; Increment octave by 1
 		srl a           ; Get octave in the right position (block needs to be set to octave)
 		or a,b          ; OR block with F-Num 2
 		ld b,a
@@ -737,7 +728,7 @@ FMCNT_set_note:
 		; Write Block and F-Num 2 
 		ld e,b 
 		ld d,REG_FM_CH13_FBLOCK
-		ld a,ixl
+		ld a,iyl
 		bit 0,a 
 		jr z,FMCNT_set_note_even_ch
 		inc d
