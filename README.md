@@ -171,7 +171,16 @@ one tick will be waited.
 ###### Command 35: Reset pitch slide
 **format: `$23`**
 
-###### Command 48\~63: Set Volume (byte)
+###### Command 40~43: Set positive pitch ofs
+**format: `%001010PP (Pitch offset MSB) %PPPPPPPP (Pitch offset LSB)`**
+Also resets the pitch slide in the channel it is used in.
+
+###### Command 44~47: Set negative pitch ofs
+**format: `%001011PP (Pitch offset MSB) %PPPPPPPP (Pitch offset LSB)`**
+The pitch offset is UNSIGNED, it is assumed to be negative.
+It also resets the pitch slide in the channel it is used in.
+
+###### Command 48~63: Set Volume (byte)
 
 FM, ADPCM:
 	**format: `%0011SOOO (Sign bit; Offset)`**

@@ -368,4 +368,4 @@ softlock:
 
 ;#code SDATA,$6000,$1800
 ;	incbin "m1rom_sdata.bin"
-;	include "mlm_test_data.s"
+	include "mlm_test_data.s"
