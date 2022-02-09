@@ -54,9 +54,6 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		bit 2,a
-		call nz,FMCNT_update_pitch_slide
-
 		; Clear all the update bitflags
 		ld a,(hl)
 		and a,FMCNT_VOL_UPDATE ^ $FF
@@ -306,108 +303,6 @@ FMCNT_update_modulator_tl:
 FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
-; b: channel (0~3)
-; DOESN'T BACKUP DE, IX, AF
-FMCNT_update_pitch_slide:
-	push hl
-	push bc
-		; Load pitch slide offset from WRAM into hl
-		ld ix,FM_pitch_slide_ofs
-		ld c,b
-		ld b,0
-		add ix,bc
-		add ix,bc
-		ld e,(ix+0)
-		ld d,(ix+1)
-		ld a,d ; Load MSB in a to check sign of offset later
-		ex hl,de
-		
-		; Load current pitch from WRAM into de
-		ld ix,FM_channel_frequencies
-		add ix,bc
-		add ix,bc
-		ld e,(ix+0)
-		ld d,(ix+1)
-
-		; Offset pitch 
-		add hl,de
-		ex hl,de
-		call FMCNT_check_fnum_overunderflow
-
-		; Store pitch back into WRAM
-		ld (ix+0),e
-		ld (ix+1),d
-		ex hl,de
-		
-		; Write Block and F-Num 2 to YM2610
-		ld e,h
-		ld d,REG_FM_CH13_FBLOCK
-		bit 0,c
-		jr z,FMCNT_update_pitch_slide_even_ch
-		inc d
-FMCNT_update_pitch_slide_even_ch:
-		bit 1,c
-		call z,port_write_a
-		call nz,port_write_b
-
-		; Write F-Num 1 to YM2610
-		ld e,l
-		dec d ; -\
-		dec d ;  | d -= 4
-		dec d ;  /
-		dec d ; /
-		bit 1,c
-		call z,port_write_a
-		call nz,port_write_b
-	pop bc
-	pop hl
-	ret
-
-; [INPUT]
-;   bc: channel
-;   de: new pitch
-;   ix: &FM_channel_frequencies[ch]
-; [OUTPUT]
-;   de: clamped pitch
-; DOESN'T BACKUP AF
-FMCNT_check_fnum_overunderflow:
-	push hl
-		; Load original frequency MSB,
-		; then AND away the fnum2 to 
-		; obtain the block, store it into l
-		ld a,(ix+1)
-		and a,%00111000 ; $00BBBFFF -> $00BBB000
-		ld l,a
-		
-		; Obtain block of the new pitch, store it in a
-		ld a,d
-		and a,%00111000 ; $00BBBFFF -> $00BBB000
-
-		; If new_block == old_block return
-		cp a,l
-		jp z,FMCNT_check_fnum_overunderflow_ret
-
-		; If new_block < old_block, then
-		; an underflow happened.
-		jp c,FMCNT_solve_fnum_underflow
-
-		; Else, an overflow happened
-		; Set pitch to $7FF with the old block
-		ld de,$07FF
-		ld a,d ; -- return $7FF | old_block
-		or a,l ;  /
-		ld d,a ; /
-
-FMCNT_check_fnum_overunderflow_ret:
-	pop hl
-	ret	
-
-FMCNT_solve_fnum_underflow:
-		; Return $001 with old block
-		ld e,1
-		ld d,l
-	pop hl
-	ret
 ; a: fbalgo (--FFFAAA; Feedback, Algorithm)
 ; c: channel (0~3)
 FMCNT_set_fbalgo:
