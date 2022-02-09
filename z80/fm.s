@@ -659,17 +659,22 @@ FMCNT_set_operator_loop:
 FMCNT_set_op_enable:
 	push de
 	push bc
+	push ix
+		; [TEMPORARY] calculate ix
 		push af
 			ld a,c
 			sla a
 			sla a
 			sla a
+			sla a
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
 		pop af
 		; Store OP enable in WRAM
-		ld hl,FM_channel_op_enable
-		ld b,0
-		add hl,bc
-		ld (hl),a
+		ld (ix+FM_Channel.op_enable),a
+	pop ix
 	pop bc
 	pop de
 	ret
