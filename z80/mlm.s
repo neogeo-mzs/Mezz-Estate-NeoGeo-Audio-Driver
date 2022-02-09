@@ -467,7 +467,7 @@ MLM_play_sample_pa:
 ; [INPUT]
 ;   a:  channel+6
 ;   bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
-; Doesn't backup AF, IX and C
+; Doesn't backup AF, IY and C
 MLM_play_note_fm:
 	push de
 	push hl
@@ -493,8 +493,8 @@ MLM_play_note_fm:
 		rst RST_YM_WRITEA
 
 		; Set pitch
-		ld ixh,c
-		ld ixl,a
+		ld iyh,c
+		ld iyl,a
 		call FMCNT_set_note
 
 		; Play FM channel
