@@ -58,8 +58,8 @@ SSGCNT_arp_macro_C:		ControlMacro
 SSGCNT_wram_end:
 
 ; ======== FM ========
+
 FM_wram_start:
-FM_channel_lramspms:	ds FM_CHANNEL_COUNT             ; u8[4] (LRAA-PPP; Left & Right, Ams, Pms)
 FM_channel_op_enable:	ds FM_CHANNEL_COUNT             ; u8[4] (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
 FM_channel_frequencies: ds FM_CHANNEL_COUNT*2           ; u16[4] (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
 FM_operator_TLs:		ds FM_CHANNEL_COUNT*FM_OP_COUNT ; u8[FM_CH_COUNT][FM_OP_COUNT] (0~127; 127 is lowest, 0 is highest)
@@ -68,6 +68,12 @@ FM_channel_key_on:		ds FM_CHANNEL_COUNT             ; bool[4] (If it isn't 0, th
 FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'FPVE; Freeze pitch slide; Pitch slide enable; update Volume; Enable Channel. every update flag is cleared every tick)
 FM_channel_algos:       ds FM_CHANNEL_COUNT             ; u8[4] (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
 FM_pitch_slide_ofs:     ds FM_CHANNEL_COUNT*2           ; s16[4]
+
+FM_ch1: ds FM_Channel.SIZE
+FM_ch2: ds FM_Channel.SIZE
+FM_ch3: ds FM_Channel.SIZE
+FM_ch4: ds FM_Channel.SIZE
+
 FM_wram_end:
 
 ; ======== PA ========
