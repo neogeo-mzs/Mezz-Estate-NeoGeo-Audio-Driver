@@ -191,8 +191,9 @@ FMCNT_tlupdate_algo7:
 	pop bc
 	ret
 
-; c: operator (1~4)
-; b: channel (0~3)
+; c:  operator (1~4)
+; b:  channel (0~3)
+; ix: &FM_ch[chs] 
 ; DOESN'T BACKUP DE
 ;	This calculates the Total Level
 ;   relative to the channel volume,
@@ -216,14 +217,9 @@ FMCNT_update_carrier_tl:
 		ld a,(hl)
 		xor a,$7F               ; lowest 127 highest 0 -> lowest 0 highest 127
 
-		; Load volume from WRAM into e
-		ld l,b
-		ld h,0
-		ld de,FM_channel_volumes
-		add hl,de
-		ld e,(hl)
-
 		; Load scaled volume from LUT
+		ld e,(ix+FM_Channel.volume)
+		ld d,0
 		ld l,a
 		ld h,0
 		xor a,a ; \
@@ -232,7 +228,6 @@ FMCNT_update_carrier_tl:
 		rra     ;   /
 		ld h,l  ;  /
 		ld l,a  ; /
-		ld d,0
 		add hl,de
 		ld de,FM_vol_LUT
 		add hl,de
@@ -691,29 +686,6 @@ FMCNT_pitch_LUT:
 	;  G#    A     A#    B
 	dw $3D4, $40E, $44C, $48D, $48D, $48D, $48D, $48D
 	; 
-; a: volume (0 is lowest, 127 is highest)
-; c: channel (0~3)
-FMCNT_set_volume:
-	push hl
-	push bc
-	push af
-		; Store volume in WRAM
-		ld b,0
-		ld hl,FM_channel_volumes
-		add hl,bc
-		and a,127 ; Wrap volume inbetween 0 and 127
-		ld (hl),a
-
-		; set channel volume update flag
-		ld hl,FM_channel_enable
-		add hl,bc
-		ld a,(hl)
-		or a,FMCNT_VOL_UPDATE
-		ld (hl),a
-	pop af
-	pop bc
-	pop hl
-	ret
 
 ; c: channel
 FMCNT_stop_channel:
