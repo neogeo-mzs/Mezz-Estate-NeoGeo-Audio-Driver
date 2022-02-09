@@ -500,10 +500,15 @@ MLM_play_note_fm:
 		; Play FM channel
 		;   Calculate pointer enabled operators 
 		push af
+			rlca      ; \
+			rlca      ;  \
+			rlca      ;  | ofs = channel*16
+			rlca      ;  /
+			and a,$F0 ; /
 			ld e,a    ; store channel in e
-			ld a,(hl) ; Store channel bit in a
-			ld hl,FM_channel_op_enable
 			ld d,0
+			ld a,(hl) ; Store channel bit in a
+			ld hl,FM_ch1+FM_Channel.op_enable
 			add hl,de
 		
 			;   OR enabled operators and channels
