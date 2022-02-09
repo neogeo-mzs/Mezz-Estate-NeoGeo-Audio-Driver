@@ -767,38 +767,6 @@ FMCNT_set_volume:
 	ret
 
 ; c: channel
-FMCNT_play_channel:
-	push af
-	push hl
-	push de
-		; Load from WRAM the enabled operators
-		ld hl,FM_channel_op_enable
-		ld e,c
-		ld d,0
-		add hl,de
-		ld a,(hl)
-
-		; Calculate address to correct FM channel id
-		ld hl,FM_channel_LUT
-		add hl,de
-
-		; Proceed to stop the FM channel
-		ld e,(hl)
-		ld d,REG_FM_KEY_ON
-		rst RST_YM_WRITEA
-
-		; OR the FM channel id and the OP enable 
-		; nibble, then store the result in e and
-		; write it to the FM Key On YM2610 register
-		or a,(hl)
-		ld e,a
-		rst RST_YM_WRITEA
-	pop de
-	pop hl
-	pop af
-	ret
-
-; c: channel
 FMCNT_stop_channel:
 	push af
 	push de
