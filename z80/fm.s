@@ -38,11 +38,11 @@ FMCNT_init:
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
 	ld b,FM_CHANNEL_COUNT
-	ld hl,FM_channel_enable+FM_CHANNEL_COUNT-1
+	ld hl,FM_ch4+FM_Channel.enable
 	
 FMCNT_irq_loop:
 	dec b
-		; If FM_channel_enable[channel] is 0,
+		; If the channel's enable bit is 0,
 		; then continue to the next channel
 		ld a,(hl)
 		bit 0,a
@@ -60,7 +60,8 @@ FMCNT_irq_loop:
 		ld (hl),a 
 
 FMCNT_irq_loop_skip:
-		dec hl
+		ld de,-FM_Channel.SIZE
+		add hl,de
 	inc b
 	djnz FMCNT_irq_loop
 	ret
@@ -91,11 +92,7 @@ FMCNT_update_total_levels:
 
 		; if the FMCNT vol enable flag
 		; isn't set, return
-		ld hl,FM_channel_enable
-		ld d,0
-		ld e,b
-		add hl,de
-		ld a,(hl)
+		ld a,(ix+FM_Channel.enable)
 		bit 1,a
 		jp z,FMCNT_update_total_levels_ret
 		
@@ -365,11 +362,9 @@ FMCNT_set_fbalgo_even_ch:
 		ld (hl),a
 
 		; Set FM volume update flag
-		ld hl,FM_channel_enable
-		add hl,de
-		ld a,(hl)
+		ld a,(ix+FM_Channel.enable)
 		or a,FMCNT_VOL_UPDATE
-		ld (hl),a
+		ld (ix+FM_Channel.enable),a
 	pop ix
 	pop hl
 	pop af
@@ -484,20 +479,31 @@ FMCNT_set_panning_even_ch:
 ; hl: pointer to operator data
 ; c:  channel (0~3)
 ; b:  operator (0~3)
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_set_operator:
 	push hl
 	push de
 	push af
 	push bc
+		; [TEMPORARY] calculate ix
+		push af
+			ld a,c
+			sla a
+			sla a
+			sla a
+			sla a
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
+
 		push hl
-			; Set FMCNT volume update flag
-			ld hl,FM_channel_enable
-			ld e,c
-			ld d,0
-			add hl,de 
-			ld a,(hl)
+			ld a,(ix+FM_Channel.enable)
 			or a,FMCNT_VOL_UPDATE
-			ld (hl),a
+			ld (ix+FM_Channel.enable),a
 			
 			; Load OP register offset in a, then 
 			; add said offset to DTMUL base address.
@@ -710,28 +716,23 @@ FMCNT_stop_channel:
 ; c: channel (0~3)
 FMCNT_enable_channel:
 	push af
-	push bc
 	push hl
-		ld b,0
-		ld hl,FM_channel_enable
-		add hl,bc
-		ld (hl),1
-	pop hl
-	pop bc
-	pop af
-	ret
+	push de
+		; Calculate address to FM_Channel.enable
+		ld a,c
+		rlca    ; \
+		rlca    ;  \
+		rlca    ;  | offset = channel*16
+		rlca    ;  /
+		and $F0 ; /
+		ld l,a
+		ld h,0
+		ld de,FM_ch1+FM_Channel.enable
+		add hl,de
 
-; c: channel (0~3)
-FMCNT_disable_channel:
-	push af
-	push bc
-	push hl
-		ld b,0
-		ld hl,FM_channel_enable
-		add hl,bc
-		ld (hl),$00
+		ld (hl),1
+	pop de
 	pop hl
-	pop bc
 	pop af
 	ret
 

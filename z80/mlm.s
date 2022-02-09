@@ -564,9 +564,22 @@ MLM_set_instrument_fm:
 	push de
 	push bc
 	push af
-		; Load pointer to instrument data
-		; from WRAM into de
+	push ix
 		push af
+			; Calculate address to
+			; FM_Channel struct
+			rlca      ; \
+			rlca      ;  \
+			rlca      ;  | offset = channel * 16
+			rlca      ;  /
+			and a,$F0 ; /
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+
+			; Load pointer to instrument data
+			; from WRAM into de
 			ld a,(MLM_instruments)
 			ld e,a
 			ld a,(MLM_instruments+1)
@@ -624,12 +637,10 @@ MLM_set_instrument_fm:
 		add hl,de
 
 		; Set volume update flag
-		ld hl,FM_channel_enable
-		ld b,0
-		add hl,bc
-		ld a,(hl)
+		ld a,(ix+FM_Channel.enable)
 		or a,FMCNT_VOL_UPDATE
-		ld (hl),a
+		ld (ix+FM_Channel.enable),a
+	pop ix
 	pop af
 	pop bc
 	pop de
@@ -812,7 +823,7 @@ MLM_set_channel_volume:
 	push hl
 	push bc
 	push af
-	push ix
+	push iy
 		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
@@ -838,7 +849,7 @@ MLM_set_channel_volume:
 		pop de
 
 MLM_set_channel_volume_skip_mvol_calc:
-		ld ixl,a ; Backup scaled MLM chvol 
+		ld iyl,a ; Backup scaled MLM chvol 
 
 		; Swap a and c
 		ld b,a
@@ -869,7 +880,7 @@ MLM_set_channel_volume_skip_mvol_calc:
 		ld b,0
 		add hl,bc
 		ld (hl),a
-	pop ix
+	pop iy
 	pop af
 	pop bc
 	pop hl
@@ -898,8 +909,8 @@ MLM_set_channel_volume_PA:
 			; if the scaled MLM chvol isn't 0, load 
 			; panning from PA_channel_pannings[channel]
 			; and OR it with the volume
-			dec ixl ; - cp ixl,0
-			inc ixl ; /
+			dec iyl ; - cp ixl,0
+			inc iyl ; /
 			jp z,MLM_set_channel_volume_PA_no_pan
 			ld de,PA_channel_pannings-PA_channel_volumes
 			add hl,de
@@ -913,7 +924,7 @@ MLM_set_channel_volume_PA_no_pan:
 			ld d,a
 			rst RST_YM_WRITEB
 		pop de
-	pop ix
+	pop iy
 	pop af
 	pop bc
 	pop hl
@@ -922,35 +933,33 @@ MLM_set_channel_volume_PA_no_pan:
 MLM_set_channel_volume_FM:
 		sub a,MLM_CH_FM1 ; Transform into FMCNT channel range (6~9 -> 0~3)
 
-		; Obtain FM_Channel offset by
-		; multiplying the channel by 16
-		rlca
-		rlca
-		rlca
-		rlca
-		and $F0
+		push ix
+			; Obtain address to FM_Channel
+			rlca       ; \
+			rlca       ;  \
+			rlca       ;  | offset = channel*16
+			rlca       ;  /
+			and a, $F0 ; /
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
 
-		; Swap a and c again
-		ld b,a
-		ld a,c
-		ld c,b
+			; Swap a and c again
+			ld b,a
+			ld a,c
+			ld c,b
 
-		srl a ; $00~$FF -> $00~$7F
+			srl a ; $00~$FF -> $00~$7F
+			and a,127 ; Wrap volume inbetween 0 and 127
+			ld (ix+FM_Channel.volume),a
 
-		; Store volume in WRAM
-		ld b,0
-		ld hl,FM_ch1+FM_Channel.volume
-		add hl,bc
-		and a,127 ; Wrap volume inbetween 0 and 127
-		ld (hl),a
-
-		; set channel volume update flag
-		ld hl,FM_channel_enable
-		add hl,bc
-		ld a,(hl)
-		or a,FMCNT_VOL_UPDATE
-		ld (hl),a
-	pop ix
+			; set channel volume update flag
+			ld a,(ix+FM_Channel.enable)
+			or a,FMCNT_VOL_UPDATE
+			ld (ix+FM_Channel.enable),a
+		pop ix
+	pop iy
 	pop af
 	pop bc
 	pop hl
@@ -1037,7 +1046,7 @@ MLM_reset_acvls_counter set 0
 				ld (iy+MLM_reset_acvls_counter),a
 
 				; set channel volume update flag
-				ld hl,FM_channel_enable
+			;	ld hl,FM_channel_enable
 				add hl,bc
 			;	ld a,(iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes))
 				or a,FMCNT_VOL_UPDATE
@@ -1673,11 +1682,12 @@ MLMCOM_upward_pitch_slide:
 	jp MLM_parse_command_end
 
 MLMCOM_upward_pitch_slide_FM:
+	jp softlock
 	push hl
 		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
 		
 		; Store pitch offset per tick in WRAM
-		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
+;		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
 		ld b,0
 		add hl,bc
 		add hl,bc
@@ -1686,7 +1696,7 @@ MLMCOM_upward_pitch_slide_FM:
 		ld (hl),0
 
 		; Enable pitch slides
-		ld hl,FM_channel_enable-MLM_CH_FM1
+;		ld hl,FM_channel_enable-MLM_CH_FM1
 		add hl,bc
 		ld a,(hl)
 		or a,FMCNT_PITCH_SLIDE_ENABLE
@@ -1733,6 +1743,7 @@ MLMCOM_downward_pitch_slide:
 	jp MLM_parse_command_end
 
 MLMCOM_downward_pitch_slide_FM:
+	jp softlock
 	push hl
 	push de
 		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
@@ -1746,7 +1757,7 @@ MLMCOM_downward_pitch_slide_FM:
 		ex hl,de
 		
 		; Store pitch offset per tick in WRAM
-		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
+;		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
 		ld b,0
 		add hl,bc
 		add hl,bc
@@ -1755,7 +1766,7 @@ MLMCOM_downward_pitch_slide_FM:
 		ld (hl),d
 
 		; Enable pitch slides
-		ld hl,FM_channel_enable-MLM_CH_FM1
+;		ld hl,FM_channel_enable-MLM_CH_FM1
 		add hl,bc
 		ld a,(hl)
 		or a,FMCNT_PITCH_SLIDE_ENABLE
@@ -1801,9 +1812,10 @@ MLMCOM_reset_pitch_slide:
 	jp MLM_parse_command_end
 
 MLMCOM_reset_pitch_slide_FM:
+	jp softlock
 	push hl
 		; Clear pitch slide enable flag
-		ld hl,FM_channel_enable-MLM_CH_FM1
+;		ld hl,FM_channel_enable-MLM_CH_FM1
 		ld b,0
 		add hl,bc
 		ld a,(hl)
