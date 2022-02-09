@@ -68,7 +68,6 @@ FM_channel_key_on:		ds FM_CHANNEL_COUNT             ; bool[4] (If it isn't 0, th
 FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'FPVE; Freeze pitch slide; Pitch slide enable; update Volume; Enable Channel. every update flag is cleared every tick)
 FM_channel_algos:       ds FM_CHANNEL_COUNT             ; u8[4] (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
 FM_pitch_slide_ofs:     ds FM_CHANNEL_COUNT*2           ; s16[4]
-FM_pitch_offset:        ds FM_CHANNEL_COUNT*2           ; s16[4]
 FM_wram_end:
 
 ; ======== PA ========
