@@ -679,15 +679,29 @@ FMCNT_set_op_enable:
 	pop de
 	ret
 
-; ixh: note (-OOONNNN; Octave, Note)
-; ixl: channel
+; iyh: note (-OOONNNN; Octave, Note)
+; iyl: channel
+;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
+;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
+;   INSIDE THE SUBROUTINE.
 FMCNT_set_note:
 	push hl
 	push de
 	push af
 	push bc
-	push iy
-		ld c,ixl
+	push ix
+		; [TEMPORARY] Calculate ix
+		ld a,iyl
+		sla a
+		sla a
+		sla a
+		sla a
+		ld ixl,a
+		ld ixh,0
+		ld de,FM_ch1
+		add ix,de
+		
+		ld c,iyl
 
 		; Calculate pointer to FM_channel_frequencies[ch]
 		ld iy,FM_channel_frequencies
@@ -716,8 +730,8 @@ FMCNT_set_note:
 		ld b,a
 
 		; Store pitch in WRAM
-		ld (iy+0),c ; F-Num 1
-		ld (iy+1),b ; Block and F-Num 2 
+		ld (ix+FM_Channel.frequency+0),c ; F-Num 1
+		ld (ix+FM_Channel.frequency+1),b ; Block and F-Num 2 
 
 		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
 		; Write Block and F-Num 2 
@@ -741,7 +755,7 @@ FMCNT_set_note_even_ch:
 		bit 1,a
 		call z,port_write_a
 		call nz,port_write_b
-	pop iy
+	pop ix
 	pop bc
 	pop af
 	pop de
