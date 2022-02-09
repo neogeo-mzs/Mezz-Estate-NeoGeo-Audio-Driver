@@ -61,8 +61,7 @@ SSGCNT_wram_end:
 
 FM_wram_start:        
 FM_operator_TLs:		ds FM_CHANNEL_COUNT*FM_OP_COUNT ; u8[FM_CH_COUNT][FM_OP_COUNT] (0~127; 127 is lowest, 0 is highest)
-FM_channel_volumes:		ds FM_CHANNEL_COUNT             ; u8[4] (127 is lowest, 0 is highest)
-FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'0PVE; Pitch slide enable; update Volume; Enable Channel. every update flag is cleared every tick)
+FM_channel_enable:      ds FM_CHANNEL_COUNT             ; u8[4] (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
 FM_pitch_slide_ofs:     ds FM_CHANNEL_COUNT*2           ; s16[4]
 
 FM_ch1: ds FM_Channel.SIZE

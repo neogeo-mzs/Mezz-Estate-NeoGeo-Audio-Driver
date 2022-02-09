@@ -922,15 +922,24 @@ MLM_set_channel_volume_PA_no_pan:
 MLM_set_channel_volume_FM:
 		sub a,MLM_CH_FM1 ; Transform into FMCNT channel range (6~9 -> 0~3)
 
+		; Obtain FM_Channel offset by
+		; multiplying the channel by 16
+		rlca
+		rlca
+		rlca
+		rlca
+		and $F0
+
 		; Swap a and c again
 		ld b,a
 		ld a,c
 		ld c,b
 
 		srl a ; $00~$FF -> $00~$7F
+
 		; Store volume in WRAM
 		ld b,0
-		ld hl,FM_channel_volumes
+		ld hl,FM_ch1+FM_Channel.volume
 		add hl,bc
 		and a,127 ; Wrap volume inbetween 0 and 127
 		ld (hl),a
@@ -947,7 +956,9 @@ MLM_set_channel_volume_FM:
 	pop hl
 	ret
 
+; TODO: REFACTOR
 MLM_reset_active_chvols:
+	jp softlock
 	push ix
 	push hl
 	push de
@@ -1003,7 +1014,7 @@ MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
 		edup
 
 		; ==== RESET FM CHVOLS ====
-		ld iy,FM_channel_volumes
+		;ld iy,FM_channel_volumes
 MLM_reset_acvls_counter set 0
 		dup FM_CHANNEL_COUNT
 			bit 0,(hl)
@@ -1028,9 +1039,9 @@ MLM_reset_acvls_counter set 0
 				; set channel volume update flag
 				ld hl,FM_channel_enable
 				add hl,bc
-				ld a,(iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes))
+			;	ld a,(iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes))
 				or a,FMCNT_VOL_UPDATE
-				ld (iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes)),a
+			;	ld (iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes)),a
 			pop hl                                  ; +1  = 36b
 			inc hl
 			inc ix
