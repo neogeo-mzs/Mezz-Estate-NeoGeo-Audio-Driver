@@ -342,13 +342,9 @@ The z80 memory zones used are zone 3 and zone 2. The driver starts playing zone 
 The z80 code is based on an empty driver made by freem. I've personally found it here (http://www.ajworld.net/neogeodev/beginner/)
 
 ## BUGS
-* 70hz+ frequencies don't work correctly (LAG ISSUE)
-* FM Channels sound kinda odd
-	- The guitar (?) in bloody_tears.dmf is shorter than it should be
+
 ## TODO
-* Stuff like depending on FMCNT_irq is the wrong approach.
-* Update MLM header parsing to allow banking
-* Implement ADPCM-B
+* Rearrange WRAM (use one array of structs instead than multiple arrays)
 
 ## IDEAS
 * If an SFX sample is playing in an ADPCM-A channel the song needs, search a free ADPCM-A channel, if there isn't one just stop the sample, else use the found free channel; all PA channels are equal
