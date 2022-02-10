@@ -290,29 +290,13 @@ FMCNT_update_modulator_tl:
 FM_op_register_offsets_LUT:
 	db $00,$08,$04,$0C
 
-; a: fbalgo (--FFFAAA; Feedback, Algorithm)
-; c: channel (0~3)
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
+; a:  fbalgo (--FFFAAA; Feedback, Algorithm)
+; c:  channel (0~3)
+; ix: Pointer to FMCNT channel data
 FMCNT_set_fbalgo:
 	push de
 	push af
 	push hl
-	push ix
-		; [TEMPORARY] Calculate ix
-		push af
-			ld a,c
-			sla a
-			sla a
-			sla a
-			sla a
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
-		pop af
-
 		ld e,a ; Store value in e
 
 		; If the channel is even then
@@ -333,18 +317,13 @@ FMCNT_set_fbalgo_even_ch:
 		; Store algorithm in WRAM
 		; (It's multiplied by 2 to make some other code faster)
 		and a,%00000111 ; --FFFAAA -> 00000AAA
-		ld hl,(ix+FM_Channel.algo)
-		ld e,c
-		ld d,0
-		add hl,de
-		sla a ; algorithm *= 2
-		ld (hl),a
+		rlca ; algorithm *= 2
+		ld (ix+FM_Channel.algo),a
 
 		; Set FM volume update flag
 		ld a,(ix+FM_Channel.enable)
 		or a,FMCNT_VOL_UPDATE
 		ld (ix+FM_Channel.enable),a
-	pop ix
 	pop hl
 	pop af
 	pop de
