@@ -492,26 +492,12 @@ FMCNT_set_operator_loop:
 
 ; iyh: note (-OOONNNN; Octave, Note)
 ; iyl: channel
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
+; ix:  pointer to FMCNT channel data
 FMCNT_set_note:
 	push hl
 	push de
 	push af
 	push bc
-	push ix
-		; [TEMPORARY] Calculate ix
-		ld a,iyl
-		sla a
-		sla a
-		sla a
-		sla a
-		ld ixl,a
-		ld ixh,0
-		ld de,FM_ch1
-		add ix,de
-
 		; Load base pitch from FMCNT_pitch_LUT in bc
 		ld a,iyh
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
@@ -557,7 +543,6 @@ FMCNT_set_note_even_ch:
 		bit 1,a
 		call z,port_write_a
 		call nz,port_write_b
-	pop ix
 	pop bc
 	pop af
 	pop de
