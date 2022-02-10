@@ -38,13 +38,13 @@ FMCNT_init:
 ; DOESN'T BACKUP REGISTERS !!!
 FMCNT_irq:
 	ld b,FM_CHANNEL_COUNT
-	ld hl,FM_ch4+FM_Channel.enable
+	ld ix,FM_ch4
 	
 FMCNT_irq_loop:
 	dec b
 		; If the channel's enable bit is 0,
 		; then continue to the next channel
-		ld a,(hl)
+		ld a,(ix+FM_Channel.enable)
 		bit 0,a
 		jr z,FMCNT_irq_loop_skip
 
@@ -55,41 +55,25 @@ FMCNT_irq_loop:
 		call nz,FMCNT_update_total_levels
 
 		; Clear all the update bitflags
-		ld a,(hl)
+		ld a,(ix+FM_Channel.enable)
 		and a,FMCNT_VOL_UPDATE ^ $FF
-		ld (hl),a 
+		ld (ix+FM_Channel.enable),a 
 
 FMCNT_irq_loop_skip:
 		ld de,-FM_Channel.SIZE
-		add hl,de
+		add ix,de
 	inc b
 	djnz FMCNT_irq_loop
 	ret
 
-; b: channel (0~3)
+; b:  channel (0~3)
+; ix: address to FMCNT channel data
 ; (FM_channel_volumes[channel]): volume (0~7F)
 ; DOESN'T BACKUP DE
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
 FMCNT_update_total_levels:
 	push bc
 	push hl
 	push af
-	push ix
-		; [TEMPORARY] Calculate ix
-		push af
-			ld a,b
-			sla a
-			sla a
-			sla a
-			sla a
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
-		pop af
-
 		; if the FMCNT vol enable flag
 		; isn't set, return
 		ld a,(ix+FM_Channel.enable)
@@ -99,7 +83,7 @@ FMCNT_update_total_levels:
 		; If it is set, clear volume flag
 		; and proceed with the function
 		and a,FMCNT_VOL_UPDATE ^ $FF
-		ld (hl),a
+		ld (ix+FM_Channel.enable),a
 
 		ld e,(ix+FM_Channel.algo)
 		ld c,1 ; Prepare operator value
@@ -117,7 +101,6 @@ FMCNT_update_total_levels:
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
 		jp (hl)
 FMCNT_update_total_levels_ret:
-	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -131,7 +114,6 @@ FMCNT_update_total_levels_algo_0_1_2_3:
 		call FMCNT_update_modulator_tl ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
-	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -154,7 +136,6 @@ FMCNT_tlupdate_algo4:
 		call FMCNT_update_modulator_tl ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
-	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -168,7 +149,6 @@ FMCNT_tlupdate_algo5_6:
 		call FMCNT_update_carrier_tl   ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
-	pop ix
 	pop af
 	pop hl
 	pop bc
@@ -182,7 +162,6 @@ FMCNT_tlupdate_algo7:
 		call FMCNT_update_carrier_tl   ; OP3
 		inc c
 		call FMCNT_update_carrier_tl   ; OP4
-	pop ix
 	pop af
 	pop hl
 	pop bc
