@@ -467,11 +467,24 @@ MLM_play_sample_pa:
 ; [INPUT]
 ;   a:  channel+6
 ;   bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
-; Doesn't backup AF, IY and C
+; Doesn't backup AF, IX, IY and C
 MLM_play_note_fm:
 	push de
 	push hl
 		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
+
+		; Calculate address of FM channel data
+		push af
+			rlca
+			rlca
+			rlca
+			rlca
+			and a,$F0
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
 
 		; Make sure the OP TLs are set
 		; before playing a note
@@ -500,20 +513,10 @@ MLM_play_note_fm:
 		; Play FM channel
 		;   Calculate pointer enabled operators 
 		push af
-			rlca      ; \
-			rlca      ;  \
-			rlca      ;  | ofs = channel*16
-			rlca      ;  /
-			and a,$F0 ; /
-			ld e,a    ; store channel in e
-			ld d,0
-			ld a,(hl) ; Store channel bit in a
-			ld hl,FM_ch1+FM_Channel.op_enable
-			add hl,de
-		
 			;   OR enabled operators and channels
 			;   together, then proceed to play the channel 
-			or a,(hl)
+			ld a,(hl)
+			or a,(ix+FM_Channel.op_enable)
 			ld e,a
 			ld d,REG_FM_KEY_ON
 			rst RST_YM_WRITEA
