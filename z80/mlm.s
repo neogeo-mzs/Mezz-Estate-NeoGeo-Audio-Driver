@@ -613,7 +613,7 @@ MLM_set_instrument_fm:
 		; Set OP enable
 		inc hl
 		ld a,(hl)
-		call FMCNT_set_op_enable
+		ld (ix+FM_Channel.op_enable),a
 
 		; Set operators
 		ld b,0

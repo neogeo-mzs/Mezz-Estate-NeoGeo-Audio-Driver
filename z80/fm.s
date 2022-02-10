@@ -331,28 +331,11 @@ FMCNT_set_fbalgo_even_ch:
 
 ; a: amspms (--AA-PPP; Ams, Pms)
 ; c: channel (0~3)
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
+; ix: Pointer to FMCNT channel data
 FMCNT_set_amspms:
 	push de
 	push af
 	push hl
-	push ix
-		; [TEMPORARY] Calculate FMStruct address
-
-		push af
-			ld a,c
-			sla a
-			sla a
-			sla a
-			sla a
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
-		pop af
-
 		; Clear channel's AMS and PMS,
 		; And OR the desired AMS and PMS.
 		; then load OR result in e
@@ -377,7 +360,6 @@ FMCNT_set_amspms_even_ch:
 		bit 1,c
 		call z,port_write_a
 		call nz,port_write_b
-	pop ix
 	pop hl
 	pop af
 	pop de
@@ -385,27 +367,11 @@ FMCNT_set_amspms_even_ch:
 
 ; a: panning (LR------; Left and Right)
 ; c: channel (0~3)
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
+; ix: Pointer to FMCNT channel data
 FMCNT_set_panning:
 	push de
 	push af
 	push hl
-	push ix
-		; [TEMPORARY] Calculate FMStruct address
-		push af
-			ld a,c
-			sla a
-			sla a
-			sla a
-			sla a
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
-		pop af
-
 		; Clear channel's AMS and PMS,
 		; And OR the desired AMS and PMS
 		ld e,a
@@ -428,7 +394,6 @@ FMCNT_set_panning_even_ch:
 		bit 1,c
 		call z,port_write_a
 		call nz,port_write_b
-	pop ix
 	pop hl
 	pop af
 	pop de
@@ -437,27 +402,12 @@ FMCNT_set_panning_even_ch:
 ; hl: pointer to operator data
 ; c:  channel (0~3)
 ; b:  operator (0~3)
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
+; ix: Pointer to FMCNT channel data
 FMCNT_set_operator:
 	push hl
 	push de
 	push af
 	push bc
-		; [TEMPORARY] calculate ix
-		push af
-			ld a,c
-			sla a
-			sla a
-			sla a
-			sla a
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
-		pop af
-
 		push hl
 			ld a,(ix+FM_Channel.enable)
 			or a,FMCNT_VOL_UPDATE
@@ -538,34 +488,6 @@ FMCNT_set_operator_loop:
 	pop af
 	pop de
 	pop hl
-	ret
-
-; a: operator enable (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
-; c: channel (0~3)
-;   THE ADDRESS TO THE FM STRUCT WILL BE PROVIDED AS 
-;   A FUNCTION ARGUMENT, IX WON'T BE CALCULATED
-;   INSIDE THE SUBROUTINE.
-FMCNT_set_op_enable:
-	push de
-	push bc
-	push ix
-		; [TEMPORARY] calculate ix
-		push af
-			ld a,c
-			sla a
-			sla a
-			sla a
-			sla a
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
-		pop af
-		; Store OP enable in WRAM
-		ld (ix+FM_Channel.op_enable),a
-	pop ix
-	pop bc
-	pop de
 	ret
 
 ; iyh: note (-OOONNNN; Octave, Note)
