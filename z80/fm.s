@@ -54,6 +54,8 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
+		;call FMCNT_update_pitch_ofs
+
 		; Clear all the update bitflags
 		ld a,(ix+FM_Channel.enable)
 		and a,FMCNT_VOL_UPDATE ^ $FF
@@ -64,6 +66,97 @@ FMCNT_irq_loop_skip:
 		add ix,de
 	inc b
 	djnz FMCNT_irq_loop
+	ret
+
+; b:  channel (0~3)
+; ix: address to FMCNT channel data
+; DOESN'T BACKUP DE 
+FMCNT_update_pitch_ofs:
+	push af
+	push hl
+		push bc
+			ld a,(ix+FM_Channel.frequency+1)
+			and a,%00111000 ; Mask out F-Num to get the Block
+			ld b,a
+
+			; Offset frequency
+			ld e,(ix+FM_Channel.frequency+0)
+			ld d,(ix+FM_Channel.frequency+1)
+			ex hl,de
+			ld e,(ix+FM_Channel.pitch_ofs+0)
+			ld d,(ix+FM_Channel.pitch_ofs+1)
+			add hl,de
+
+			; If pitch offset is positive, avoid overflow...
+			ld a,(ix+FM_Channel.pitch_ofs+1)
+			bit 7,a
+			jp z,FMCNT_update_pitch_pos 
+
+			; If not, avoid FNum underflow...
+			;   if the Blocks are equal, no
+			;   underflow has happened.
+			ld a,h
+			and a,%00111000 ; Mask out F-Num to get the Block
+			cp a,b
+			jp z,FMCNT_update_pitch_no_underflow
+
+			;   Else, fix the underflow by returning
+			;   the lowest value allowed
+			ld hl,$02D4 ; FM lowest pitch (~19Hz; from Deflemask)
+FMCNT_update_pitch_no_underflow:
+		pop bc
+
+		ex hl,de
+		ld (ix+FM_Channel.frequency+0),e
+		ld (ix+FM_Channel.frequency+1),d
+		jp FMCNT_update_pitch_write_reg ; returns here
+
+FMCNT_update_pitch_pos:
+			; If the Blocks are equal, no
+			; overflow has happened.
+			ld a,h
+			and a,%00111000 ; Mask out F-Num to get the Block
+			cp a,b
+			jp z,FMCNT_update_pitch_no_overflow
+
+			; Else, fix the overflow by returning
+			; the highest value allowed
+			ld hl,$3C67 ; FM highest pitch (~3821Hz; from Deflemask)
+FMCNT_update_pitch_no_overflow:
+		pop bc
+
+		ex hl,de
+		ld (ix+FM_Channel.frequency+0),e
+		ld (ix+FM_Channel.frequency+1),d
+		jp FMCNT_update_pitch_write_reg ; returns here
+
+; de: pitch
+; ix: address to FMCNT channel data
+; b:  channel (0~3)
+FMCNT_update_pitch_write_reg:
+		; CH1, CH3 (b = 0, 2): $A5
+		; CH2, CH4 (b = 1, 3): $A6
+		ld a,b
+		and a,%00000001
+		add a,REG_FM_CH13_FBLOCK
+
+		; Write to Block & F-Num 2 register
+		ld e,d ; backup frequency MSB in e
+		ld d,a
+		bit 1,b
+		call z,port_write_a
+		call nz,port_write_b
+
+		; Write to F-Num 1 register
+		ld a,-4  ; \
+		add a,d  ; | d -= 4
+		ld d,a   ; / 
+		ld e,(ix+FM_Channel.frequency+0)
+		bit 1,b
+		call z,port_write_a
+		call nz,port_write_b
+	pop hl
+	pop af
 	ret
 
 ; b:  channel (0~3)
