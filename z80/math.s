@@ -169,3 +169,16 @@ shift_left_c_by_b_bits_1_loop:
 shift_left_c_by_b_bits_1_loop_skip:
   pop af
   ret
+
+; Inputs:
+;   hl: number to be shifted
+;   b:  how many bits a has to be shifted
+; Outputs
+;   hl: shifted number
+;   b:  0
+shift_right_hl_by_b:
+  or a,a ; clear carry
+  rr h
+  rr l
+  djnz shift_right_hl_by_b
+  ret

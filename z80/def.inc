@@ -294,11 +294,12 @@ ControlMacro.loop_pt equ 4
 ControlMacro.curr_pt equ 5
 ControlMacro.SIZE    equ 8
 
-FM_Channel.lramspms:   equ 0 ; u8[4] (LRAA-PPP; Left & Right, Ams, Pms)
-FM_Channel.op_enable:  equ 1 ; u8[4] (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
-FM_Channel.frequency:  equ 2 ; u16[4] (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
-FM_Channel.volume:     equ 4 ; u8[4] (127 is lowest, 0 is highest)
-FM_Channel.enable:     equ 5 ; u8[4] (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
-FM_Channel.algo:       equ 6 ; u8[4] (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
-FM_Channel.pslide_ofs: equ 7 ; s16[4]
-FM_Channel.SIZE        equ 10+6 ; size + padding
+FM_Channel.lramspms:   equ 0 ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
+FM_Channel.op_enable:  equ 1 ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
+FM_Channel.frequency:  equ 2 ; u16 (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
+FM_Channel.volume:     equ 4 ; u8 (127 is lowest, 0 is highest)
+FM_Channel.enable:     equ 5 ; u8 (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
+FM_Channel.algo:       equ 6 ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
+FM_Channel.pslide_ofs: equ 7 ; s16
+FM_Channel.pitch_ofs:  equ 9 ; s16
+FM_Channel.SIZE        equ 11+6 ; size + padding
