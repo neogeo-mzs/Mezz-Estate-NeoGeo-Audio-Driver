@@ -510,6 +510,7 @@ MLM_play_note_fm:
 		ld iyl,a
 		call FMCNT_set_note
 
+		
 		; Play FM channel
 		;   Calculate pointer enabled operators 
 		push af
@@ -568,6 +569,7 @@ MLM_set_instrument_fm:
 	push bc
 	push af
 	push ix
+		sub a,MLM_CH_FM1
 		push af
 			; Calculate address to
 			; FM_Channel struct
@@ -600,7 +602,6 @@ MLM_set_instrument_fm:
 		add hl,de
 
 		; Set feedback $ algorithm
-		sub a,MLM_CH_FM1
 		ld c,a
 		ld a,(hl)
 		call FMCNT_set_fbalgo
@@ -611,6 +612,7 @@ MLM_set_instrument_fm:
 		call FMCNT_set_amspms
 
 		; Set OP enable
+		
 		inc hl
 		ld a,(hl)
 		ld (ix+FM_Channel.op_enable),a
