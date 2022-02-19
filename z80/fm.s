@@ -54,8 +54,8 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		call FMCNT_update_frequency
-		call FMCNT_update_pslide
+		;call FMCNT_update_frequency
+		;call FMCNT_update_pslide
 
 		; Clear all the update bitflags
 		ld a,(ix+FM_Channel.enable)
