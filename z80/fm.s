@@ -54,7 +54,8 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		;call FMCNT_update_pitch_ofs
+		call FMCNT_update_frequency
+		call FMCNT_update_pslide
 
 		; Clear all the update bitflags
 		ld a,(ix+FM_Channel.enable)
@@ -70,12 +71,11 @@ FMCNT_irq_loop_skip:
 
 ; b:  channel (0~3)
 ; ix: address to FMCNT channel data
-; DOESN'T BACKUP DE
+; DOESN'T BACKUP HL AND DE
 ;  Adds frequency and pitch offset together
 ;  and sets the YM2610 registers
 FMCNT_update_frequency:
 	push af
-	push hl
 		push bc
 			ld a,(ix+FM_Channel.frequency+1)
 			and a,%00111000 ; Mask out F-Num to get the Block
@@ -157,8 +157,24 @@ FMCNT_update_frequency_write_reg:
 		bit 1,b
 		call z,port_write_a
 		call nz,port_write_b
-	pop hl
 	pop af
+	ret
+
+; ix: address to FMCNT channel data
+; b:  channel (0~3)
+; DOESN'T BACKUP AF, HL AND DE
+; Adds the pitch slide offset to
+; the pitch offset
+FMCNT_update_pslide:
+	ld e,(ix+FM_Channel.pitch_ofs+0)
+	ld d,(ix+FM_Channel.pitch_ofs+1)
+	ex hl,de
+	ld e,(ix+FM_Channel.pslide_ofs+0)
+	ld d,(ix+FM_Channel.pslide_ofs+1)
+	add hl,de
+	ex hl,de
+	ld (ix+FM_Channel.pitch_ofs+0),e
+	ld (ix+FM_Channel.pitch_ofs+1),d
 	ret
 
 ; b:  channel (0~3)
