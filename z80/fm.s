@@ -1,5 +1,38 @@
 fm_stop:
 	push de
+		; Silence all OP4s
+		ld e,127
+		ld d,REG_FM_CH1_OP1_TVOL+$C
+		rst RST_YM_WRITEA ; CH1
+		rst RST_YM_WRITEB ; CH3
+		inc d
+		rst RST_YM_WRITEA ; CH2
+		rst RST_YM_WRITEB ; CH4
+
+		; Silence all OP3s
+		ld d,REG_FM_CH1_OP1_TVOL+$4
+		rst RST_YM_WRITEA ; CH1
+		rst RST_YM_WRITEB ; CH3
+		inc d
+		rst RST_YM_WRITEA ; CH2
+		rst RST_YM_WRITEB ; CH4
+
+		; Silence all OP2s
+		ld d,REG_FM_CH1_OP1_TVOL+$8
+		rst RST_YM_WRITEA ; CH1
+		rst RST_YM_WRITEB ; CH3
+		inc d
+		rst RST_YM_WRITEA ; CH2
+		rst RST_YM_WRITEB ; CH4
+
+		; Silence all OP1s
+		ld d,REG_FM_CH1_OP1_TVOL
+		rst RST_YM_WRITEA ; CH1
+		rst RST_YM_WRITEB ; CH3
+		inc d
+		rst RST_YM_WRITEA ; CH2
+		rst RST_YM_WRITEB ; CH4
+
 		ld de,REG_FM_KEY_ON<<8 | FM_CH1
 		rst RST_YM_WRITEA
 		ld e,FM_CH2
@@ -23,12 +56,14 @@ FMCNT_init:
 		ld (hl),0
 		ldir
 
-		; set all operator TLs to $7F
-		;ld hl,FM_operator_TLs
-		;ld de,FM_operator_TLs+1
-		;ld bc,FM_CHANNEL_COUNT*FM_OP_COUNT - 1
-		;ld (hl),$7F
-		;ldir
+		call fm_stop
+
+		; Set all channel pannings to CENTER
+		ld a,PANNING_CENTER
+		ld (FM_ch1+FM_Channel.lramspms),a
+		ld (FM_ch2+FM_Channel.lramspms),a
+		ld (FM_ch3+FM_Channel.lramspms),a
+		ld (FM_ch4+FM_Channel.lramspms),a
 	pop af
 	pop bc
 	pop de
