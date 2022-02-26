@@ -601,7 +601,7 @@ MLM_set_instrument_fm:
 		add hl,hl ; /
 		add hl,de
 
-		; Set feedback $ algorithm
+		; Set feedback & algorithm
 		ld c,a
 		ld a,(hl)
 		call FMCNT_set_fbalgo
