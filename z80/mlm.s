@@ -1687,31 +1687,32 @@ MLMCOM_upward_pitch_slide:
 	jp MLM_parse_command_end
 
 MLMCOM_upward_pitch_slide_FM:
-	jp softlock
 	push hl
+	push de
+		; Calculate address to FMCNT
+		; channel's pitch slide offset
+		ld a,c
+		rlca
+		rlca
+		rlca
+		rlca
+		ld e,a
+		ld d,0
+		ld hl,FM_ch1+FM_Channel.pslide_ofs
+		add hl,de
+
+		; Sets pitch slide offset
 		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
-		
-		; Store pitch offset per tick in WRAM
-;		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
-		ld b,0
-		add hl,bc
-		add hl,bc
 		ld (hl),a
 		inc hl
 		ld (hl),0
-
-		; Enable pitch slides
-;		ld hl,FM_channel_enable-MLM_CH_FM1
-		add hl,bc
-		ld a,(hl)
-		or a,FMCNT_PITCH_SLIDE_ENABLE
-		ld (hl),a
 
 		; Set timing to 0
 		; (Execute next command immediately)
 		ld a,c
 		ld bc,0
 		call MLM_set_timing
+	pop de
 	pop hl
 	jp MLM_parse_command_end
 
@@ -1748,34 +1749,35 @@ MLMCOM_downward_pitch_slide:
 	jp MLM_parse_command_end
 
 MLMCOM_downward_pitch_slide_FM:
-	jp softlock
 	push hl
 	push de
-		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
-		
 		; Convert 8bit ofs to a negative 
 		; 16bit ofs, then store it into de
+		ld a,(MLM_event_arg_buffer) ; Load pitch offset per tick in a
 		xor a,$FF
 		ld l,a
 		ld h,$FF
 		inc hl
 		ex hl,de
 		
-		; Store pitch offset per tick in WRAM
-;		ld hl,FM_pitch_slide_ofs-(MLM_CH_FM1*2)
-		ld b,0
-		add hl,bc
-		add hl,bc
+		; Calculate address to FMCNT
+		; channel's pitch slide offset
+		push de
+			ld a,c
+			rlca
+			rlca
+			rlca
+			rlca
+			ld e,a
+			ld d,0
+			ld hl,FM_ch1+FM_Channel.pslide_ofs
+			add hl,de
+		pop de
+
+		; Sets pitch slide offset
 		ld (hl),e
 		inc hl
 		ld (hl),d
-
-		; Enable pitch slides
-;		ld hl,FM_channel_enable-MLM_CH_FM1
-		add hl,bc
-		ld a,(hl)
-		or a,FMCNT_PITCH_SLIDE_ENABLE
-		ld (hl),a
 
 		; Set timing to 0
 		; (Execute next command immediately)
@@ -1817,15 +1819,18 @@ MLMCOM_reset_pitch_slide:
 	jp MLM_parse_command_end
 
 MLMCOM_reset_pitch_slide_FM:
-	jp softlock
 	push hl
-		; Clear pitch slide enable flag
-;		ld hl,FM_channel_enable-MLM_CH_FM1
+		; Clear pitch slide offset
+		ld hl,FM_ch1+FM_Channel.pslide_ofs
 		ld b,0
 		add hl,bc
-		ld a,(hl)
-		and a,FMCNT_PITCH_SLIDE_ENABLE ^ $FF
-		ld (hl),a
+		add hl,bc
+		add hl,bc
+		add hl,bc
+		xor a,a ; ld a,0
+		ld (hl),0
+		inc hl
+		ld (hl),0
 
 		; Set timing to 0
 		; (Execute next command immediately)

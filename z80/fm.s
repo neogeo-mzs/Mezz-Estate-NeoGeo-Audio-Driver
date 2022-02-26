@@ -54,7 +54,8 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		;call FMCNT_update_pitch_ofs
+		;call FMCNT_update_frequency
+		;call FMCNT_update_pslide
 
 		; Clear all the update bitflags
 		ld a,(ix+FM_Channel.enable)
@@ -70,10 +71,11 @@ FMCNT_irq_loop_skip:
 
 ; b:  channel (0~3)
 ; ix: address to FMCNT channel data
-; DOESN'T BACKUP DE 
-FMCNT_update_pitch_ofs:
+; DOESN'T BACKUP HL AND DE
+;  Adds frequency and pitch offset together
+;  and sets the YM2610 registers
+FMCNT_update_frequency:
 	push af
-	push hl
 		push bc
 			ld a,(ix+FM_Channel.frequency+1)
 			and a,%00111000 ; Mask out F-Num to get the Block
@@ -90,7 +92,7 @@ FMCNT_update_pitch_ofs:
 			; If pitch offset is positive, avoid overflow...
 			ld a,(ix+FM_Channel.pitch_ofs+1)
 			bit 7,a
-			jp z,FMCNT_update_pitch_pos 
+			jp z,FMCNT_update_frequency_pos 
 
 			; If not, avoid FNum underflow...
 			;   if the Blocks are equal, no
@@ -98,42 +100,42 @@ FMCNT_update_pitch_ofs:
 			ld a,h
 			and a,%00111000 ; Mask out F-Num to get the Block
 			cp a,b
-			jp z,FMCNT_update_pitch_no_underflow
+			jp z,FMCNT_update_frequency_no_underflow
 
 			;   Else, fix the underflow by returning
 			;   the lowest value allowed
 			ld hl,$02D4 ; FM lowest pitch (~19Hz; from Deflemask)
-FMCNT_update_pitch_no_underflow:
+FMCNT_update_frequency_no_underflow:
 		pop bc
 
 		ex hl,de
 		ld (ix+FM_Channel.frequency+0),e
 		ld (ix+FM_Channel.frequency+1),d
-		jp FMCNT_update_pitch_write_reg ; returns here
+		jp FMCNT_update_frequency_write_reg ; returns here
 
-FMCNT_update_pitch_pos:
+FMCNT_update_frequency_pos:
 			; If the Blocks are equal, no
 			; overflow has happened.
 			ld a,h
 			and a,%00111000 ; Mask out F-Num to get the Block
 			cp a,b
-			jp z,FMCNT_update_pitch_no_overflow
+			jp z,FMCNT_update_frequency_no_overflow
 
 			; Else, fix the overflow by returning
 			; the highest value allowed
 			ld hl,$3C67 ; FM highest pitch (~3821Hz; from Deflemask)
-FMCNT_update_pitch_no_overflow:
+FMCNT_update_frequency_no_overflow:
 		pop bc
 
 		ex hl,de
 		ld (ix+FM_Channel.frequency+0),e
 		ld (ix+FM_Channel.frequency+1),d
-		jp FMCNT_update_pitch_write_reg ; returns here
+		jp FMCNT_update_frequency_write_reg ; returns here
 
 ; de: pitch
 ; ix: address to FMCNT channel data
 ; b:  channel (0~3)
-FMCNT_update_pitch_write_reg:
+FMCNT_update_frequency_write_reg:
 		; CH1, CH3 (b = 0, 2): $A5
 		; CH2, CH4 (b = 1, 3): $A6
 		ld a,b
@@ -155,8 +157,24 @@ FMCNT_update_pitch_write_reg:
 		bit 1,b
 		call z,port_write_a
 		call nz,port_write_b
-	pop hl
 	pop af
+	ret
+
+; ix: address to FMCNT channel data
+; b:  channel (0~3)
+; DOESN'T BACKUP AF, HL AND DE
+; Adds the pitch slide offset to
+; the pitch offset
+FMCNT_update_pslide:
+	ld e,(ix+FM_Channel.pitch_ofs+0)
+	ld d,(ix+FM_Channel.pitch_ofs+1)
+	ex hl,de
+	ld e,(ix+FM_Channel.pslide_ofs+0)
+	ld d,(ix+FM_Channel.pslide_ofs+1)
+	add hl,de
+	ex hl,de
+	ld (ix+FM_Channel.pitch_ofs+0),e
+	ld (ix+FM_Channel.pitch_ofs+1),d
 	ret
 
 ; b:  channel (0~3)
@@ -612,7 +630,12 @@ FMCNT_set_note:
 
 		; Store pitch in WRAM
 		ld (ix+FM_Channel.frequency+0),c ; F-Num 1
-		ld (ix+FM_Channel.frequency+1),b ; Block and F-Num 2 
+		ld (ix+FM_Channel.frequency+1),b ; Block and F-Num 2
+
+		; Reset pitch offset
+		xor a,a ; ld a,0
+		ld (ix+FM_Channel.pitch_ofs+0),a
+		ld (ix+FM_Channel.pitch_ofs+1),a
 
 		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
 		; Write Block and F-Num 2 
