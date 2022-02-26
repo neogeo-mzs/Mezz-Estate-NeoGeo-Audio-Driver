@@ -155,7 +155,7 @@ MLM_song_fm4:
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
-MLM_el_fm:
+MLM_el_fm2:
 	db $02,2         ; Set instrument to 2
 	db $05,$FF       ; Set channel volume
 	db $06,%11000000 ; Set panning to CENTER
@@ -172,7 +172,7 @@ MLM_el_fm:
 	dw MLM_el_fm-MLM_header
 	db $00
 
-MLM_el_fm2:
+MLM_el_fm:
 	db $02,2   ; Set instrument to 2
 	db $22,255  ; Set Pitch downward slide
 	db $80 | 2, 0 | (4 << 4) ; Play FM note C4 and wait 2 ticks
