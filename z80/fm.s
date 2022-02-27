@@ -513,11 +513,24 @@ FMCNT_set_amspms_even_ch:
 
 ; a: panning (LR------; Left and Right)
 ; c: channel (0~3)
-; ix: Pointer to FMCNT channel data
 FMCNT_set_panning:
 	push de
 	push af
-	push hl
+	push ix
+		; Calculate address to
+		; FMCNT channel data
+		push af
+			ld a,c
+			rlca ; -\
+			rlca ;  | a *= 16
+			rlca ;  /
+			rlca ; /
+			ld e,a
+			ld d,0
+			ld ix,FM_ch1
+			add ix,de
+		pop af
+
 		; Clear channel's AMS and PMS,
 		; And OR the desired AMS and PMS
 		ld e,a
@@ -540,7 +553,7 @@ FMCNT_set_panning_even_ch:
 		bit 1,c
 		call z,port_write_a
 		call nz,port_write_b
-	pop hl
+	pop ix
 	pop af
 	pop de
 	ret
