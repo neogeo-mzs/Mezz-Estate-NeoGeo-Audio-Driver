@@ -73,7 +73,7 @@ MLM_update_channel_playback_exec_check:
 			jp z,MLM_parse_command ; hl, de, c
 
 			; ======== Parse note ========
-			push bc
+			push bc ;;;; CRASHES PARSING NOTE
 				ld a,(hl)
 				and a,$7F ; Clear bit 7 of the note's first byte
 				ld b,a
@@ -471,6 +471,7 @@ MLM_play_sample_pa:
 MLM_play_note_fm:
 	push de
 	push hl
+	push ix
 		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
 
 		; Calculate address of FM channel data
@@ -490,6 +491,7 @@ MLM_play_note_fm:
 		; before playing a note
 		ld h,b ; backup timing in h
 		ld b,a
+		brk
 		call FMCNT_update_total_levels
 		ld b,h ; store timing back into b
 
@@ -526,6 +528,7 @@ MLM_play_note_fm:
 		add a,MLM_CH_FM1
 		ld c,b
 		call MLM_set_timing
+	pop ix
 	pop hl
 	pop de
 	jp MLM_parse_note_end
@@ -940,15 +943,16 @@ MLM_set_channel_volume_FM:
 
 		push ix
 			; Obtain address to FM_Channel
-			rlca       ; \
-			rlca       ;  \
-			rlca       ;  | offset = channel*16
-			rlca       ;  /
-			and a, $F0 ; /
-			ld ixl,a
-			ld ixh,0
-			ld de,FM_ch1
-			add ix,de
+			push af
+				rlca       ; -\
+				rlca       ;  | offset = channel*16
+				rlca       ;  /
+				rlca       ; /
+				ld ixl,a
+				ld ixh,0
+				ld de,FM_ch1
+				add ix,de
+			pop af
 
 			; Swap a and c again
 			ld b,a
