@@ -243,6 +243,7 @@ FMCNT_update_total_levels:
 		; for all the other algorithms, you have
 		; to index the vector table.
 		ld hl,FMCNT_tlupdate_vectors-8
+		ld d,0
 		add hl,de
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
 		jp (hl)
