@@ -491,7 +491,6 @@ MLM_play_note_fm:
 		; before playing a note
 		ld h,b ; backup timing in h
 		ld b,a
-		brk
 		call FMCNT_update_total_levels
 		ld b,h ; store timing back into b
 
