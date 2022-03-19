@@ -108,7 +108,7 @@ startup:
 	out ($C0),a
 	
 	;call set_default_banks
-	ld b,2
+	ld b,0
 	call set_banks
 	call SFXPS_init
 	call UCOM_init
@@ -243,8 +243,8 @@ play_sample:
 
 ; b: 32kb bank
 set_banks:
-	brk
 	push af
+	push bc
 		; If the selected bank has already
 		; been switched into place, return
 		ld a,(current_bank)
@@ -257,27 +257,31 @@ set_banks:
 
 		; z3 = b * 2
 		sla a
+		ld c,a
 		in a,($0B)
 
 		; z2 = z3 * 2 + 2
-		ld a,b
+		ld a,c
 		sla a
 		add a,2
+		ld c,a
 		in a,($0A)
 
 		; z1 = z2 * 2 + 2
-		ld a,b
+		ld a,c
 		sla a
 		add a,2
+		ld c,a
 		in a,($09)
 
 		; z0 = z1 * 2 + 2
-		ld a,b
+		ld a,c
 		sla a
 		add a,2
 		in a,($08)
 		
 set_banks_ret:
+	pop bc
 	pop af
 	ret
 
