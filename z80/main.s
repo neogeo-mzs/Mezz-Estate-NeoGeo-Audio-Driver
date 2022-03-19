@@ -243,6 +243,7 @@ play_sample:
 
 ; b: 32kb bank
 set_banks:
+	brk
 	push af
 		; If the selected bank has already
 		; been switched into place, return
@@ -259,16 +260,19 @@ set_banks:
 		in a,($0B)
 
 		; z2 = z3 * 2 + 2
+		ld a,b
 		sla a
 		add a,2
 		in a,($0A)
 
 		; z1 = z2 * 2 + 2
+		ld a,b
 		sla a
 		add a,2
 		in a,($09)
 
 		; z0 = z1 * 2 + 2
+		ld a,b
 		sla a
 		add a,2
 		in a,($08)
@@ -368,4 +372,4 @@ softlock:
 
 ;#code SDATA,$6000,$1800
 ;	incbin "m1rom_sdata.bin"
-	include "mlm_test_data.s"
+;	include "mlm_test_data.s"
