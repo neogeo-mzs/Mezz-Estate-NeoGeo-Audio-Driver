@@ -1952,6 +1952,7 @@ MLMCOM_set_channel_volume_byte_FM_pos:
 ; de: playback pointer
 MLMCOM_set_channel_volume_byte_SSG:
 	push de
+	push hl
 		; Load command byte in a, and 
 		; then get the volume from the 
 		; least significant nibble of it
@@ -1969,6 +1970,7 @@ MLMCOM_set_channel_volume_byte_SSG:
 		sla a ; /
 
 		call MLM_set_channel_volume
+	pop hl
 	pop de
 	jp MLMCOM_set_channel_volume_byte_ret
 
