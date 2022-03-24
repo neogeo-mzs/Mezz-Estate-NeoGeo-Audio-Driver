@@ -66,3 +66,20 @@ void Z80_send_user_command(u8 command, u8 parameter)
 	FIX_PrintNibble(tmp >> 4);
    	FIX_PrintNibble(tmp & 0x0F);
 }
+
+/*void Z80_send_user_command(u8 command, u8 parameter)
+{
+    const u8 user_com_mask = 0x80;
+    command |= user_com_mask;
+    parameter |= user_com_mask;
+
+    *REG_SOUND = command;
+    u8 neg_command = command ^ 0xFF;
+    while (*REG_SOUND != neg_command);
+    wait_loop(64);
+
+    *REG_SOUND = parameter;
+    u8 neg_parameter = parameter ^ 0xFF;
+    while (*REG_SOUND != neg_parameter);
+    wait_loop(64);
+}*/
