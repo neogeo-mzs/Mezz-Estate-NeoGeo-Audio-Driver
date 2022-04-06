@@ -189,6 +189,52 @@ SFXPS_find_suitable_channel_loop_bch_found:
     pop bc
     ret
 
+; [INPUT]
+;   c: priority
+;   b: sample id
+; [OUTPUT]
+;   a: channel ($FF if none is found)
+; CHANGES FLAGS!!!
+;   Searches for a channel currently playing,
+;   or that has just played, the specified sample, 
+;   if none satisfy this condition, it returns
+;   a channel based on its busy status and priority.
+SFXPS_find_retrig_channel:
+    push hl
+    push bc
+    push de
+        ; Go through all channels and find a busy 
+        ; channel playing the specified sample
+        ld a,(SFXPS_channel_taken_status)
+        ld e,a
+        ld a,b
+        ld b,PA_CHANNEL_COUNT
+        ld hl,SFXPS_channel_sample_ids
+SFXPS_find_retrig_channel_loop:
+        ; If channel is taken, check next channel
+        bit 0,e
+        jp nz,SFXPS_find_retrig_channel_next
+        cp a,(hl) ; if smp_id == sample_ids[ch] ...
+        jp z,SFXPS_find_retrig_channel_found ; then...
+
+SFXPS_find_retrig_channel_next:
+        inc hl
+        djnz SFXPS_find_retrig_channel_loop
+    pop de
+    pop bc
+    pop hl
+
+    ; If none are found...
+    jp SFXPS_find_suitable_channel
+
+SFXPS_find_retrig_channel_found:
+        ld a,b
+        dec a
+    pop de
+    pop bc
+    pop hl
+    ret
+
 ; c:   priority
 ; b:   sample id
 ; iyl: CVOL (%PP-VVVVV; Panning, Volume)
@@ -201,16 +247,22 @@ SFXPS_play_sfx:
         ; Find a suitable channel, if
         ; none is found return.
         call SFXPS_find_suitable_channel
+SFXPS_play_sfx_found_channel:
         cp a,$FF
         jr z,SFXPS_play_sfx_ret
 
         ; Else, there's a channel the 
         ; sample can be played in.
+        ;   Store the sample id in WRAM
+        ld hl,SFXPS_channel_sample_ids
+        ld e,a
+        ld d,0
+        add hl,de
+        ld (hl),b
+
         ;   Set the SFXPS ch. playback status to busy
         ;   (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
         ld hl,PA_channel_on_masks
-        ld e,a
-        ld d,0
         add hl,de
         ld a,(SFXPS_channel_playback_status)
         or a,(hl)
@@ -259,3 +311,15 @@ SFXPS_play_sfx_ret:
     pop bc
     pop af
     ret
+
+; c:   priority
+; b:   sample id
+; iyl: CVOL (%PP-VVVVV; Panning, Volume)
+SFXPS_retrigger_sfx:
+    push af
+    push bc
+    push hl
+    push de
+    push ix
+        call SFXPS_find_retrig_channel
+        jp SFXPS_play_sfx_found_channel

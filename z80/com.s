@@ -186,8 +186,8 @@ UCOM_command_vectors:
     dw UCOM_CMD_sfxps_buffer_prio, UCOM_CMD_sfxps_play_smp
     dw UCOM_CMD_fade_in,           UCOM_CMD_fade_in
     dw UCOM_CMD_fade_out,          UCOM_CMD_fade_out
-    dw UCOM_CMD_buffer_fade_ofs
-    dup 117
+    dw UCOM_CMD_buffer_fade_ofs,   UCOM_CMD_sfxps_retrig_smp
+    dup 116
         dw UCOM_CMD_invalid
     edup
 
@@ -322,6 +322,22 @@ UCOM_CMD_buffer_fade_ofs:
         ld (com_fdcnt_buffered_offset),a
     pop af
     jp UCOM_run_command_return
-    
+
+; b: %0SSSSSSS
+; c: $0B
+UCOM_CMD_sfxps_retrig_smp:
+    push bc
+    push iy
+    push af
+        ld a,(com_sfxps_buffered_cvol)
+        ld iyl,a
+        ld a,(com_sfxps_buffered_prio)
+        ld c,a
+        call SFXPS_retrigger_sfx
+    pop af
+    pop iy
+    pop bc
+    jp UCOM_run_command_return
+
 UCOM_CMD_invalid:
     call softlock
