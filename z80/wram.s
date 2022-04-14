@@ -76,15 +76,6 @@ PA_channel_pannings: ds PA_CHANNEL_COUNT
 PA_status_register: ds 1	
 PA_wram_end:
 
-; ======== SFX Playback System =======
-SFXPS_WRAM_start:
-SFXPS_adpcma_table: ds 2 ; void*
-SFXPS_channel_priorities:      ds PA_CHANNEL_COUNT ; u8[6]
-SFXPS_channel_sample_ids:      ds PA_CHANNEL_COUNT ; u8[6]
-SFXPS_channel_taken_status:    ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 taken? 1 = yes, 0 = no)
-SFXPS_channel_playback_status: ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 playing? 1 = yes, 0 = no)
-SFXPS_WRAM_end:
-
 ; ======== FDCNT ========
 FDCNT_offset:          ds 1 ; s8
 FDCNT_do_reset_chvols: ds 1 ; u8 (if set FDCNT_irqA will reset all channel volume and clear this variable)
@@ -98,3 +89,12 @@ current_bank:             ds 1 ; u8
 has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has expired)
 master_volume:            ds 1 ; u8
 tmp2:                     ds 2
+
+; ======== SFX Playback System =======
+SFXPS_WRAM_start:
+SFXPS_adpcma_table: ds 2 ; void*
+SFXPS_channel_priorities:      ds PA_CHANNEL_COUNT ; u8[6]
+SFXPS_channel_sample_ids:      ;ds PA_CHANNEL_COUNT ; u8[6]
+SFXPS_channel_taken_status:    ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 taken? 1 = yes, 0 = no)
+SFXPS_channel_playback_status: ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 playing? 1 = yes, 0 = no)
+SFXPS_WRAM_end:
