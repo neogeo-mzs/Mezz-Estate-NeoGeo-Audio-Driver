@@ -89,8 +89,8 @@ FMCNT_irq_loop:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		;call FMCNT_update_frequency
-		;call FMCNT_update_pslide
+		call FMCNT_update_frequency
+		call FMCNT_update_pslide
 
 		; Clear all the update bitflags
 		ld a,(ix+FM_Channel.enable)
@@ -135,18 +135,11 @@ FMCNT_update_frequency:
 			ld a,h
 			and a,%00111000 ; Mask out F-Num to get the Block
 			cp a,b
-			jp z,FMCNT_update_frequency_no_underflow
+			jp z,FMCNT_update_frequency_no_over_or_underflow
 
 			;   Else, fix the underflow by returning
 			;   the lowest value allowed
 			ld hl,$02D4 ; FM lowest pitch (~19Hz; from Deflemask)
-FMCNT_update_frequency_no_underflow:
-		pop bc
-
-		ex hl,de
-		ld (ix+FM_Channel.frequency+0),e
-		ld (ix+FM_Channel.frequency+1),d
-		jp FMCNT_update_frequency_write_reg ; returns here
 
 FMCNT_update_frequency_pos:
 			; If the Blocks are equal, no
@@ -154,23 +147,15 @@ FMCNT_update_frequency_pos:
 			ld a,h
 			and a,%00111000 ; Mask out F-Num to get the Block
 			cp a,b
-			jp z,FMCNT_update_frequency_no_overflow
+			jp z,FMCNT_update_frequency_no_over_or_underflow
 
 			; Else, fix the overflow by returning
 			; the highest value allowed
 			ld hl,$3C67 ; FM highest pitch (~3821Hz; from Deflemask)
-FMCNT_update_frequency_no_overflow:
+FMCNT_update_frequency_no_over_or_underflow:
 		pop bc
 
-		ex hl,de
-		ld (ix+FM_Channel.frequency+0),e
-		ld (ix+FM_Channel.frequency+1),d
-		jp FMCNT_update_frequency_write_reg ; returns here
-
-; de: pitch
-; ix: address to FMCNT channel data
-; b:  channel (0~3)
-FMCNT_update_frequency_write_reg:
+		; Write frequency to registers
 		; CH1, CH3 (b = 0, 2): $A5
 		; CH2, CH4 (b = 1, 3): $A6
 		ld a,b
@@ -178,7 +163,7 @@ FMCNT_update_frequency_write_reg:
 		add a,REG_FM_CH13_FBLOCK
 
 		; Write to Block & F-Num 2 register
-		ld e,d ; backup frequency MSB in e
+		ld e,h 
 		ld d,a
 		bit 1,b
 		call z,port_write_a
@@ -188,7 +173,7 @@ FMCNT_update_frequency_write_reg:
 		ld a,-4  ; \
 		add a,d  ; | d -= 4
 		ld d,a   ; / 
-		ld e,(ix+FM_Channel.frequency+0)
+		ld e,l
 		bit 1,b
 		call z,port_write_a
 		call nz,port_write_b
