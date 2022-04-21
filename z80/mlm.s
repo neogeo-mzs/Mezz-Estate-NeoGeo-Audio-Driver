@@ -1701,7 +1701,7 @@ MLMCOM_upward_pitch_slide_FM:
 		rlca
 		ld e,a
 		ld d,0
-		ld hl,FM_ch1+FM_Channel.pslide_ofs
+		ld hl,FM_ch1+FM_Channel.pslide_ofs-(MLM_CH_FM1*16)
 		add hl,de
 
 		; Sets pitch slide offset
@@ -1773,7 +1773,7 @@ MLMCOM_downward_pitch_slide_FM:
 			rlca
 			ld e,a
 			ld d,0
-			ld hl,FM_ch1+FM_Channel.pslide_ofs
+			ld hl,FM_ch1+FM_Channel.pslide_ofs-(MLM_CH_FM1*16)
 			add hl,de
 		pop de
 
