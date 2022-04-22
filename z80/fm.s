@@ -149,9 +149,12 @@ FMCNT_update_frequency_pos:
 			cp a,b
 			jp z,FMCNT_update_frequency_no_over_or_underflow
 
-			; Else, fix the overflow by returning
-			; the highest value allowed
-			ld hl,$3C67 ; FM highest pitch (~3821Hz; from Deflemask)
+			; Else, fix the overflow by returning the highest 
+			; value allowed within the original block
+			ld a,b
+			or a,%111
+			ld h,a
+			ld l,$FF
 FMCNT_update_frequency_no_over_or_underflow:
 		pop bc
 
