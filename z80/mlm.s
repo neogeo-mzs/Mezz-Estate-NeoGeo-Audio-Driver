@@ -2,6 +2,7 @@
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
+	; FM1 OK
 	ld c,0
 	ld hl,MLM_channel_control
 	dup CHANNEL_COUNT
@@ -1824,12 +1825,16 @@ MLMCOM_reset_pitch_slide:
 MLMCOM_reset_pitch_slide_FM:
 	push hl
 		; Clear pitch slide offset
-		ld hl,FM_ch1+FM_Channel.pslide_ofs
-		ld b,0
-		add hl,bc
-		add hl,bc
-		add hl,bc
-		add hl,bc
+		push bc
+			ld h,0
+			ld l,c
+			ld bc,FM_ch1+FM_Channel.pslide_ofs-(MLM_CH_FM1*16)
+			add hl,hl
+			add hl,hl
+			add hl,hl
+			add hl,hl
+			add hl,bc
+		pop bc
 		xor a,a ; ld a,0
 		ld (hl),0
 		inc hl
