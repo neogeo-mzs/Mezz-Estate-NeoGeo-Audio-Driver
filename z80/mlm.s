@@ -1651,7 +1651,7 @@ MLMCOM_upward_pitch_slide:
 	; ADPCM-A channels have no pitch, return
 	ld a,c 
 	cp a,MLM_CH_FM1
-	jp c,MLM_parse_command_end
+	jp c,MLMCOM_pitch_slide_PA_ret
 
 	; Else if FM, update FMCNT accordingly
 	cp a,MLM_CH_SSG1
@@ -1690,6 +1690,16 @@ MLMCOM_upward_pitch_slide:
 	pop hl
 	jp MLM_parse_command_end
 
+MLMCOM_pitch_slide_PA_ret:
+	; Set timing to 0
+	; (Execute next command immediately)
+	push af
+		ld a,c
+		ld bc,0
+	pop af
+	call MLM_set_timing
+	jp MLM_parse_command_end
+
 MLMCOM_upward_pitch_slide_FM:
 	push hl
 	push de
@@ -1725,7 +1735,7 @@ MLMCOM_downward_pitch_slide:
 	; ADPCM-A channels have no pitch, return
 	ld a,c
 	cp a,MLM_CH_FM1
-	jp c,MLM_parse_command_end
+	jp c,MLMCOM_pitch_slide_PA_ret
 
 	; Else if FM, update FMCNT accordingly
 	cp a,MLM_CH_SSG1
@@ -1797,7 +1807,7 @@ MLMCOM_reset_pitch_slide:
 	; ADPCM-A channels have no pitch, return
 	ld a,c
 	cp a,MLM_CH_FM1
-	jp c,MLM_parse_command_end
+	jp c,MLMCOM_pitch_slide_PA_ret
 
 	; Else if FM, update FMCNT accordingly
 	cp a,MLM_CH_SSG1
