@@ -156,33 +156,32 @@ MLM_song_fm4:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_fm2:
-	db $02,2         ; Set instrument to 2
-	db $05,$FF       ; Set channel volume
-	db $06,%11000000 ; Set panning to CENTER
+	db $02,2                     ; Set instrument to 2
+	db $05,$FF                   ; Set channel volume
+	db $06,%11000000             ; Set panning to CENTER
 	db $80 | (8*3), 0 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
 	db $80 | (8*3), 2 | (4 << 4) ; Play FM note D4 and wait 8*3 ticks
-	db $01, 30 ; Stop note and wait 30 ticks
-	db $05,$E8 ; Set channel volume
-	db $06,%10000000 ; Set panning to LEFT
+	db $01, 30                   ; Stop note and wait 30 ticks
+	db $05,$E8                   ; Set channel volume
+	db $06,%10000000             ; Set panning to LEFT
 	db $80 | (8*3), 4 | (4 << 4) ; Play FM note E4 and wait 8*3 ticks
-	db $06,%01000000 ; Set panning to RIGHT
+	db $06,%01000000             ; Set panning to RIGHT
 	db $80 | (8*3), 5 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
-	db $01, 30 ; Stop note and wait 30 ticks
+	db $01, 30                   ; Stop note and wait 30 ticks
 	db $0B
 	dw MLM_el_fm-MLM_header
 	db $00
 
 MLM_el_fm:
-	db $02,2   ; Set instrument to 2
-	db $22,255  ; Set Pitch downward slide
+	db $02,2                 ; Set instrument to 2
+	db $22,255               ; Set pitch slide to -255
 	db $80 | 2, 0 | (4 << 4) ; Play FM note C4 and wait 2 ticks
-	db $21,32   ; Set Pitch upward slide
-	db $03, 16
-	db $23
-	db $03,64
+	db $21,32                ; Set pitch slide to +32
+	db $03,16                ; Wait 16 ticks
+	db $23                   ; Reset pitch slide
+	db $03,64                ; Wait 64 ticks
 	db $0B
-	dw MLM_el_fm-MLM_header
-	db $00
+	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
 
 #code SDATA_BANK2,$8000,$8000
 MLM_song_ssg1:
@@ -211,10 +210,10 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db $02,1             ; Set instrument to 1
 	db $38               ; Set SSG volume to 8
-	db $22,255             ; Set pitch slide to +1    
+	db $22,255           ; Set pitch slide to -255    
 	db $80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
-	db $01, 30 ; Stop note and wait 30 ticks
-	db $3F ; Set SSG volume to F
-	db $23
+	db $01, 30           ; Stop note and wait 30 ticks
+	db $3F               ; Set SSG volume to F
+	db $23               ; Reset pitch slide
 	db $80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
  	db $00 ; End of song
