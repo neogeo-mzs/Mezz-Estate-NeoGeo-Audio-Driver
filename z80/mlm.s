@@ -1251,7 +1251,10 @@ MLM_command_vectors:
 	edup
 	dw MLMCOM_return_from_sub_el,   MLMCOM_upward_pitch_slide
 	dw MLMCOM_downward_pitch_slide, MLMCOM_reset_pitch_slide
-	dup 12
+	dup 4
+		dw MLMCOM_FM_TL_set
+	edup
+	dup 8
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 	dup 16
@@ -1266,7 +1269,8 @@ MLM_command_argc:
 	db $01, $02, $01, $02, $01, $02, $02, $02
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
-	ds 12, 0   ; Invalid commands all have no arguments
+	ds 4, $01 ; FM OP TL Set
+	ds 8, 0   ; Invalid commands all have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
 	ds 64, 0   ; Invalid commands all have no arguments
 
@@ -1857,6 +1861,68 @@ MLMCOM_reset_pitch_slide_FM:
 		call MLM_set_timing
 	pop hl
 	jp MLM_parse_command_end
+
+; c: channel
+; de: playback pointer
+MLMCOM_FM_TL_set:
+	brk
+	; Set timing to 0
+	push bc
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+
+	cp a,MLM_CH_FM1 ; if a < MLM_CH_FM1 (channel is ADPCMA)
+	jp c,MLM_parse_command_end 
+
+	cp a,MLM_CH_SSG1 ; if a >= MLM_CH_SSG1 (channel is SSG)
+	jp nc,MLM_parse_command_end
+
+	; Else... (Channel is FM)
+	push hl
+	push de
+		; Correctly offset FM channel (6~9 -> 0~3)
+		sub a,MLM_CH_FM1
+		ld c,a
+
+		; Get operator to set
+		ex hl,de
+		dec hl
+		dec hl
+		ld a,(hl)
+		and a,%00000011
+
+		; Calculate FM OP TL Set address
+		ld hl,FM_operator_TLs
+		ld e,a
+		ld d,0
+		add hl,de
+		ld a,c
+		rlca ; - a *= 4
+		rlca ; / 
+		ld e,a
+		add hl,de
+
+		; Set FM OP TL
+		ld a,(MLM_event_arg_buffer)
+		and a,$7F
+		ld (hl),a
+
+		; Calculate address to FM channel flag
+		; and set the volume (and TL) update flag
+		; (change if FM_Channel.SIZE isn't 16)
+		rlca ; - a *= 4 (thus channel * 16)
+		rlca ; /
+		ld e,a
+		ld hl,FM_ch1+FM_Channel.enable
+		add hl,de
+		ld a,(hl)
+		or a,FMCNT_VOL_UPDATE
+		ld (hl),a
+	pop de
+	pop hl
+	jp MLM_parse_command_end 
 
 ; c: channel
 ; de: playback pointer
