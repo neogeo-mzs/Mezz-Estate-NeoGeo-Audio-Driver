@@ -1912,7 +1912,10 @@ MLMCOM_FM_TL_set:
 		; Calculate address to FM channel flag
 		; and set the volume (and TL) update flag
 		; (change if FM_Channel.SIZE isn't 16)
-		rlca ; - a *= 4 (thus channel * 16)
+		ld a,c
+		rlca ; -\
+		rlca ;  | a *= 16
+		rlca ;  /
 		rlca ; /
 		ld e,a
 		ld hl,FM_ch1+FM_Channel.enable
