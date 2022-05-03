@@ -9,9 +9,9 @@ MLM_header:
 	.long (MLM_song_pa5-MLM_header) << 8 | 0
 	.long (MLM_song_pa6-MLM_header) << 8 | 0
 	.long (MLM_song_fm1-MLM_header) << 8 | 1
-	.long (MLM_song_fm1-MLM_header) << 8 | 1
-	.long (MLM_song_fm1-MLM_header) << 8 | 1
-	.long (MLM_song_fm1-MLM_header) << 8 | 1
+	.long (MLM_song_fm2-MLM_header) << 8 | 1
+	.long (MLM_song_fm3-MLM_header) << 8 | 1
+	.long (MLM_song_fm4-MLM_header) << 8 | 1
 	.long (MLM_song_ssg1-MLM_header) << 8 | 2
 	.long (MLM_song_ssg2-MLM_header) << 8 | 2
 	.long (MLM_song_ssg3-MLM_header) << 8 | 2
@@ -170,9 +170,8 @@ MLM_el_fm2:
 	db $01, 30                   ; Stop note and wait 30 ticks
 	db $0B
 	dw MLM_el_fm-MLM_header
-	db $00
 
-MLM_el_fm:
+MLM_el_fm3:
 	db $02,2                 ; Set instrument to 2
 	db $22,255               ; Set pitch slide to -255
 	db $80 | 2, 0 | (4 << 4) ; Play FM note C4 and wait 2 ticks
@@ -183,6 +182,16 @@ MLM_el_fm:
 	db $0B
 	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
 
+MLM_el_fm:
+	db $02,2                  ; Set instrument to 2
+	db $24 | 0,$00            ; Set OP1 TL to $00
+	db $80 | 32, 0 | (4 << 4) ; Play C4 then wait 32 ticks
+
+	db $24 | 0,$20            ; Set OP1 TL to $20
+	db $80 | 32, 0 | (4 << 4)
+	db $0B
+	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
+	
 #code SDATA_BANK2,$8000,$8000
 MLM_song_ssg1:
 	ds 10*2,0
