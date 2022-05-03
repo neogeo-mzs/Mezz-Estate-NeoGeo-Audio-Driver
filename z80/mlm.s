@@ -1865,7 +1865,6 @@ MLMCOM_reset_pitch_slide_FM:
 ; c: channel
 ; de: playback pointer
 MLMCOM_FM_TL_set:
-	brk
 	; Set timing to 0
 	push bc
 		ld a,c
