@@ -2,7 +2,6 @@
 MLM_irq:
 	ld iyl,0 ; Clear active mlm channel counter
 
-	; FM1 OK
 	ld c,0
 	ld hl,MLM_channel_control
 	dup CHANNEL_COUNT
@@ -1254,7 +1253,8 @@ MLM_command_vectors:
 	dup 4
 		dw MLMCOM_FM_TL_set
 	edup
-	dup 8
+	dw MLMCOM_inc_pitch_offset,     MLMCOM_inc_pitch_offset
+	dup 6
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 	dup 16
@@ -1270,9 +1270,10 @@ MLM_command_argc:
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
 	ds 4, $01 ; FM OP TL Set
-	ds 8, 0   ; Invalid commands all have no arguments
+	db $01, $01
+	ds 6, 0   ; Invalid commands have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
-	ds 64, 0   ; Invalid commands all have no arguments
+	ds 64, 0   ; Invalid commands have no arguments
 
 ; c: channel
 MLMCOM_end_of_list:
@@ -1925,6 +1926,102 @@ MLMCOM_FM_TL_set:
 	pop de
 	pop hl
 	jp MLM_parse_command_end 
+
+; c: channel
+; de: playback pointer
+MLMCOM_inc_pitch_offset:
+	brk
+	; Set timing to 0
+	push hl
+	push de
+		; Set timing
+		ex hl,de
+		dec hl
+		dec hl
+		ld a,(hl)
+		and a,1 ; %0100000T -> %0000000T
+		push bc
+			ld b,c ; \
+			ld c,a ; | swap a and c
+			ld a,b ; /
+			ld b,0
+			call MLM_set_timing
+		pop bc
+
+		; get pitch offset and extend its sign
+		push bc
+			ld a,(MLM_event_arg_buffer)
+			call AtoBCextendendsign
+			ld e,c
+			ld d,b
+		pop bc
+
+		ld a,c
+		cp a,MLM_CH_SSG1 ; If ch >= MLM_CH_SSG1 (ch is SSG)
+		jp nc,MLMCOM_inc_pitch_offset_ssg
+		cp a,MLM_CH_FM1  ; elif ch >= MLM_CH_FM1 (ch is FM)
+		jp nc,MLMCOM_inc_pitch_offset_fm
+
+		; Else, return (channel is ADPCM)
+	pop de
+	pop hl
+
+	jp MLM_parse_command_end 
+
+; de: pitch offset offset
+MLMCOM_inc_pitch_offset_ssg:
+		; Calculate address to SSGCNT_pitch_ofs
+		ld hl,SSGCNT_pitch_ofs-(MLM_CH_SSG1*2)
+		ld b,0
+		add hl,bc
+		add hl,bc
+
+		; Add pitch offset offset to pitch offset
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+		ex hl,de
+		add hl,bc
+
+		; Store result in WRAM
+		ex hl,de
+		ld (hl),d
+		dec hl
+		ld (hl),e
+	pop de
+	pop hl
+	jp MLM_parse_command_end
+
+; de: pitch offset offset
+MLMCOM_inc_pitch_offset_fm:
+		; Calculate address to FM_Channel.pitch_ofs
+		; (Assumes FM_Channel.SIZE is 16)
+		ld hl,FM_ch1+FM_Channel.pitch_ofs
+		ld a,c
+		sub a,MLM_CH_FM1
+		rlca ; -\
+		rlca ;  | a *= 16
+		rlca ;  /
+		rlca ; /
+		ld c,a
+		ld b,0
+		add hl,bc
+
+		; Add pitch offset offset to pitch offset
+		ld c,(hl)
+		inc hl
+		ld b,(hl)
+		ex hl,de
+		add hl,bc
+
+		; Store result in WRAM
+		ex hl,de
+		ld (hl),d
+		dec hl
+		ld (hl),e
+	pop de
+	pop hl
+	jp MLM_parse_command_end
 
 ; c: channel
 ; de: playback pointer
