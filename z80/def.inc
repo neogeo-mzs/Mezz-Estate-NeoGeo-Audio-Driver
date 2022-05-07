@@ -302,4 +302,4 @@ FM_Channel.enable:     equ 5 ; u8 (%0000'00VE; update Volume; Enable Channel. ev
 FM_Channel.algo:       equ 6 ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
 FM_Channel.pslide_ofs: equ 7 ; s16
 FM_Channel.pitch_ofs:  equ 9 ; s16
-FM_Channel.SIZE        equ 11+6 ; size + padding
+FM_Channel.SIZE        equ 11+5 ; size + padding
