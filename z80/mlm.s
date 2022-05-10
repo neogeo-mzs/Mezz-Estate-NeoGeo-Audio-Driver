@@ -1253,7 +1253,8 @@ MLM_command_vectors:
 	dup 4
 		dw MLMCOM_FM_TL_set
 	edup
-	dw MLMCOM_inc_pitch_offset,     MLMCOM_inc_pitch_offset
+	dw MLMCOM_inc_pitch_offset8,     MLMCOM_inc_pitch_offset8
+	dw MLMCOM_inc_pitch_offset16,    MLMCOM_inc_pitch_offset16
 	dup 6
 		dw MLMCOM_invalid ; Invalid commands
 	edup
@@ -1270,7 +1271,7 @@ MLM_command_argc:
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
 	ds 4, $01 ; FM OP TL Set
-	db $01, $01
+	db $01, $01, $02, $02
 	ds 6, 0   ; Invalid commands have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
 	ds 64, 0   ; Invalid commands have no arguments
@@ -1929,8 +1930,7 @@ MLMCOM_FM_TL_set:
 
 ; c: channel
 ; de: playback pointer
-MLMCOM_inc_pitch_offset:
-	brk
+MLMCOM_inc_pitch_offset8:
 	; Set timing to 0
 	push hl
 	push de
@@ -2022,6 +2022,45 @@ MLMCOM_inc_pitch_offset_fm:
 	pop de
 	pop hl
 	jp MLM_parse_command_end
+
+; c: channel
+; de: playback pointer
+MLMCOM_inc_pitch_offset16:
+	; Set timing to 0
+	push hl
+	push de
+		; Set timing
+		ex hl,de
+		dec hl
+		dec hl
+		dec hl
+		ld a,(hl)
+		and a,1 ; %0100000T -> %0000000T
+		push bc
+			ld b,c ; \
+			ld c,a ; | swap a and c
+			ld a,b ; /
+			ld b,0
+			call MLM_set_timing
+		pop bc
+
+		; get pitch offset 
+		ld a,(MLM_event_arg_buffer)
+		ld e,a
+		ld a,(MLM_event_arg_buffer+1)
+		ld d,a
+
+		ld a,c
+		cp a,MLM_CH_SSG1 ; If ch >= MLM_CH_SSG1 (ch is SSG)
+		jp nc,MLMCOM_inc_pitch_offset_ssg
+		cp a,MLM_CH_FM1  ; elif ch >= MLM_CH_FM1 (ch is FM)
+		jp nc,MLMCOM_inc_pitch_offset_fm
+
+		; Else, return (channel is ADPCM)
+	pop de
+	pop hl
+
+	jp MLM_parse_command_end 
 
 ; c: channel
 ; de: playback pointer
