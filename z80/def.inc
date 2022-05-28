@@ -297,7 +297,7 @@ ControlMacro.SIZE    equ 8
 FM_Channel.lramspms:   equ 0 ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
 FM_Channel.op_enable:  equ 1 ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
 FM_Channel.frequency:  equ 2 ; u16 (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
-FM_Channel.volume:     equ 4 ; u8 (127 is lowest, 0 is highest)
+FM_Channel.volume:     equ 4 ; u8 (0 is lowest, 127 is highest)
 FM_Channel.enable:     equ 5 ; u8 (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
 FM_Channel.algo:       equ 6 ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
 FM_Channel.pslide_ofs: equ 7 ; s16
