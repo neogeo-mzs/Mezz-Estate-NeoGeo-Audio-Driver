@@ -373,7 +373,8 @@ softlock:
 	include "math.s"
 	include "sfxps.s"
 	include "fade.s"
-
+	include "macro.s"
+	
 ;#code SDATA,$6000,$1800
 ;	incbin "m1rom_sdata.bin"
 ;	include "mlm_test_data.s"

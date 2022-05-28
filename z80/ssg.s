@@ -61,7 +61,7 @@ SSGCNT_irq_vol_loop:
 	ld de,ControlMacro.SIZE  ; de = sizeof(ControlMacro)
 	ld ix,SSGCNT_macros
 SSGCNT_irq_vol_macro_loop:
-	call SSGCNT_MACRO_update
+	call MACRO_update
 	add ix,de
 	djnz SSGCNT_irq_vol_macro_loop
 
@@ -152,7 +152,7 @@ SSGCNT_get_ym2610_ch_volume:
 
 		; Index said array to get the
 		; desired volume
-		call SSGCNT_NMACRO_read ; Load macro value in a
+		call NMACRO_read ; Load macro value in a
 		ld e,a
 		ld d,0
 		add hl,de
@@ -203,7 +203,7 @@ SSGCNT_update_note:
 		; Else (the macro is enabled) add to
 		; the value in SSGCNT_notes[channel]
 		; the macro's current value (signed addition)
-		call SSGCNT_BMACRO_read ; Load macro value in a
+		call BMACRO_read ; Load macro value in a
 		add a,l
 		ld l,a
 		;ld ixl,a
@@ -341,7 +341,7 @@ SSGCNT_update_channels_mix:
 		or a,a ; cp a,0
 		jr z,SSGCNT_update_mixing_macros_return
 
-		call SSGCNT_NMACRO_read ; Stores macro value in a
+		call NMACRO_read ; Stores macro value in a
 		ld ixl,a ; backup macro value in ixl
 		ld d,b   ; backup channel in d (channel parameter)
 
@@ -531,136 +531,6 @@ SSGCNT_disable_channel:
 		ld (hl),0
 	pop de
 	pop hl
-	ret
-
-; [INPUT]
-; 	ix: pointer to macro
-; [OUTPUT]
-;	a:  Current macro value
-; CHANGES FLAGS!!
-SSGCNT_BMACRO_read:
-	push hl
-	push de
-		; a = macro.data[macro.curr_pt]
-		ld l,(ix+ControlMacro.data)
-		ld h,(ix+ControlMacro.data+1)
-		ld e,(ix+ControlMacro.curr_pt)
-		ld d,0
-		add hl,de
-		ld a,(hl)
-	pop de
-	pop hl
-	ret
-
-; [INPUT]
-; 	ix: pointer to macro
-; [OUTPUT]
-;	a:  Current macro value
-; CHANGES FLAGS!!
-SSGCNT_NMACRO_read:
-	push hl
-	push de
-		; Load byte containing the value
-		; by adding to the macro data 
-		; pointer curr_pt divided by two
-		ld l,(ix+ControlMacro.data)
-		ld h,(ix+ControlMacro.data+1)
-		ld a,(ix+ControlMacro.curr_pt)
-		srl a
-		ld e,a ; e = macro.curr_pt / 2
-		ld d,0
-		add hl,de
-		ld a,(hl)
-
-		; If macro.curr_pt is even, then
-		; return the least significant nibble,
-		; else return the most significant one.
-		bit 0,(ix+ControlMacro.curr_pt)
-		jr z,SSGCNT_NMACRO_read_even_pt
-
-		srl a ; \
-		srl a ;  | a >>= 4
-		srl a ;  | (VVVV---- => 0000VVVV)
-		srl a ; /
-
-SSGCNT_NMACRO_read_even_pt:
-		and a,$0F
-	pop de
-	pop hl
-	ret
-
-; ix: pointer to macro
-SSGCNT_MACRO_update:
-	push af
-		; If macro.loop_pt is bigger or equal 
-		; than the actual length, set it to
-		; the length minus 1 (remember that
-		; the length is always stored 
-		; decremented by one)
-		ld a,(ix+ControlMacro.length)
-		cp a,(ix+ControlMacro.loop_pt)
-		jr nc,SSGCNT_MACRO_update_valid_loop_pt ; if macro.length >= macro.loop_pt ...
-
-		ld (ix+ControlMacro.loop_pt),a ; macro.loop_pt = macro.length (length is stored decremented by 1)
-SSGCNT_MACRO_update_valid_loop_pt:
-
-		; increment macro.curr_pt, if it
-		; overflows set it to macro.loop_pt
-		inc (ix+ControlMacro.curr_pt)
-		cp a,(ix+ControlMacro.curr_pt)
-		jr nc,SSGCNT_MACRO_update_return ; if macro.length >= macro.curr_pt
-
-		ld a,(ix+ControlMacro.loop_pt)
-		ld (ix+ControlMacro.curr_pt),a
-
-SSGCNT_MACRO_update_return:
-	pop af
-	ret
-
-; ix: pointer to macro
-; hl: pointer to macro initialization data
-;    if hl is equal to MLM_HEADER, 
-;    the macro will NOT be set
-SSGCNT_MACRO_set:
-	push af
-	push hl
-	push de
-		; Disable macro, if needed it'll be 
-		; enabled later in the function
-		ld (ix+ControlMacro.enable),$00
-
-		; If the address to the macro initialization data is
-		; equal to MLM_HEADER, then return from the subroutine
-		;   if address is equal to offset + MLM_HEADER; then
-		;   when the offset will be 0 the address will be MLM_HEADER
-		push hl
-		ld de,MLM_HEADER
-		or a,a    ; Clear carry flag
-		sbc hl,de ; cp hl,de
-		pop hl
-		jr z,SSGCNT_MACRO_set_return
-
-		; Set macro's length
-		ld a,(hl)
-		ld (ix+ControlMacro.length),a
-
-		; Set macro's loop point
-		inc hl
-		ld a,(hl)
-		ld (ix+ControlMacro.loop_pt),a
-
-		; Set macro's data pointer
-		inc hl
-		ld (ix+ControlMacro.data),l
-		ld (ix+ControlMacro.data+1),h
-
-		; Set other variables
-		ld (ix+ControlMacro.enable),$FF
-		ld (ix+ControlMacro.curr_pt),0
-SSGCNT_MACRO_set_return:
-	pop de
-	pop hl
-	pop af
 	ret
 
 ; a: channel
