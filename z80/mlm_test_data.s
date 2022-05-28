@@ -185,12 +185,13 @@ MLM_el_fm3:
 MLM_el_fm:
 	db $02,2                  ; Set instrument to 2
 	db $24 | 0,$00            ; Set OP1 TL to $00
-	db $80 | 32, 0 | (4 << 4) ; Play C4 then wait 32 ticks
+	db $80 | 0, 0 | (4 << 4)  ; Play C4 then wait 0 ticks
 
-	db $24 | 0,$20            ; Set OP1 TL to $20
-	db $80 | 32, 0 | (4 << 4)
-	db $0B
-	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
+MLM_el_fm_L1:
+	db $2A | 1
+	dw 1        ; Increase pitch offset by 1 and wait 1 tick
+ 	db $0B
+	dw MLM_el_fm_L1-MLM_header  ; Jump to MLM_el_fm_L1
 	
 #code SDATA_BANK2,$8000,$8000
 MLM_song_ssg1:
@@ -218,11 +219,11 @@ MLM_song_ssg3:
 	
 MLM_el_ssg:
 	db $02,1             ; Set instrument to 1
-	db $38               ; Set SSG volume to 8
-	db $22,255           ; Set pitch slide to -255    
-	db $80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
-	db $01, 30           ; Stop note and wait 30 ticks
 	db $3F               ; Set SSG volume to F
-	db $23               ; Reset pitch slide
-	db $80 | 30,2*12 + 2 ; Play SSG note D4 and wait 30 ticks
- 	db $00 ; End of song
+	db $80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
+
+MLM_el_ssg_L1:
+	db $2A | 1 
+	dw -1        ; Increase pitch offset by -1 and wait 1 tick
+ 	db $0B
+	dw MLM_el_ssg_L1-MLM_header  ; Jump to MLM_el_ssg_L1
