@@ -171,7 +171,7 @@ MLM_el_fm2:
 	db $0B
 	dw MLM_el_fm-MLM_header
 
-MLM_el_fm3:
+MLM_el_fm1:
 	db $02,2                 ; Set instrument to 2
 	db $22,255               ; Set pitch slide to -255
 	db $80 | 2, 0 | (4 << 4) ; Play FM note C4 and wait 2 ticks
@@ -183,16 +183,20 @@ MLM_el_fm3:
 	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
 
 MLM_el_fm:
-	db $02,2                  ; Set instrument to 2
-	db $24 | 0,$00            ; Set OP1 TL to $00
-	db $80 | 0, 0 | (4 << 4)  ; Play C4 then wait 0 ticks
+	db $02,2                   ; Set instrument to 2
+	db $80 | 0, 0 | (4 << 4)   ; Play C4 then wait 0 ticks
+	db $28                     ; Set pitch macro
+	dw MLM_fm_vib_macro-MLM_header 
+	db $03, 64-1          ; Wait 64 ticks
+	db $28, $00, $00      ; Reset pitch macro
+	db $03, 64-1          ; Wait 64 ticks
+	db $00
 
-MLM_el_fm_L1:
-	db $2A | 1
-	dw 1        ; Increase pitch offset by 1 and wait 1 tick
- 	db $0B
-	dw MLM_el_fm_L1-MLM_header  ; Jump to MLM_el_fm_L1
-	
+MLM_fm_vib_macro:
+	db 8-1 ; Length: 8
+	db 0   ; Loop point: 0
+	db 0, 24, 32, 24, 0, -24, 32, -24
+
 #code SDATA_BANK2,$8000,$8000
 MLM_song_ssg1:
 	ds 10*2,0
@@ -218,12 +222,18 @@ MLM_song_ssg3:
 	dw MLM_song_instruments-MLM_header
 	
 MLM_el_ssg:
-	db $02,1             ; Set instrument to 1
-	db $3F               ; Set SSG volume to F
-	db $80 | 30,2*12 + 0 ; Play SSG note C4 and wait 30 ticks
+	db $02,1              ; Set instrument to 1
+	db $3F                ; Set SSG volume to F
+	db $80 | 0,2*12 + 0   ; Play SSG note C4 and wait 127 ticks
+	db $28                ; Set pitch macro
+	dw MLM_ssg_pmacro-MLM_header 
+	db $03, 64-1          ; Wait 64 ticks
+	db $28, $00, $00      ; Reset pitch macro
+	db $03, 64-1          ; Wait 64 ticks
+	db $00                ; End of EL
 
-MLM_el_ssg_L1:
-	db $2A | 1 
-	dw -1        ; Increase pitch offset by -1 and wait 1 tick
- 	db $0B
-	dw MLM_el_ssg_L1-MLM_header  ; Jump to MLM_el_ssg_L1
+MLM_ssg_pmacro:
+	db 16-1 ; Length:     16
+	db 8    ; Loop point: 8
+	db 0,  8,  16, 32, 48, 64, 80, 96
+	db 127, 80, 127, 80, 127, 80, 127, 80 

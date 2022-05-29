@@ -26,6 +26,7 @@ MLM_channel_instruments:      ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
 MLM_sub_el_return_pointers:   ds 2*CHANNEL_COUNT     ; void*[13]
+MLM_channel_pitch_macros:     ds ControlMacro.SIZE*CHANNEL_COUNT
 MLM_instruments:              ds 2                   ; void*
 MLM_wram_end:
 
