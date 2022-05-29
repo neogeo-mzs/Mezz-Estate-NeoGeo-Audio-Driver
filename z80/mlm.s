@@ -2077,7 +2077,6 @@ MLMCOM_set_pitch_macro:
 	jp MLM_parse_command_end 
 
 MLMCOM_set_pitch_macro_reset:
-		brk
 		; Calculate address to macro in WRAM
 		; (works because ControlMacro.SIZE is 8)
 		ld ix,MLM_channel_pitch_macros
