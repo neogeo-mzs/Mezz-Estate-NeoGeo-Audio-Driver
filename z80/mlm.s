@@ -7,12 +7,13 @@ MLM_irq:
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		bit MLM_CH_ENABLE_BIT,(hl)            ; channel is disabled if MLM_channel_control[ch]'s bit 0 is cleared
-		jr z,$+7                              ; +2 = 2b
+		jr z,$+10                             ; +2 = 2b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
 		pop hl                                ; +1 = 7b
-		
+		call MLM_update_ch_macro              ; +3 = 10b
+
 		inc c
 		inc hl
 	edup
@@ -115,6 +116,69 @@ MLM_update_channel_playback_check_set_t:
 		cp a,(hl) ; cp 0,(hl)
 		jr z,MLM_update_channel_playback_exec_check
 	pop iy
+	ret
+
+; c: channel
+MLM_update_ch_macro:
+	; Calculate address to channel macro
+	ld ix,MLM_channel_pitch_macros
+	ld a,c
+	sla a ; \
+	sla a ; | a *= 8
+	sla a ; /
+	ld e,a
+	ld d,0
+	add ix,de
+
+	; If control macro is disabled, return.
+	xor a,a ; ld a,0
+	cp a,(ix+ControlMacro.enable)
+	ret z
+
+	ld a,c
+	cp a,MLM_CH_FM1  ; If channel is ADPCMA...
+	ret c            ; return, because ADPCMA has no pitch.
+	cp a,MLM_CH_SSG1 ; If channel is FM...
+	jp c,MLM_update_ch_macro_fm
+
+	push hl
+		; Else, channel is SSG...
+		; Calculate address to pitch offset in WRAM
+		ld hl,SSGCNT_pitch_ofs-(MLM_CH_SSG1*2)
+		sla a ; a *= 2
+		ld e,a
+		add hl,de
+
+		call BMACRO_read
+		call AtoBCextendendsign
+		ld (hl),c
+		inc hl
+		ld (hl),b
+		call MACRO_update
+	pop hl
+	ret
+
+; a: channel
+; d: 0
+MLM_update_ch_macro_fm:
+	push hl
+		; Calculate address to FM Channel pitch offset
+		ld hl,FM_ch1+FM_Channel.pitch_ofs-(MLM_CH_FM1*16)
+		sla a ; -\
+		sla a ;  | a *= 16
+		sla a ;  /
+		sla a ; /
+		ld e,a
+		add hl,de
+
+		call BMACRO_read
+		call AtoBCextendendsign
+		ld (hl),c
+		inc hl
+		ld (hl),b
+								
+		call MACRO_update
+	pop hl  
 	ret
 
 ; stop song
@@ -728,7 +792,7 @@ MLM_set_instrument_ssg:
 			ld de,MLM_HEADER ; | Add MLM header offset to
 			add hl,de        ; | obtain the actual address
 		pop de               ; /
-		call SSGCNT_MACRO_set
+		call MACRO_set
 		
 		; Calculate pointer to volume macro
 		; initialization data (hl) and pointer
@@ -747,7 +811,7 @@ MLM_set_instrument_ssg:
 			ld de,MLM_HEADER ; | Add MLM header offset to
 			add hl,de        ; | obtain the actual address
 		pop de               ; /
-		call SSGCNT_MACRO_set
+		call MACRO_set
 
 		; Set arpeggio macro
 		ex de,hl
@@ -761,7 +825,7 @@ MLM_set_instrument_ssg:
 			ld de,MLM_HEADER ; | Add MLM header offset to
 			add hl,de        ; | obtain the actual address
 		pop de               ; /
-		call SSGCNT_MACRO_set
+		call MACRO_set
 	pop ix
 	pop af
 	pop bc
@@ -1233,6 +1297,49 @@ MLM_parse_command_end_skip_playback_pointer_set:
 	pop bc
 	jp MLM_update_channel_playback_check_set_t
 
+; [INPUT]
+;   c: channel
+; [OUTPUT]
+;   a: channel
+; DOESN'T BACKUP HL AND DE
+MLM_reset_pitch_ofs:
+	ld a,c
+	cp a,MLM_CH_FM1  ; if ch is ADPCMA...
+	ret c            ; return.
+	cp a,MLM_CH_SSG1 ; if ch is FM...
+	jp c,MLM_reset_pitch_ofs_fm
+
+	; Else, ch is SSG...
+	; Calculate address to channel's pitch offset
+	ld hl,SSGCNT_pitch_ofs-(2*MLM_CH_SSG1)
+	sla a ; a *= 2
+	ld e,a
+	ld d,0
+	add hl,de
+
+	; Clear pitch offset
+	ld (hl),d
+	inc hl
+	ld (hl),d
+	ret
+
+MLM_reset_pitch_ofs_fm:
+	; Calculate address to channel's pitch offset
+	ld hl,FM_ch1+FM_Channel.pitch_ofs-(FM_Channel.SIZE*MLM_CH_FM1)
+	sla a ; -\
+	sla a ;  | a *= 16 (FM_Channel.SIZE)
+	sla a ;  /
+	sla a ; /
+	ld e,a
+	ld d,0
+	add hl,de
+
+	; Clear pitch offset
+	ld (hl),d
+	inc hl
+	ld (hl),d
+	ret
+
 ; commands only need to backup HL, DE and IX unless 
 ; they set the playback pointer, then they don't
 ; need to backup anything.
@@ -1253,9 +1360,8 @@ MLM_command_vectors:
 	dup 4
 		dw MLMCOM_FM_TL_set
 	edup
-	dw MLMCOM_inc_pitch_offset8,     MLMCOM_inc_pitch_offset8
-	dw MLMCOM_inc_pitch_offset16,    MLMCOM_inc_pitch_offset16
-	dup 6
+	dw MLMCOM_set_pitch_macro
+	dup 9
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 	dup 16
@@ -1271,8 +1377,8 @@ MLM_command_argc:
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
 	ds 4, $01 ; FM OP TL Set
-	db $01, $01, $02, $02
-	ds 6, 0   ; Invalid commands have no arguments
+	db $02
+	ds 9, 0   ; Invalid commands have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
 	ds 64, 0   ; Invalid commands have no arguments
 
@@ -1929,137 +2035,71 @@ MLMCOM_FM_TL_set:
 	jp MLM_parse_command_end 
 
 ; c: channel
-; de: playback pointer
-MLMCOM_inc_pitch_offset8:
-	; Set timing to 0
+MLMCOM_set_pitch_macro:
 	push hl
 	push de
-		; Set timing
-		ex hl,de
-		dec hl
-		dec hl
-		ld a,(hl)
-		and a,1 ; %0100000T -> %0000000T
-		push bc
-			ld b,c ; \
-			ld c,a ; | swap a and c
-			ld a,b ; /
-			ld b,0
-			call MLM_set_timing
-		pop bc
+	push ix
+		; Load pointer to macro init. data in hl
+		; and if it's 0, go to reset macro routine
+		ld a,(MLM_event_arg_buffer)
+		ld l,a
+		ld a,(MLM_event_arg_buffer+1)
+		ld h,a
+		ld de,0
+		or a,a ; reset carry flag
+		sbc hl,de ; if hl == 0
+		jp z,MLMCOM_set_pitch_macro_reset
 
-		; get pitch offset and extend its sign
-		push bc
-			ld a,(MLM_event_arg_buffer)
-			call AtoBCextendendsign
-			ld e,c
-			ld d,b
-		pop bc
-
+		; Else...
+		; calculate data's physical address
+		ld de,MLM_HEADER
+		add hl,de
+		
+		; Calculate address to macro in WRAM
+		; (works because ControlMacro.SIZE is 8)
+		ld ix,MLM_channel_pitch_macros
 		ld a,c
-		cp a,MLM_CH_SSG1 ; If ch >= MLM_CH_SSG1 (ch is SSG)
-		jp nc,MLMCOM_inc_pitch_offset_ssg
-		cp a,MLM_CH_FM1  ; elif ch >= MLM_CH_FM1 (ch is FM)
-		jp nc,MLMCOM_inc_pitch_offset_fm
-
-		; Else, return (channel is ADPCM)
+		sla a ; \
+		sla a ; | a *= 8
+		sla a ; /
+		ld e,a
+		ld d,0
+		add ix,de
+		
+		call MACRO_set
+		
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop ix
 	pop de
 	pop hl
-
 	jp MLM_parse_command_end 
 
-; de: pitch offset offset
-MLMCOM_inc_pitch_offset_ssg:
-		; Calculate address to SSGCNT_pitch_ofs
-		ld hl,SSGCNT_pitch_ofs-(MLM_CH_SSG1*2)
-		ld b,0
-		add hl,bc
-		add hl,bc
-
-		; Add pitch offset offset to pitch offset
-		ld c,(hl)
-		inc hl
-		ld b,(hl)
-		ex hl,de
-		add hl,bc
-
-		; Store result in WRAM
-		ex hl,de
-		ld (hl),d
-		dec hl
-		ld (hl),e
-	pop de
-	pop hl
-	jp MLM_parse_command_end
-
-; de: pitch offset offset
-MLMCOM_inc_pitch_offset_fm:
-		; Calculate address to FM_Channel.pitch_ofs
-		; (Assumes FM_Channel.SIZE is 16)
-		ld hl,FM_ch1+FM_Channel.pitch_ofs
+MLMCOM_set_pitch_macro_reset:
+		brk
+		; Calculate address to macro in WRAM
+		; (works because ControlMacro.SIZE is 8)
+		ld ix,MLM_channel_pitch_macros
 		ld a,c
-		sub a,MLM_CH_FM1
-		rlca ; -\
-		rlca ;  | a *= 16
-		rlca ;  /
-		rlca ; /
-		ld c,a
-		ld b,0
-		add hl,bc
-
-		; Add pitch offset offset to pitch offset
-		ld c,(hl)
-		inc hl
-		ld b,(hl)
-		ex hl,de
-		add hl,bc
-
-		; Store result in WRAM
-		ex hl,de
-		ld (hl),d
-		dec hl
-		ld (hl),e
-	pop de
-	pop hl
-	jp MLM_parse_command_end
-
-; c: channel
-; de: playback pointer
-MLMCOM_inc_pitch_offset16:
-	; Set timing to 0
-	push hl
-	push de
-		; Set timing
-		ex hl,de
-		dec hl
-		dec hl
-		dec hl
-		ld a,(hl)
-		and a,1 ; %0100000T -> %0000000T
-		push bc
-			ld b,c ; \
-			ld c,a ; | swap a and c
-			ld a,b ; /
-			ld b,0
-			call MLM_set_timing
-		pop bc
-
-		; get pitch offset 
-		ld a,(MLM_event_arg_buffer)
+		sla a ; \
+		sla a ; | a *= 8
+		sla a ; /
 		ld e,a
-		ld a,(MLM_event_arg_buffer+1)
-		ld d,a
+		ld d,0
+		add ix,de
+
+		; Disable macro
+		xor a,a
+		ld (ix+ControlMacro.enable),a
+		call MLM_reset_pitch_ofs
 
 		ld a,c
-		cp a,MLM_CH_SSG1 ; If ch >= MLM_CH_SSG1 (ch is SSG)
-		jp nc,MLMCOM_inc_pitch_offset_ssg
-		cp a,MLM_CH_FM1  ; elif ch >= MLM_CH_FM1 (ch is FM)
-		jp nc,MLMCOM_inc_pitch_offset_fm
-
-		; Else, return (channel is ADPCM)
+		ld bc,0
+		call MLM_set_timing
+	pop ix
 	pop de
 	pop hl
-
 	jp MLM_parse_command_end 
 
 ; c: channel
