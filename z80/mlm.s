@@ -142,6 +142,7 @@ MLM_update_ch_macro:
 	jp c,MLM_update_ch_macro_fm
 
 	push hl
+	push bc
 		; Else, channel is SSG...
 		; Calculate address to pitch offset in WRAM
 		ld hl,SSGCNT_pitch_ofs-(MLM_CH_SSG1*2)
@@ -155,6 +156,7 @@ MLM_update_ch_macro:
 		inc hl
 		ld (hl),b
 		call MACRO_update
+	pop bc
 	pop hl
 	ret
 
@@ -162,6 +164,7 @@ MLM_update_ch_macro:
 ; d: 0
 MLM_update_ch_macro_fm:
 	push hl
+	push bc
 		; Calculate address to FM Channel pitch offset
 		ld hl,FM_ch1+FM_Channel.pitch_ofs-(MLM_CH_FM1*16)
 		sla a ; -\
@@ -178,6 +181,7 @@ MLM_update_ch_macro_fm:
 		ld (hl),b
 								
 		call MACRO_update
+	pop bc
 	pop hl  
 	ret
 
@@ -2036,6 +2040,11 @@ MLMCOM_FM_TL_set:
 
 ; c: channel
 MLMCOM_set_pitch_macro:
+	;ld a,c
+	;ld bc,0
+	;call MLM_set_timing
+	;jp MLM_parse_command_end 
+	
 	push hl
 	push de
 	push ix
