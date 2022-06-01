@@ -263,6 +263,16 @@ FMCNT_PITCH_SLIDE_ENABLE   equ 4
 		pop hl
 	endm
 
+	macro brk6b
+		push hl
+		push bc
+			ld b,$3E
+			ld hl,breakpoint
+			ld (hl),b
+		pop bc
+		pop hl
+	endm
+
 	macro fm_ch_data fb,algo,ams,pms
 		.db \algo | (\fb << 3)
 		.db \pms | (\ams << 4)
