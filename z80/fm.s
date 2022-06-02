@@ -124,38 +124,32 @@ FMCNT_update_frequency:
 			ld d,(ix+FM_Channel.pitch_ofs+1)
 			add hl,de
 
-			; If pitch offset is positive, avoid overflow...
-			ld a,(ix+FM_Channel.pitch_ofs+1)
-			bit 7,a
-			jp z,FMCNT_update_frequency_pos 
-
-			; If not, avoid FNum underflow...
-			;   if the Blocks are equal, no
-			;   underflow has happened.
-			ld a,h
-			and a,%00111000 ; Mask out F-Num to get the Block
-			cp a,b
-			jp z,FMCNT_update_frequency_no_over_or_underflow
-
-			;   Else, fix the underflow by returning
-			;   the lowest value allowed
-			ld hl,$02D4 ; FM lowest pitch (~19Hz; from Deflemask)
-
-FMCNT_update_frequency_pos:
-			; If the Blocks are equal, no
-			; overflow has happened.
-			ld a,h
-			and a,%00111000 ; Mask out F-Num to get the Block
-			cp a,b
-			jp z,FMCNT_update_frequency_no_over_or_underflow
-
-			; Else, fix the overflow by returning the highest 
-			; value allowed within the original block
+			; Clamp frequency floor
 			ld a,b
-			or a,%111
-			ld h,a
-			ld l,$FF
-FMCNT_update_frequency_no_over_or_underflow:
+			or a,FMCNT_MIN_FNUM >> 8
+			ld d,a
+			ld e,FMCNT_MIN_FNUM & $FF
+			or a,a
+			sbc hl,de
+			add hl,de
+			jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
+
+			ld hl,de
+			jp FMCNT_update_frequency_no_cclamp
+FMCNT_update_frequency_no_fclamp:
+
+			; Clamp frequency ceiling
+			ld a,b
+			or a,FMCNT_MAX_FNUM >> 8
+			ld d,a
+			ld e,FMCNT_MAX_FNUM & $FF
+			or a,a
+			sbc hl,de
+			add hl,de
+			jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
+
+			ld hl,de
+FMCNT_update_frequency_no_cclamp:
 		pop bc
 
 		; Write frequency to registers
