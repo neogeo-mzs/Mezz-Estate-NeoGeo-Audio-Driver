@@ -5,6 +5,7 @@
 ; wpset F800,1,w,wpdata==3B,{tracelog "B addr: 0x%02X; data: 0x%02X\n", d, e; go}
 ; wpset F800,1,w,wpdata==3C,{tracelog "WA addr: 0x%02X;", a; go}
 ; wpset F800,1,w,wpdata==3D,{tracelog " data: 0x%02X\n", a; go}
+; wpset F800,1,w,wpdata==3E,{tracelog "[EVENT] CH%02X $%02X\n", c, a; go }
 ; wpset F800,1,w,wpdata==39&&(bc>>8)==00,{w@F9A1 = (w@F9A1) + 1; g}
 	include "def.inc"
 
