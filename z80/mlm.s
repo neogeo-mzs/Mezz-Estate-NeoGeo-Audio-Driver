@@ -1764,6 +1764,25 @@ MLMCOM_return_from_sub_el:
 
 ; c: channel
 MLMCOM_upward_pitch_slide:
+	; disable channel's pitch macro
+	push hl
+	push bc
+		; Calculate address to pitch macro enable
+		ld hl,MLM_channel_pitch_macros+ControlMacro.enable
+		ld a,c
+		sla a ; -\
+		sla a ;  | a *= 16
+		sla a ;  /
+		sla a ; /
+		ld c,a
+		ld b,0
+		add hl,bc
+
+		xor a,a ; clear a
+		ld (hl),a
+	pop bc
+	pop hl
+
 	; ADPCM-A channels have no pitch, return
 	ld a,c 
 	cp a,MLM_CH_FM1
@@ -1848,6 +1867,25 @@ MLMCOM_upward_pitch_slide_FM:
 
 ; c: channel
 MLMCOM_downward_pitch_slide:
+	; disable channel's pitch macro
+	push hl
+	push bc
+		; Calculate address to pitch macro enable
+		ld hl,MLM_channel_pitch_macros+ControlMacro.enable
+		ld a,c
+		sla a ; -\
+		sla a ;  | a *= 16
+		sla a ;  /
+		sla a ; /
+		ld c,a
+		ld b,0
+		add hl,bc
+
+		xor a,a ; clear a
+		ld (hl),a
+	pop bc
+	pop hl
+	
 	; ADPCM-A channels have no pitch, return
 	ld a,c
 	cp a,MLM_CH_FM1
