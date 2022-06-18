@@ -1816,6 +1816,13 @@ MLMCOM_upward_pitch_slide:
 		inc hl
 		ld (hl),d
 
+		; Disable custom clamp limits
+		ld hl,SSGCNT_pitch_slide_clamp-(MLM_CH_SSG1*2)+1
+		add hl,bc
+		add hl,bc
+		xor a,a
+		ld (hl),a ; clears enable flag
+
 		; Set timing to 0
 		; (Execute next command immediately)
 		ld a,c
@@ -1847,6 +1854,12 @@ MLMCOM_upward_pitch_slide_FM:
 		rlca
 		ld e,a
 		ld d,0
+
+		; Disable custom fnum clamp
+		ld hl,FM_ch1+FM_Channel.fnum_clamp+1-(MLM_CH_FM1*16)
+		add hl,de
+		ld (hl),d ; clears enable flag
+
 		ld hl,FM_ch1+FM_Channel.pslide_ofs-(MLM_CH_FM1*16)
 		add hl,de
 
@@ -1885,7 +1898,7 @@ MLMCOM_downward_pitch_slide:
 		ld (hl),a
 	pop bc
 	pop hl
-	
+
 	; ADPCM-A channels have no pitch, return
 	ld a,c
 	cp a,MLM_CH_FM1
@@ -1907,6 +1920,13 @@ MLMCOM_downward_pitch_slide:
 		ld (hl),a
 		inc hl
 		ld (hl),0
+
+		; Disable custom clamp limits
+		ld hl,SSGCNT_pitch_slide_clamp-(MLM_CH_SSG1*2)+1
+		add hl,bc
+		add hl,bc
+		xor a,a
+		ld (hl),a ; clears enable flag
 
 		; Set timing to 0
 		; (Execute next command immediately)
@@ -1938,6 +1958,12 @@ MLMCOM_downward_pitch_slide_FM:
 			rlca
 			ld e,a
 			ld d,0
+
+			; Disable custom fnum clamp
+			ld hl,FM_ch1+FM_Channel.fnum_clamp+1-(MLM_CH_FM1*16)
+			add hl,de
+			ld (hl),d ; clears enable flag
+
 			ld hl,FM_ch1+FM_Channel.pslide_ofs-(MLM_CH_FM1*16)
 			add hl,de
 		pop de
@@ -1946,6 +1972,12 @@ MLMCOM_downward_pitch_slide_FM:
 		ld (hl),e
 		inc hl
 		ld (hl),d
+
+		; Disable custom fnum clamp
+		ld hl,FM_ch1+FM_Channel.fnum_clamp+1-(MLM_CH_FM1*16)
+		add hl,de
+		xor a,a
+		ld (hl),a ; clears enable flag
 
 		; Set timing to 0
 		; (Execute next command immediately)

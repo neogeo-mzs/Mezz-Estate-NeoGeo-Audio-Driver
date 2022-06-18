@@ -229,6 +229,12 @@ SSGCNT_update_note_macro_disabled:
 		ld d,(ix+1)
 		add hl,de ; Add offset to loaded pitch
 
+		; Check if custom clamp is enabled, if that's the
+		; case, use custom clamp routine
+		bit 7,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+		jp nz,SSGCNT_update_note_custom_clamp
+
+SSGCNT_update_note_def_clamp:
 		; Check for underflow (upward pitch slide)
 		;   SSG tune values go inbetween $0000 and $0FFF,
 		;   if the most significant nibble isn't 0, then
@@ -280,6 +286,62 @@ SSGCNT_update_note_solve_overunderflow:
 
 SSGCNT_update_note_solve_overflow:
 	ld hl,$0FFF
+	jp SSGCNT_update_note_solve_overunderflow_ret
+
+; [INPUT]
+;   hl: pitch offset
+;   de: pitch slide offset
+; [OUTPUT]
+;   hl: pitch offset
+;   REGISTER DE ISNT BACKED UP
+SSGCNT_update_note_custom_clamp:
+	jp softlock
+	; if pitch slide offset is positive, solve overflow
+	bit 7,d
+	jp z,SSGCNT_update_note_solve_overunderflow_ret
+
+	; else, solve underflow
+	;   if custom clamp is a clamp on the maximum
+	;   value, use default overflow handler
+	bit 6,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+	jp nz,SSGCNT_update_note_def_clamp
+
+	; Load minimum clamp value in de
+	ld e,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs))
+	ld a,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+	and a,%00001111 ; clear flags
+	ld d,a
+	
+	; if pitch >= limit: return
+	or a,a ; clear carry flag
+	sbc hl,de
+	add hl,de
+	jp nc,SSGCNT_update_note_solve_overunderflow_ret
+	
+	; else, clamp value
+	ex hl,de ; hl = limit
+	jp SSGCNT_update_note_solve_overunderflow_ret
+
+SSGCNT_update_note_custom_overflow:
+	; if custom clamp is a clamp on the minimum 
+	; value, use default overflow handler
+	bit 6,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+	jp z,SSGCNT_update_note_def_clamp
+
+	; Load maximum clamp value in de
+	ld e,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs))
+	ld a,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+	and a,%00001111 ; clear flags
+	ld d,a
+	
+	; if pitch < limit: return
+	or a,a ; clear carry flag
+	sbc hl,de
+	add hl,de
+	jp c,SSGCNT_update_note_solve_overunderflow_ret
+	
+	; else, clamp value
+	ex hl,de ; hl = limit
 	jp SSGCNT_update_note_solve_overunderflow_ret
 
 ; b: channel (0~2)
