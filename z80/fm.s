@@ -125,10 +125,19 @@ FMCNT_update_frequency:
 			add hl,de
 
 			; Clamp frequency floor
-			ld a,b
-			or a,FMCNT_MIN_FNUM >> 8
+			;   if custom clamp disabled or custom clamp
+			;   is a ceil clamp, use default value
+			bit 7,(ix+FM_Channel.fnum_clamp+1)
+			jp z,FMCNT_update_frequency_def_cclamp
+			bit 6,(ix+FM_Channel.fnum_clamp+1)
+			jp nz,FMCNT_update_frequency_def_cclamp
+
+			jp softlock
+			ld a,(ix+FM_Channel.fnum_clamp+1)
+			and a,%00000111 ; Get fnum minimum
+			or a,b 
 			ld d,a
-			ld e,FMCNT_MIN_FNUM & $FF
+			ld e,(ix+FM_Channel.fnum_clamp)
 			or a,a
 			sbc hl,de
 			add hl,de
@@ -139,14 +148,23 @@ FMCNT_update_frequency:
 FMCNT_update_frequency_no_fclamp:
 
 			; Clamp frequency ceiling
-			ld a,b
-			or a,FMCNT_MAX_FNUM >> 8
+			;   if custom clamp disabled or custom clamp
+			;   is a ceil clamp, use default value
+			bit 7,(ix+FM_Channel.fnum_clamp+1)
+			jp z,FMCNT_update_frequency_def_fclamp
+			bit 6,(ix+FM_Channel.fnum_clamp+1)
+			jp nz,FMCNT_update_frequency_def_fclamp
+
+			jp softlock
+			ld a,(ix+FM_Channel.fnum_clamp+1)
+			and a,%00000111 ; Get fnum minimum
+			or a,b 
 			ld d,a
-			ld e,FMCNT_MAX_FNUM & $FF
+			ld e,(ix+FM_Channel.fnum_clamp)
 			or a,a
 			sbc hl,de
 			add hl,de
-			jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
+			jp c,FMCNT_update_frequency_no_fclamp ; if hl < MAX_FNUM...
 
 			ld hl,de
 FMCNT_update_frequency_no_cclamp:
@@ -176,6 +194,32 @@ FMCNT_update_frequency_no_cclamp:
 		call nz,port_write_b
 	pop af
 	ret
+
+FMCNT_update_frequency_def_cclamp:
+	ld a,b
+	or a,FMCNT_MIN_FNUM >> 8
+	ld d,a
+	ld e,FMCNT_MIN_FNUM & $FF
+	or a,a
+	sbc hl,de
+	add hl,de
+	jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
+	
+	ld hl,de
+	jp FMCNT_update_frequency_no_cclamp
+
+FMCNT_update_frequency_def_fclamp:
+	ld a,b
+	or a,FMCNT_MAX_FNUM >> 8
+	ld d,a
+	ld e,FMCNT_MAX_FNUM & $FF
+	or a,a
+	sbc hl,de
+	add hl,de
+	jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
+
+	ld hl,de
+	jp FMCNT_update_frequency_no_cclamp
 
 ; ix: address to FMCNT channel data
 ; b:  channel (0~3)
