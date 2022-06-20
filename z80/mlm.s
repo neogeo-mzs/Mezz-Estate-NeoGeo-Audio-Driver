@@ -1354,7 +1354,7 @@ MLM_command_vectors:
 	dw MLMCOM_set_channel_panning,  MLMCOM_set_master_volume
 	dw MLMCOM_set_base_time,        MLMCOM_jump_to_sub_el
 	dw MLMCOM_small_position_jump,  MLMCOM_big_position_jump
-	dw MLMCOM_invalid,              MLMCOM_porta_write
+	dw MLMCOM_pitch_slide_clamped,  MLMCOM_porta_write
 	dw MLMCOM_portb_write,          MLMCOM_set_timer_a
 	dup 16
 		dw MLMCOM_wait_ticks_nibble
@@ -1377,7 +1377,7 @@ MLM_command_vectors:
 
 MLM_command_argc:
 	db $00, $01, $01, $01, $02, $01, $01, $01
-	db $01, $02, $01, $02, $01, $02, $02, $02
+	db $01, $02, $01, $02, $03, $02, $02, $02
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
 	ds 4, $01 ; FM OP TL Set
@@ -1638,6 +1638,114 @@ MLMCOM_big_position_jump:
 	ld bc,0
 	call MLM_set_timing
 	jp MLM_parse_command_end_skip_playback_pointer_set
+
+; c: channel
+; Arguments:
+;   1. %OOOOOOOO (Unsigned pitch offset per tick) 
+;   2. %LLLLLLLL (Limit lsb) 
+;   3. %LLLLLLLL (Limit msb)
+MLMCOM_pitch_slide_clamped:
+	; Set timing to 0
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
+
+	; Currently pitch slides are handled by two
+	; different controllers (FMCNT and SSGCNT),
+	; so two different routines have to be made.
+	cp a,MLM_CH_FM1 ; if ch is ADPCMA, return (ADPCMA has no pitch)
+	jp c,MLM_parse_command_end
+	
+	push hl
+	push de
+		cp a,MLM_CH_SSG1 ; if ch is FM, setup clamped pitch slide for FMCNT...
+		jp c,MLMCOM_pitch_slide_clamped_FM
+		
+		; Else (ch is SSG), setup clamped 
+		; pitch slide for SSGCNT...
+		;   Get the current note, and from it 
+		;   get the channel's current pitch
+		ld c,a ; load channel back in a
+		ld hl,SSGCNT_notes
+		ld e,a
+		ld d,b ; b is currently equal to 0
+		add hl,de
+		ld l,(hl)
+		call SSGCNT_get_pitch_from_note
+
+		; Load pitch limit, compare it to the 
+		; base pitch, and if the limit is lower 
+		; than the base, set the carry flag.
+		; (if it's equal or higher, clear it)
+		ld a,(MLM_event_arg_buffer+1)
+		ld l,a
+		ld a,(MLM_event_arg_buffer+2)
+		ld h,a
+		or a,a
+		sbc hl,de
+
+		; Load pitch offset in de; if 
+		; limit < base (carry is set),
+		; negate the pitch offset
+		ld a,(MLM_event_arg_buffer+0)
+		ld e,a
+		ld b,64 ; if limit >= base set b to 64
+		ld d,0
+		jp nc,MLMCOM_pitch_slide_clamped_ssg_no_neg ; if limit >= base (carry not set), skip negate
+
+		ld b,0 ; if limit < base set b to 0
+		ld hl,0
+		or a,a ; clear carry flag
+		sbc hl,de
+		ex hl,de
+MLMCOM_pitch_slide_clamped_ssg_no_neg:
+		; Calculate address to pslide offset in WRAM,
+		; then store the new pslide offset in it.
+		push de
+			ld a,c
+			sla a ; a *= 2
+			ld e,a
+			ld d,0
+			ld hl,SSGCNT_pitch_slide_ofs-(MLM_CH_SSG1*2)
+			add hl,de
+		pop de
+		ld (hl),e
+		inc hl
+		ld (hl),d
+
+		; Load limit from argument buffer
+		; and set its 15th bit;
+		; additionally, if limit >= base, 
+		; set its 14th bit 
+		ld a,(MLM_event_arg_buffer+1)
+		ld l,a
+		ld a,(MLM_event_arg_buffer+2)
+		or a,128
+		or a,b ; if limit >= base: b = 64, else b = 0; thus is limit >= base the 14th bit gets set.
+		ld h,a
+		ld de,hl
+
+		; Calculate address to pitch slide clamp
+		; in WRAM and load pslide clamp to it.
+		push de
+			ld a,c
+			sla a ; a *= 2
+			ld e,a
+			ld d,0
+			ld hl,SSGCNT_pitch_slide_clamp-(MLM_CH_SSG1*2)
+			add hl,de
+		pop de
+		ld (hl),e
+		inc hl
+		ld (hl),d
+	pop de
+	pop hl
+	jp MLM_parse_command_end
+
+MLMCOM_pitch_slide_clamped_FM:
+	pop de
+	pop hl
+	jp MLM_parse_command_end
 
 ; c: channel
 ; Arguments:

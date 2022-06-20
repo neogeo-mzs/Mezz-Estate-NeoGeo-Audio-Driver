@@ -530,6 +530,21 @@ SSGCNT_set_note:
 	pop bc
 	ret
 
+; [INPUT]
+;   l: note
+; [OUTPUT]
+;   de: pitch
+; DOESN`T BACKUP REGISTER HL
+SSGCNT_get_pitch_from_note:
+	ld h,0
+	ld de,SSGCNT_note_LUT
+	add hl,de
+	add hl,de
+	ld e,(hl)
+	inc hl
+	ld d,(hl)
+	ret
+
 ; e: flag type to set/clear (SSGCNT_MIX_EN_TUNE = 0; SSGCNT_MIX_EN_NOISE = 3)
 ; d: SSG channel (0~2)
 ; c: 0 if the flag needs to be cleared, 1 if the flag needs to be set
