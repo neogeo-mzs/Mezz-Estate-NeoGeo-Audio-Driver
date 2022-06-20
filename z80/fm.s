@@ -128,10 +128,11 @@ FMCNT_update_frequency:
 			;   if custom clamp disabled or custom clamp
 			;   is a ceil clamp, use default value
 			bit 7,(ix+FM_Channel.fnum_clamp+1)
-			jp z,FMCNT_update_frequency_def_cclamp
+			jp z,FMCNT_update_frequency_def_fclamp
 			bit 6,(ix+FM_Channel.fnum_clamp+1)
-			jp nz,FMCNT_update_frequency_def_cclamp
+			jp nz,FMCNT_update_frequency_def_fclamp ; custom clamp is ceil...
 
+			; Custom floor clamp
 			jp softlock
 			ld a,(ix+FM_Channel.fnum_clamp+1)
 			and a,%00000111 ; Get fnum minimum
@@ -143,6 +144,8 @@ FMCNT_update_frequency:
 			add hl,de
 			jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
 
+			; if the freq is below the custom floor,
+			; fix the value and skip the clamp test
 			ld hl,de
 			jp FMCNT_update_frequency_no_cclamp
 FMCNT_update_frequency_no_fclamp:
@@ -151,9 +154,9 @@ FMCNT_update_frequency_no_fclamp:
 			;   if custom clamp disabled or custom clamp
 			;   is a ceil clamp, use default value
 			bit 7,(ix+FM_Channel.fnum_clamp+1)
-			jp z,FMCNT_update_frequency_def_fclamp
+			jp z,FMCNT_update_frequency_def_cclamp
 			bit 6,(ix+FM_Channel.fnum_clamp+1)
-			jp nz,FMCNT_update_frequency_def_fclamp
+			jp z,FMCNT_update_frequency_def_cclamp ; custom clamp is floor...
 
 			jp softlock
 			ld a,(ix+FM_Channel.fnum_clamp+1)
@@ -164,7 +167,7 @@ FMCNT_update_frequency_no_fclamp:
 			or a,a
 			sbc hl,de
 			add hl,de
-			jp c,FMCNT_update_frequency_no_fclamp ; if hl < MAX_FNUM...
+			jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
 
 			ld hl,de
 FMCNT_update_frequency_no_cclamp:
@@ -195,7 +198,7 @@ FMCNT_update_frequency_no_cclamp:
 	pop af
 	ret
 
-FMCNT_update_frequency_def_cclamp:
+FMCNT_update_frequency_def_fclamp:
 	ld a,b
 	or a,FMCNT_MIN_FNUM >> 8
 	ld d,a
@@ -208,7 +211,7 @@ FMCNT_update_frequency_def_cclamp:
 	ld hl,de
 	jp FMCNT_update_frequency_no_cclamp
 
-FMCNT_update_frequency_def_fclamp:
+FMCNT_update_frequency_def_cclamp:
 	ld a,b
 	or a,FMCNT_MAX_FNUM >> 8
 	ld d,a

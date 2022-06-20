@@ -231,7 +231,7 @@ SSGCNT_update_note_macro_disabled:
 
 		; Check if custom clamp is enabled, if that's the
 		; case, use custom clamp routine
-		bit 7,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+		bit 7,(ix+(SSGCNT_pitch_slide_clamp-SSGCNT_pitch_ofs)+1)
 		jp nz,SSGCNT_update_note_custom_clamp
 
 SSGCNT_update_note_def_clamp:

@@ -213,6 +213,9 @@ FMCNT_CH_ENABLE            equ 1
 FMCNT_VOL_UPDATE           equ 2
 FMCNT_PITCH_SLIDE_ENABLE   equ 4
 
+FMCNT_MIN_FNUM equ $0080
+FMCNT_MAX_FNUM equ $07FF
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    MACROS                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -312,4 +315,5 @@ FM_Channel.enable:     equ 5 ; u8 (%0000'00VE; update Volume; Enable Channel. ev
 FM_Channel.algo:       equ 6 ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
 FM_Channel.pslide_ofs: equ 7 ; s16
 FM_Channel.pitch_ofs:  equ 9 ; s16
-FM_Channel.SIZE        equ 11+5 ; size + padding
+FM_Channel.fnum_clamp: equ 11 ; u16 bit 15: custom clamp enable, bit 14: clamp direction (0: below, 1: above)
+FM_Channel.SIZE        equ 12+4 ; size + padding
