@@ -1743,6 +1743,70 @@ MLMCOM_pitch_slide_clamped_ssg_no_neg:
 	jp MLM_parse_command_end
 
 MLMCOM_pitch_slide_clamped_FM:
+		push ix
+			; Calculate address to 
+			; FMCNT channel WRAM data
+			ld ix,FM_ch1-(MLM_CH_FM1*FM_Channel.SIZE)
+			ld a,c
+			rla ; -\
+			rla ;  | a *= 16 (when multiplicand < 16)
+			rla ;  /
+			rla ; /
+			ld e,a
+			ld d,0
+			add ix,de
+
+			; Compare pitch limit to channel's
+			; pitch, if the limit is lower than
+			; the base, set the carry flag.
+			; (if it's equal or higher, clear it)
+			ld e,(ix+FM_Channel.frequency+0)
+			ld a,(ix+FM_Channel.frequency+1)
+			and a,%00000111 ; Only get the FNum
+			ld d,a
+			ld a,(MLM_event_arg_buffer+1)
+			ld l,a
+			ld a,(MLM_event_arg_buffer+2)
+			and a,%00000111 ; Only get the FNum
+			ld h,a
+			or a,a
+			sbc hl,de
+
+			; Load pitch offset in de; if
+			; limit < base (carry is set)
+			; negate the pitch offset
+			ld a,(MLM_event_arg_buffer+0)
+			ld e,a
+			ld b,64 ; if limit >= base set b to 64
+			ld d,0
+			jp nc,MLMCOM_pitch_slide_clamped_fm_no_neg ; if limit >= base (carry not set), skip negate
+
+			ld b,0 ; if limit < base set b to 0
+			ld hl,0
+			or a,a ; clear carry flag
+			sbc hl,de
+			ex hl,de
+MLMCOM_pitch_slide_clamped_fm_no_neg:
+			; Store pitch slide offset in WRAM
+			ld (ix+FM_Channel.pslide_ofs+0),e
+			ld (ix+FM_Channel.pslide_ofs+1),d
+
+			; Load limit from argument buffer
+			; and set its 15th bit;
+			; additionally, if limit >= base, 
+			; set its 14th bit 
+			ld a,(MLM_event_arg_buffer+1)
+			ld l,a
+			ld a,(MLM_event_arg_buffer+2)
+			or a,128
+			or a,b ; if limit >= base: b = 64, else b = 0; thus is limit >= base the 14th bit gets set.
+			ld h,a
+			ex hl,de
+
+			; Store pitch slide clamp in WRAM
+			ld (ix+FM_Channel.fnum_clamp+0),e
+			ld (ix+FM_Channel.fnum_clamp+1),d
+		pop ix
 	pop de
 	pop hl
 	jp MLM_parse_command_end
