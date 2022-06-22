@@ -534,7 +534,7 @@ SSGCNT_set_note:
 ;   l: note
 ; [OUTPUT]
 ;   de: pitch
-; DOESN`T BACKUP REGISTER HL
+; DOESN'T BACKUP REGISTER HL
 SSGCNT_get_pitch_from_note:
 	ld h,0
 	ld de,SSGCNT_note_LUT
