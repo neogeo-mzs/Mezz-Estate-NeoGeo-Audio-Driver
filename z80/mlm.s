@@ -1645,6 +1645,8 @@ MLMCOM_big_position_jump:
 ;   2. %LLLLLLLL (Limit lsb) 
 ;   3. %LLLLLLLL (Limit msb)
 MLMCOM_pitch_slide_clamped:
+	; TO FIX CUSTOM CLAMP FUNCTION CALLED EVERY TICK IN SSGCNT
+	brk 
 	; Set timing to 0
 	ld a,c
 	ld bc,0
@@ -1666,7 +1668,7 @@ MLMCOM_pitch_slide_clamped:
 		;   Get the current note, and from it 
 		;   get the channel's current pitch
 		ld c,a ; load channel back in a
-		ld hl,SSGCNT_notes
+		ld hl,SSGCNT_notes-MLM_CH_SSG1
 		ld e,a
 		ld d,b ; b is currently equal to 0
 		add hl,de
