@@ -231,9 +231,13 @@ SSGCNT_update_note_macro_disabled:
 
 		; Check if custom clamp is enabled, if that's the
 		; case, use custom clamp routine
-		bit 7,(ix+(SSGCNT_pitch_slide_clamp-SSGCNT_pitch_ofs)+1)
+		ld ix,SSGCNT_pitch_slide_clamp
+		ld d,0
+		ld e,b
+		add ix,de
+		add ix,de
+		bit 7,(ix+1)
 		jp nz,SSGCNT_update_note_custom_clamp
-
 SSGCNT_update_note_def_clamp:
 		; Check for underflow (upward pitch slide)
 		;   SSG tune values go inbetween $0000 and $0FFF,
@@ -289,26 +293,90 @@ SSGCNT_update_note_solve_overflow:
 	jp SSGCNT_update_note_solve_overunderflow_ret
 
 ; [INPUT]
-;   hl: pitch offset
-;   de: pitch slide offset
+;   hl: pitch 
+;   de: channel
+;   ix: pitch slide clamp address
 ; [OUTPUT]
-;   hl: pitch offset
+;   hl: clamped pitch 
 ;   REGISTER DE ISNT BACKED UP
+;   TO REFACTOR
 SSGCNT_update_note_custom_clamp:
-	jp softlock
-	; if pitch slide offset is positive, solve overflow
-	bit 7,d
-	jp z,SSGCNT_update_note_solve_overunderflow_ret
+	brk2
+	; if custom clamp is a clamp on the minimum 
+	; value, use default limit
+	bit 6,(ix+1)
+	jp nz,SSGCNT_update_note_custom_clamp_no_def
 
+	; if pitch < limit: skip to underflow check
+	ld de,$0FFF ; DEFAULT
+	or a,a ; clear carry flag
+	sbc hl,de
+	add hl,de
+	jp c,SSGCNT_update_note_custom_clamp_under
+
+	; clamp result and reset pslide offset
+	ld hl,de
+	ld ix,SSGCNT_pitch_slide_ofs
+	ld e,b
+	ld d,0
+	add ix,de
+	add ix,de
+	ld (ix+0),d
+	ld (ix+1),d
+	jp SSGCNT_update_note_solve_overunderflow_ret
+
+SSGCNT_update_note_custom_clamp_no_def:
+	; Load maximum clamp value in de
+	ld e,(ix+0)
+	ld a,(ix+1)
+	and a,%00001111 ; clear flags
+	ld d,a
+	
+	; if pitch < limit: skip to underflow check
+	or a,a ; clear carry flag
+	sbc hl,de
+	add hl,de
+	jp c,SSGCNT_update_note_custom_clamp_under
+	
+	; clamp result and reset pslide offset
+	ld hl,de
+	ld ix,SSGCNT_pitch_slide_ofs
+	ld e,b
+	ld d,0
+	add ix,de
+	add ix,de
+	ld (ix+0),d
+	ld (ix+1),d
+	jp SSGCNT_update_note_solve_overunderflow_ret
+
+SSGCNT_update_note_custom_clamp_under:
 	; else, solve underflow
 	;   if custom clamp is a clamp on the maximum
 	;   value, use default overflow handler
-	bit 6,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
-	jp nz,SSGCNT_update_note_def_clamp
+	bit 6,(ix+1)
+	jp z,SSGCNT_update_note_def_clamp_under_no_def
 
+	ld de,$0000
+	or a,a ; clear carry flag
+	sbc hl,de
+	add hl,de
+	jp nc,SSGCNT_update_note_solve_overunderflow_ret
+
+	; clamp result and reset pslide offset
+	ld hl,de
+	ld ix,SSGCNT_pitch_slide_ofs
+	ld e,b
+	ld d,0
+	add ix,de
+	add ix,de
+	ld (ix+0),d
+	ld (ix+1),d
+	jp SSGCNT_update_note_solve_overunderflow_ret
+
+SSGCNT_update_note_def_clamp_under_no_def:
 	; Load minimum clamp value in de
-	ld e,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs))
-	ld a,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
+	ld e,(ix+0)
+	ld a,(ix+1)
 	and a,%00001111 ; clear flags
 	ld d,a
 	
@@ -318,30 +386,15 @@ SSGCNT_update_note_custom_clamp:
 	add hl,de
 	jp nc,SSGCNT_update_note_solve_overunderflow_ret
 	
-	; else, clamp value
-	ex hl,de ; hl = limit
-	jp SSGCNT_update_note_solve_overunderflow_ret
-
-SSGCNT_update_note_custom_overflow:
-	; if custom clamp is a clamp on the minimum 
-	; value, use default overflow handler
-	bit 6,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
-	jp z,SSGCNT_update_note_def_clamp
-
-	; Load maximum clamp value in de
-	ld e,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs))
-	ld a,(ix+(SSGCNT_pitch_slide_ofs-SSGCNT_pitch_ofs)+1)
-	and a,%00001111 ; clear flags
-	ld d,a
-	
-	; if pitch < limit: return
-	or a,a ; clear carry flag
-	sbc hl,de
-	add hl,de
-	jp c,SSGCNT_update_note_solve_overunderflow_ret
-	
-	; else, clamp value
-	ex hl,de ; hl = limit
+	; clamp result and reset pslide offset
+	ld hl,de
+	ld ix,SSGCNT_pitch_slide_ofs
+	ld e,b
+	ld d,0
+	add ix,de
+	add ix,de
+	ld (ix+0),d
+	ld (ix+1),d
 	jp SSGCNT_update_note_solve_overunderflow_ret
 
 ; b: channel (0~2)
@@ -538,7 +591,7 @@ SSGCNT_set_note:
 SSGCNT_get_pitch_from_note:
 	ld h,0
 	ld de,SSGCNT_note_LUT
-	add hl,de
+	add hl,hl
 	add hl,de
 	ld e,(hl)
 	inc hl
