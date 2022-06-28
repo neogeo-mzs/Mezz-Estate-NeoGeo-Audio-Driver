@@ -275,10 +275,20 @@ SSGCNT_update_note_solve_overunderflow_ret:
 	ret
 
 ; [INPUT]
-;   de: pitch slide offset
-; [OUTPUT]
 ;   hl: pitch offset
+;   de: channel
+; [OUTPUT]
+;   hl: clamped pitch offset
+;   d: pitch slide offset MSB
 SSGCNT_update_note_solve_overunderflow:
+	; Load pitch slide offset MSB
+	push hl
+		ld hl,SSGCNT_pitch_slide_ofs+1
+		add hl,de
+		add hl,de
+		ld d,(hl)
+	pop hl
+
 	; If pitch slide offset is 
 	; positive, solve overflow
 	bit 7,d
@@ -300,8 +310,8 @@ SSGCNT_update_note_solve_overflow:
 ;   hl: clamped pitch 
 ;   REGISTER DE ISNT BACKED UP
 ;   TO REFACTOR
+;   TO FIX: REDIRECT TO DEFAULT CLAMP IF CLAMP LIMIT IS 0
 SSGCNT_update_note_custom_clamp:
-	brk2
 	; if custom clamp is a clamp on the minimum 
 	; value, use default limit
 	bit 6,(ix+1)

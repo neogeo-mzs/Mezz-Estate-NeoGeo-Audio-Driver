@@ -224,11 +224,11 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db $02,1              ; Set instrument to 1
 	db $3F                ; Set SSG volume to F
-	db $80 | 0,2*12 + 0   ; Play SSG note C4 and wait 127 ticks
-	db $28                ; Set pitch macro
-	dw MLM_ssg_pmacro-MLM_header 
+	db $80 | 0,1*12 + 0   ; Play SSG note C3 and wait 0 ticks
+	;db $0C, 128           ; Pitch slide torwards $2A4 at 128 ofs per tick
+	;dw $1DE               ; C4
+	db $21, 128           ; pitch slide up (aka pitch register value is subtracted from) is FUCKED
 	db $03, 64-1          ; Wait 64 ticks
-	db $28, $00, $00      ; Reset pitch macro
 	db $03, 64-1          ; Wait 64 ticks
 	db $00                ; End of EL
 
