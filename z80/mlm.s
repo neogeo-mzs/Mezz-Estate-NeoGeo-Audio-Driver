@@ -1645,8 +1645,6 @@ MLMCOM_big_position_jump:
 ;   2. %LLLLLLLL (Limit lsb) 
 ;   3. %LLLLLLLL (Limit msb)
 MLMCOM_pitch_slide_clamped:
-	; TO FIX CUSTOM CLAMP FUNCTION CALLED EVERY TICK IN SSGCNT
-	brk 
 	; Set timing to 0
 	ld a,c
 	ld bc,0
@@ -1749,7 +1747,8 @@ MLMCOM_pitch_slide_clamped_FM:
 			; Calculate address to 
 			; FMCNT channel WRAM data
 			ld ix,FM_ch1-(MLM_CH_FM1*FM_Channel.SIZE)
-			ld a,c
+			ld c,a ; backup channel in c
+			or a,a ; clear carry
 			rla ; -\
 			rla ;  | a *= 16 (when multiplicand < 16)
 			rla ;  /
