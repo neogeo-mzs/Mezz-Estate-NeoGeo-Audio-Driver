@@ -184,11 +184,11 @@ MLM_el_fm1:
 
 MLM_el_fm:
 	db $02,2                   ; Set instrument to 2
-	db $80 | 0, 0 | (4 << 4)   ; Play C4 then wait 0 ticks
-	db $28                     ; Set pitch macro
-	dw MLM_fm_vib_macro-MLM_header 
+	db $80 | 0, 9 | (4 << 4)   ; Play A4 then wait 0 ticks
+	db $0C, 2                  ; Slide to C5 at 2 per tick
+	dw $4D3 
 	db $03, 64-1          ; Wait 64 ticks
-	db $28, $00, $00      ; Reset pitch macro
+	;db $28, $00, $00      ; Reset pitch macro
 	db $03, 64-1          ; Wait 64 ticks
 	db $00
 
