@@ -133,7 +133,6 @@ FMCNT_update_frequency:
 			jp nz,FMCNT_update_frequency_def_fclamp ; custom clamp is ceil...
 
 			; Custom floor clamp
-			jp softlock
 			ld a,(ix+FM_Channel.fnum_clamp+1)
 			and a,%00000111 ; Get fnum minimum
 			or a,b 
@@ -145,7 +144,12 @@ FMCNT_update_frequency:
 			jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
 
 			; if the freq is below the custom floor,
-			; fix the value and skip the clamp test
+			; clear the pitch slide offset...
+			xor a,a
+			ld (ix+FM_Channel.pslide_ofs+0),a
+			ld (ix+FM_Channel.pslide_ofs+1),a
+
+			; ...fix the value and skip the ceil clamp test
 			ld hl,de
 			jp FMCNT_update_frequency_no_cclamp
 FMCNT_update_frequency_no_fclamp:
@@ -158,7 +162,7 @@ FMCNT_update_frequency_no_fclamp:
 			bit 6,(ix+FM_Channel.fnum_clamp+1)
 			jp z,FMCNT_update_frequency_def_cclamp ; custom clamp is floor...
 
-			jp softlock
+			; Custom ceiling clamp
 			ld a,(ix+FM_Channel.fnum_clamp+1)
 			and a,%00000111 ; Get fnum minimum
 			or a,b 
@@ -169,6 +173,10 @@ FMCNT_update_frequency_no_fclamp:
 			add hl,de
 			jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
 
+			; clear the pitch slide offset...
+			xor a,a
+			ld (ix+FM_Channel.pslide_ofs+0),a
+			ld (ix+FM_Channel.pslide_ofs+1),a
 			ld hl,de
 FMCNT_update_frequency_no_cclamp:
 		pop bc
@@ -208,6 +216,9 @@ FMCNT_update_frequency_def_fclamp:
 	add hl,de
 	jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
 	
+	xor a,a
+	ld (ix+FM_Channel.pslide_ofs+0),a
+	ld (ix+FM_Channel.pslide_ofs+1),a
 	ld hl,de
 	jp FMCNT_update_frequency_no_cclamp
 
@@ -221,6 +232,9 @@ FMCNT_update_frequency_def_cclamp:
 	add hl,de
 	jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
 
+	xor a,a
+	ld (ix+FM_Channel.pslide_ofs+0),a
+	ld (ix+FM_Channel.pslide_ofs+1),a
 	ld hl,de
 	jp FMCNT_update_frequency_no_cclamp
 
