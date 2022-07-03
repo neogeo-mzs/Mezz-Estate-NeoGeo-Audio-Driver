@@ -2163,10 +2163,18 @@ MLMCOM_downward_pitch_slide_FM:
 
 ; c: channel
 MLMCOM_reset_pitch_slide:
+	; Set timing to 0
+	; (Execute next command immediately)
+	push bc
+		ld a,c
+		ld bc,0
+		call MLM_set_timing
+	pop bc
+
 	; ADPCM-A channels have no pitch, return
 	ld a,c
 	cp a,MLM_CH_FM1
-	jp c,MLMCOM_pitch_slide_PA_ret
+	jp c,MLM_parse_command_end
 
 	; Else if FM, update FMCNT accordingly
 	cp a,MLM_CH_SSG1
@@ -2182,12 +2190,6 @@ MLMCOM_reset_pitch_slide:
 		ld (hl),b
 		inc hl
 		ld (hl),b
-
-		; Set timing to 0
-		; (Execute next command immediately)
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
 	pop hl
 	jp MLM_parse_command_end
 
@@ -2208,12 +2210,6 @@ MLMCOM_reset_pitch_slide_FM:
 		ld (hl),0
 		inc hl
 		ld (hl),0
-
-		; Set timing to 0
-		; (Execute next command immediately)
-		ld a,c
-		ld bc,0
-		call MLM_set_timing
 	pop hl
 	jp MLM_parse_command_end
 
