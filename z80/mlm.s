@@ -2146,12 +2146,6 @@ MLMCOM_downward_pitch_slide_FM:
 		inc hl
 		ld (hl),d
 
-		; Disable custom fnum clamp
-		ld hl,FM_ch1+FM_Channel.fnum_clamp+1-(MLM_CH_FM1*16)
-		add hl,de
-		xor a,a
-		ld (hl),a ; clears enable flag
-
 		; Set timing to 0
 		; (Execute next command immediately)
 		ld a,c
