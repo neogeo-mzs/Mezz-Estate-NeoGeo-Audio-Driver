@@ -578,7 +578,6 @@ MLM_play_note_fm:
 		ld iyh,c
 		ld iyl,a
 		call FMCNT_set_note
-
 		
 		; Play FM channel
 		;   Calculate pointer enabled operators 
@@ -1364,8 +1363,8 @@ MLM_command_vectors:
 	dup 4
 		dw MLMCOM_FM_TL_set
 	edup
-	dw MLMCOM_set_pitch_macro
-	dup 9
+	dw MLMCOM_set_pitch_macro,      MLMCOM_set_note
+	dup 8
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 	dup 16
@@ -1381,8 +1380,8 @@ MLM_command_argc:
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
 	ds 4, $01 ; FM OP TL Set
-	db $02
-	ds 9, 0   ; Invalid commands have no arguments
+	db $02, $01
+	ds 8, 0   ; Invalid commands have no arguments
 	ds 16, 0   ; Set Channel Volume (byte sized)
 	ds 64, 0   ; Invalid commands have no arguments
 
@@ -1644,6 +1643,8 @@ MLMCOM_big_position_jump:
 ;   1. %OOOOOOOO (Unsigned pitch offset per tick) 
 ;   2. %LLLLLLLL (Limit lsb) 
 ;   3. %LLLLLLLL (Limit msb)
+; To convert an FM pitch from block to block-1,
+; multiply the FNum by 2, and viceversa.
 MLMCOM_pitch_slide_clamped:
 	; Set timing to 0
 	ld a,c
@@ -2343,6 +2344,59 @@ MLMCOM_set_pitch_macro_reset:
 	pop hl
 	jp MLM_parse_command_end 
 
+; c: channel
+; Arguments:
+;   1. %-NNNNNNN
+MLMCOM_set_note:
+	; Set timing to 0
+	ld a,c
+	ld bc,0
+	call MLM_set_timing
+
+	ld c,a ; store channel back in c
+	cp a,MLM_CH_FM1 ; if a < MLM_CH_FM1 (channel is ADPCMA)
+	jp c,MLM_parse_command_end 
+
+	cp a,MLM_CH_SSG1 ; if a < MLM_CH_SSG1 (channel is SSG)
+	jp c,MLMCOM_set_note_fm
+
+	; Else, channel is SSG...
+	push af
+		ld a,(MLM_event_arg_buffer)
+		ld c,a
+	pop af
+	call SSGCNT_set_note
+	jp MLM_parse_command_end 
+
+MLMCOM_set_note_fm:
+	push de
+	push hl
+	push ix
+		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
+
+		; Calculate address of FM channel data
+		push af
+			rlca
+			rlca
+			rlca
+			rlca
+			and a,$F0
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
+
+		; Set pitch
+		ld iyl,c
+		ld a,(MLM_event_arg_buffer)
+		ld iyh,a
+		call FMCNT_set_note
+	pop ix
+	pop hl
+	pop de
+	jp MLM_parse_command_end
+	
 ; c: channel
 ; de: playback pointer
 MLMCOM_set_channel_volume_byte:
