@@ -40,6 +40,7 @@ SSGCNT_notes:			ds SSG_CHANNEL_COUNT   ; u8[3]
 SSGCNT_pitch_ofs:       ds SSG_CHANNEL_COUNT*2 ; s16[3]
 SSGCNT_pitch_slide_ofs: ds SSG_CHANNEL_COUNT*2 ; s16[3]
 SSGCNT_pitch_slide_clamp: ds SSG_CHANNEL_COUNT*2 ; u16[3] bit 15: custom clamp enable, bit 14: clamp direction (0: below, 1: above)
+SSGCNT_buffered_note:   ds SSG_CHANNEL_COUNT ; u8[3] Used to avoid issues with multiple clamped slides effects in a row.
 
 ; IF THE ORDER OF THESE MACROS IS 
 ; CHANGED THEN "MLM_set_instrument_ssg"
