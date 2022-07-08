@@ -183,13 +183,11 @@ MLM_el_fm1:
 	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
 
 MLM_el_fm:
-	db $02,2                   ; Set instrument to 2
-	db $80 | 0, 9 | (4 << 4)   ; Play A4 then wait 0 ticks
-	db $0C, 2                  ; Slide to C5 at 2 per tick
-	dw $4D3 
-	db $03, 64-1          ; Wait 64 ticks
-	;db $28, $00, $00      ; Reset pitch macro
-	db $03, 64-1          ; Wait 64 ticks
+	db $02,2                    ; Set instrument to 2
+	db $80 | 24, 11 | (4 << 4)  ; Play C4 then wait 24 ticks
+	db $0C, 32                  ; Slide down at 32 per tick
+	dw 1136                     ; till A3
+	db $03, 24-1                ; Wait 24 tickw
 	db $00
 
 MLM_fm_vib_macro:
@@ -222,15 +220,15 @@ MLM_song_ssg3:
 	dw MLM_song_instruments-MLM_header
 	
 MLM_el_ssg:
-	db $02,1              ; Set instrument to 1
-	db $3F                ; Set SSG volume to F
-	db $80 | 0,1*12 + 0   ; Play SSG note C3 and wait 0 ticks
-	;db $0C, 128           ; Pitch slide torwards $2A4 at 128 ofs per tick
-	;dw $1DE               ; C4
-	db $21, 128           ; pitch slide up (aka pitch register value is subtracted from) is FUCKED
-	db $03, 64-1          ; Wait 64 ticks
-	db $03, 64-1          ; Wait 64 ticks
-	db $00                ; End of EL
+	db $02,1                    ; Set instrument to 1
+	db $80 | 24, 12*(4-2) + 0   ; Play C4 then wait 24 ticks
+	db $0C, 32                  ; Slide at 32 per tick
+	db 12*(3-2) + 9             ; till A3
+	db $03, 24-1                ; Wait 24 ticks
+	db $0C, 64                  ; Slide at 64 per tick
+	db 12*(4-2) + 7             ; till G4
+	db $03, 128-1               ; Wait 128 ticks
+	db $00
 
 MLM_ssg_pmacro:
 	db 16-1 ; Length:     16

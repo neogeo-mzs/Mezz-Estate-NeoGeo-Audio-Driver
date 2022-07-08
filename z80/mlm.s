@@ -1376,7 +1376,7 @@ MLM_command_vectors:
 
 MLM_command_argc:
 	db $00, $01, $01, $01, $02, $01, $01, $01
-	db $01, $02, $01, $02, $03, $02, $02, $02
+	db $01, $02, $01, $02, $02, $02, $02, $02
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $01, $01, $00
 	ds 4, $01 ; FM OP TL Set
@@ -1641,8 +1641,7 @@ MLMCOM_big_position_jump:
 ; c: channel
 ; Arguments:
 ;   1. %OOOOOOOO (Unsigned pitch offset per tick) 
-;   2. %LLLLLLLL (Limit lsb) 
-;   3. %LLLLLLLL (Limit msb)
+;   2. %-NNNNNNN (Note)
 ; To convert an FM pitch from block to block-1,
 ; multiply the FNum by 2, and viceversa.
 MLMCOM_pitch_slide_clamped:
@@ -1659,31 +1658,48 @@ MLMCOM_pitch_slide_clamped:
 	
 	push hl
 	push de
+	push ix
 		cp a,MLM_CH_SSG1 ; if ch is FM, setup clamped pitch slide for FMCNT...
 		jp c,MLMCOM_pitch_slide_clamped_FM
 		
 		; Else (ch is SSG), setup clamped 
 		; pitch slide for SSGCNT...
-		;   Get the current note, and from it 
-		;   get the channel's current pitch
+		sub a,MLM_CH_SSG1
+		call SSGCNT_set_buffered_note
+
+		; Get the current note, and from it 
+		; get the channel's current pitch
 		ld c,a ; load channel back in a
-		ld hl,SSGCNT_notes-MLM_CH_SSG1
+		ld hl,SSGCNT_notes
 		ld e,a
 		ld d,b ; b is currently equal to 0
 		add hl,de
 		ld l,(hl)
 		call SSGCNT_get_pitch_from_note
 
-		; Load pitch limit, compare it to the 
+		; Load note and store it in WRAM, then 
+		; get its pitch and store it in hl and ix
+		ld a,(MLM_event_arg_buffer+1)
+		push de
+			ld hl,SSGCNT_buffered_note
+			ld e,c
+			ld d,0
+			add hl,de
+			ld (hl),a
+
+			ld l,a
+			call SSGCNT_get_pitch_from_note
+			ld ix,de
+			ex hl,de
+		pop de
+
+		; compare pitch limit to the 
 		; base pitch, and if the limit is lower 
 		; than the base, set the carry flag.
 		; (if it's equal or higher, clear it)
-		ld a,(MLM_event_arg_buffer+1)
-		ld l,a
-		ld a,(MLM_event_arg_buffer+2)
-		ld h,a
 		or a,a
 		sbc hl,de
+		add hl,de
 
 		; Load pitch offset in de; if 
 		; limit < base (carry is set),
@@ -1707,20 +1723,20 @@ MLMCOM_pitch_slide_clamped_ssg_no_neg:
 			sla a ; a *= 2
 			ld e,a
 			ld d,0
-			ld hl,SSGCNT_pitch_slide_ofs-(MLM_CH_SSG1*2)
+			ld hl,SSGCNT_pitch_slide_ofs
 			add hl,de
 		pop de
 		ld (hl),e
 		inc hl
 		ld (hl),d
 
-		; Load limit from argument buffer
+		; Load limit from ix
 		; and set its 15th bit;
 		; additionally, if limit >= base, 
 		; set its 14th bit 
-		ld a,(MLM_event_arg_buffer+1)
+		ld a,ixl
 		ld l,a
-		ld a,(MLM_event_arg_buffer+2)
+		ld a,ixh
 		or a,128
 		or a,b ; if limit >= base: b = 64, else b = 0; thus is limit >= base the 14th bit gets set.
 		ld h,a
@@ -1733,12 +1749,13 @@ MLMCOM_pitch_slide_clamped_ssg_no_neg:
 			sla a ; a *= 2
 			ld e,a
 			ld d,0
-			ld hl,SSGCNT_pitch_slide_clamp-(MLM_CH_SSG1*2)
+			ld hl,SSGCNT_pitch_slide_clamp
 			add hl,de
 		pop de
 		ld (hl),e
 		inc hl
 		ld (hl),d
+	pop ix
 	pop de
 	pop hl
 	jp MLM_parse_command_end

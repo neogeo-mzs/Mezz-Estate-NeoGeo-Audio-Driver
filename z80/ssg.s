@@ -254,19 +254,19 @@ SSGCNT_update_note_def_clamp:
 		jp nz,SSGCNT_update_note_solve_overunderflow
 
 SSGCNT_update_note_solve_overunderflow_ret:
-		; Load fine tune and write
+		; Load coarse tune and write
 		; it to correct register
-		ld a,REG_SSG_CHA_FINE_TUNE
-		add a,b ; - a += b*2
+		ld a,REG_SSG_CHA_COARSE_TUNE
+		add a,b ; - a += channel*2
 		add a,b ; /
 		ld d,a
-		ld e,l
+		ld e,h
 		rst RST_YM_WRITEA
 
-		; Load coarse tune and write
+		; Load fine tune and write
 		; it to the correct register
-		inc d
-		ld e,h
+		dec d
+		ld e,l
 		rst RST_YM_WRITEA
 	pop ix
 	pop af
@@ -565,6 +565,19 @@ SSGCNT_set_noise_tune:
 	ret
 
 ; a: channel
+SSGCNT_set_buffered_note:
+	push hl
+	push de
+		ld hl,SSGCNT_buffered_note
+		ld e,a
+		ld d,0
+		add hl,de
+		ld c,(hl)
+	pop de
+	pop hl
+	; this then goes to SSGCNT_set_note...
+
+; a: channel
 ; c: note
 ; Also resets any pitch offset modified by a pitch slide
 SSGCNT_set_note:
@@ -578,6 +591,11 @@ SSGCNT_set_note:
 		; Store note into WRAM
 		ld b,0
 		ld hl,SSGCNT_notes
+		add hl,bc
+		ld (hl),a
+
+		; Set buffered note
+		ld hl,SSGCNT_buffered_note
 		add hl,bc
 		ld (hl),a
 
