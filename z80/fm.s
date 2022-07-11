@@ -757,6 +757,74 @@ FMCNT_set_note_even_ch:
 	pop hl
 	ret
 
+; [INPUT]
+;   d: note (%-OOONNNN Octave; Note)
+;   e: block
+; [OUTPUT]
+;   hl: note's pitch
+; DOESN'T BACKUP AF
+; To convert an FM pitch from block to block-1,
+; multiply the FNum by 2, and viceversa.
+FMCNT_get_note_with_block:
+	push bc
+		; Load note in c and octave in b
+		ld a,d
+		and a,$0F
+		ld c,a
+		ld a,d
+		and a,%01110000
+		rrca ; -\
+		rrca ;  | 0OOO0000 >> 00000OOO
+		rrca ;  /
+		rrca ; /
+		ld b,a
+
+		; Load FNum in hl
+		push bc
+			ld hl,FMCNT_pitch_LUT
+			ld b,0
+			add hl,bc
+			add hl,bc
+			ld c,(hl)
+			inc hl
+			ld b,(hl)
+			ld hl,bc
+		pop bc
+
+		; If the octave and block are equal, return.
+		; If the octave is bigger than the block, 
+		; shift FNum to the left until they're equal.
+		; If the opposite is true, do the same but
+		; shift FNum to the right.
+		ld a,b
+		cp a,e
+		jp z,FMCNT_get_note_with_block_equal      ; if equal...
+		jp nc,FMCNT_get_note_with_block_lower_blk ; if octave > block...
+
+		; Else (octave < block)...
+FMCNT_get_note_with_block_hiblk_loop:
+		srl_hl ; shift hl to the right until octave == block
+		inc a
+		cp a,b 
+		jp nz,FMCNT_get_note_with_block_hiblk_loop
+
+FMCNT_get_note_with_block_equal:
+		; OR the block and the FNum to obtain the final pitch
+		rlca
+		rlca
+		rlca
+		or a,h
+		ld h,a
+	pop bc
+	ret
+
+FMCNT_get_note_with_block_lower_blk:
+	add hl,hl ; shift hl to the left until octave == block
+	dec a
+	cp a,b
+	jp nz,FMCNT_get_note_with_block_lower_blk
+	jp FMCNT_get_note_with_block_equal	
+
 ; Compatible with deflemask
 ; octave 0 = block 0, etc...
 FMCNT_pitch_LUT:
