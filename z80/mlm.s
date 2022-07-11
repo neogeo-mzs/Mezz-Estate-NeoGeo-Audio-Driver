@@ -1642,8 +1642,6 @@ MLMCOM_big_position_jump:
 ; Arguments:
 ;   1. %OOOOOOOO (Unsigned pitch offset per tick) 
 ;   2. %-NNNNNNN (Note)
-; To convert an FM pitch from block to block-1,
-; multiply the FNum by 2, and viceversa.
 MLMCOM_pitch_slide_clamped:
 	; Set timing to 0
 	ld a,c
@@ -1761,7 +1759,7 @@ MLMCOM_pitch_slide_clamped_ssg_no_neg:
 	jp MLM_parse_command_end
 
 MLMCOM_pitch_slide_clamped_FM:
-		push ix
+		push iy
 			; Calculate address to 
 			; FMCNT channel WRAM data
 			ld ix,FM_ch1-(MLM_CH_FM1*FM_Channel.SIZE)
@@ -1775,19 +1773,28 @@ MLMCOM_pitch_slide_clamped_FM:
 			ld d,0
 			add ix,de
 
+			; Store current frequency's block in e
+			ld a,(ix+FM_Channel.frequency+1)
+			and a,%00111000
+			rrca ; \
+			rrca ; | 00BBB000 >> 00000BBB
+			rrca ; /
+			ld e,a
+
 			; Compare pitch limit to channel's
 			; pitch, if the limit is lower than
 			; the base, set the carry flag.
 			; (if it's equal or higher, clear it)
+			ld a,(MLM_event_arg_buffer+1)
+			ld d,a
+			call FMCNT_get_note_with_block
+			ld a,l
+			ld iyl,a
+			ld a,h
+			ld iyh,a
 			ld e,(ix+FM_Channel.frequency+0)
 			ld a,(ix+FM_Channel.frequency+1)
-			and a,%00000111 ; Only get the FNum
 			ld d,a
-			ld a,(MLM_event_arg_buffer+1)
-			ld l,a
-			ld a,(MLM_event_arg_buffer+2)
-			and a,%00000111 ; Only get the FNum
-			ld h,a
 			or a,a
 			sbc hl,de
 
@@ -1814,9 +1821,9 @@ MLMCOM_pitch_slide_clamped_fm_no_neg:
 			; and set its 15th bit;
 			; additionally, if limit >= base, 
 			; set its 14th bit 
-			ld a,(MLM_event_arg_buffer+1)
+			ld a,iyl
 			ld l,a
-			ld a,(MLM_event_arg_buffer+2)
+			ld a,iyh
 			or a,128
 			or a,b ; if limit >= base: b = 64, else b = 0; thus is limit >= base the 14th bit gets set.
 			ld h,a
@@ -1825,7 +1832,8 @@ MLMCOM_pitch_slide_clamped_fm_no_neg:
 			; Store pitch slide clamp in WRAM
 			ld (ix+FM_Channel.fnum_clamp+0),e
 			ld (ix+FM_Channel.fnum_clamp+1),d
-		pop ix
+		pop iy
+	pop ix
 	pop de
 	pop hl
 	jp MLM_parse_command_end
