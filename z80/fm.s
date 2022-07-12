@@ -701,8 +701,11 @@ FMCNT_set_note:
 	push de
 	push af
 	push bc
+		; Store new note in WRAM buffer
+		ld a,iyh ; load note in a
+		ld (ix+FM_Channel.bufrd_note),a
+
 		; Load base pitch from FMCNT_pitch_LUT in bc
-		ld a,iyh
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
 		ld l,a
 		ld h,0
@@ -805,7 +808,7 @@ FMCNT_get_note_with_block:
 FMCNT_get_note_with_block_hiblk_loop:
 		srl_hl ; shift hl to the right until octave == block
 		inc a
-		cp a,b 
+		cp a,e 
 		jp nz,FMCNT_get_note_with_block_hiblk_loop
 
 FMCNT_get_note_with_block_equal:
@@ -821,7 +824,7 @@ FMCNT_get_note_with_block_equal:
 FMCNT_get_note_with_block_lower_blk:
 	add hl,hl ; shift hl to the left until octave == block
 	dec a
-	cp a,b
+	cp a,e
 	jp nz,FMCNT_get_note_with_block_lower_blk
 	jp FMCNT_get_note_with_block_equal	
 

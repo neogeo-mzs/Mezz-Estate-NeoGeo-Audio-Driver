@@ -1773,6 +1773,18 @@ MLMCOM_pitch_slide_clamped_FM:
 			ld d,0
 			add ix,de
 
+			; Set buffered note
+			ld a,(ix+FM_Channel.bufrd_note)
+			ld iyh,a
+			ld a,c
+			sub a,MLM_CH_FM1
+			ld iyl,a
+			call FMCNT_set_note
+
+			; Store destination note in WRAM buffer
+			ld a,(MLM_event_arg_buffer+1)
+			ld (ix+FM_Channel.bufrd_note),a
+
 			; Store current frequency's block in e
 			ld a,(ix+FM_Channel.frequency+1)
 			and a,%00111000
