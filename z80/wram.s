@@ -80,9 +80,6 @@ PA_status_register: ds 1
 PA_wram_end:
 
 ; ======== FDCNT ========
-FDCNT_offset:          ds 1 ; s8
-FDCNT_do_reset_chvols: ds 1 ; u8 (if set FDCNT_irqA will reset all channel volume and clear this variable)
-
 
 ; ======== Others ========
 EXT_2CH_mode:             ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
