@@ -1,5 +1,13 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
+	; Reset master volumes if the reset
+	; chvols flag is enabled, then reset said flag.
+	ld a,(do_reset_chvols)
+	or a,a ; cp a,0
+	call nz,MLM_reset_channel_volumes
+	xor a,a
+	ld (do_reset_chvols),a
+
 	ld iyl,0 ; Clear active mlm channel counter
 
 	ld c,0
@@ -1060,8 +1068,8 @@ ch_counter set 0
 			; scale the result down (0~255 -> 0~31)
 			ld a,(MLM_channel_volumes+ch_counter)
 			sub a,b
-			jp po,$+5 ; +2 = 2b
-			ld a,0    ; +2 = 4b
+			jp po,$+5 ; +3 = 3b
+			ld a,0    ; +2 = 5b
 
 			rrca
 			rrca
@@ -1082,8 +1090,8 @@ ch_counter set 0
 			; scale the result down (0~255 -> 0~127)
 			ld a,(MLM_channel_volumes+MLM_CH_FM1+ch_counter)
 			sub a,b
-			jp po,$+5 ; +2 = 2b
-			ld a,0    ; +2 = 4b
+			jp po,$+5 ; +3 = 3b
+			ld a,0    ; +2 = 5b
 			srl a
 			and a,127
 
@@ -1100,8 +1108,8 @@ ch_counter set 0
 			; scale the result down (0~255 -> 0~15)
 			ld a,(MLM_channel_volumes+MLM_CH_SSG1+ch_counter)
 			sub a,b
-			jp po,$+5 ; +2 = 2b
-			ld a,0    ; +2 = 4b
+			jp po,$+5 ; +3 = 3b
+			ld a,0    ; +2 = 5b
 			rrca
 			rrca
 			rrca

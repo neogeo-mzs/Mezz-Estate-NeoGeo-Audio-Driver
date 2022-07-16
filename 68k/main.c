@@ -81,6 +81,8 @@ int main()
         if (BIOS_P1CHANGE->right)
             smp_id = WRAP(smp_id+1, 0, 128);
 
+        Z80_UCOM_SET_MLM_MVOL(255 - (smp_id*2));
+
         if (BIOS_P1CHANGE->A)
         {
             Z80_UCOM_PLAY_SONG(selected_song);

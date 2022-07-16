@@ -187,7 +187,8 @@ UCOM_command_vectors:
     dw UCOM_CMD_invalid,           UCOM_CMD_invalid
     dw UCOM_CMD_invalid,           UCOM_CMD_invalid
     dw UCOM_CMD_invalid,           UCOM_CMD_sfxps_retrig_smp
-    dup 116
+    dw UCOM_CMD_set_master_vol,    UCOM_CMD_set_master_vol
+    dup 114
         dw UCOM_CMD_invalid
     edup
 
@@ -266,6 +267,24 @@ UCOM_CMD_sfxps_retrig_smp:
     pop af
     pop iy
     pop bc
+    jp UCOM_run_command_return
+
+; b: %1MMMMMMM
+; c: %1000011L
+UCOM_CMD_set_master_vol:
+    push af
+    push bc
+        ld a,c
+        and a,1
+        ld c,a
+        ld a,b
+        sla a
+        or a,c
+        ld (master_volume),a
+        ld a,$FF
+        ld (do_reset_chvols),a
+    pop bc
+    pop af
     jp UCOM_run_command_return
 
 UCOM_CMD_invalid:
