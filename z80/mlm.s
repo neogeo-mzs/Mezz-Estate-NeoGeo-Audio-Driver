@@ -1042,8 +1042,77 @@ MLM_set_channel_volume_FM:
 	pop hl
 	ret
 
-MLM_reset_active_chvols_apply_mvol:
-	
+; Should be called after 
+; setting the master volume
+MLM_reset_channel_volumes:
+	push af
+	push bc
+		; Load and negate master volume
+		ld a,(master_volume)
+		ld b,a
+		ld a,$FF
+		sub a,b
+		ld b,a
+
+ch_counter set 0
+		dup PA_CHANNEL_COUNT
+			; Load MLM volume, subtract mvol and 
+			; scale the result down (0~255 -> 0~31)
+			ld a,(MLM_channel_volumes+ch_counter)
+			sub a,b
+			jp po,$+5 ; +2 = 2b
+			ld a,0    ; +2 = 4b
+
+			rrca
+			rrca
+			rrca
+			and a,$1F
+
+			ld (PA_channel_volumes+ch_counter),a
+			ld c,a
+			ld a,(PA_channel_pannings+ch_counter)
+			or a,c
+
+ch_counter set ch_counter+1
+		edup
+
+ch_counter set 0
+		dup FM_CHANNEL_COUNT
+			; Load MLM volume, subtract mvol and 
+			; scale the result down (0~255 -> 0~127)
+			ld a,(MLM_channel_volumes+MLM_CH_FM1+ch_counter)
+			sub a,b
+			jp po,$+5 ; +2 = 2b
+			ld a,0    ; +2 = 4b
+			srl a
+			and a,127
+
+			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.volume),a
+			ld a,(FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.enable)
+			or a,FMCNT_VOL_UPDATE
+			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.enable),a
+ch_counter set ch_counter+1
+		edup
+
+ch_counter set 0
+		dup SSG_CHANNEL_COUNT
+			; Load MLM volume, subtract mvol and 
+			; scale the result down (0~255 -> 0~15)
+			ld a,(MLM_channel_volumes+MLM_CH_SSG1+ch_counter)
+			sub a,b
+			jp po,$+5 ; +2 = 2b
+			ld a,0    ; +2 = 4b
+			rrca
+			rrca
+			rrca
+			rrca
+			and a,$0F
+
+			ld (SSGCNT_volumes+ch_counter),a
+ch_counter set ch_counter+1
+		edup
+	pop bc
+	pop af
 	ret
 
 ; a: channel
