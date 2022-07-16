@@ -1042,7 +1042,6 @@ MLM_set_channel_volume_FM:
 
 ; TODO: REFACTOR
 MLM_reset_active_chvols:
-	jp softlock
 	push ix
 	push hl
 	push de
