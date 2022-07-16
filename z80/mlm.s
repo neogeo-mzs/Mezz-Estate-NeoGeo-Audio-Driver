@@ -911,16 +911,18 @@ MLM_set_channel_volume:
 		inc b ; cp b,255
 		jp z,MLM_set_channel_volume_skip_mvol_calc
 
-		; Else, since cvol : 255 = x : mvol, calculate x using 
-		; cvol*mvol / 256 (It's much faster to divide by 256 
-		; than to divide by 255, a small error to pay for speed)
-		push de
-			ld h,(hl)
-			ld e,a
-			call H_Times_E
-			add a,$80 ; Makes next "division" more accurate
-			ld a,h    ; No division needs to be done, hl / 256 = h
-		pop de
+		; Else, negate the master vol and
+		; subtract it from the channel vol
+		; (The master volume works logarithmically)
+		ld b,a ; backup cvol in b
+		ld a,$FF
+		sub a,(hl)
+		ld iyl,a ; backup negated mvol in iyl
+		ld a,b   ; store cvol back in a
+		sub a,iyl
+
+		jp po,MLM_set_channel_volume_skip_mvol_calc ; if no overflow happened...
+		ld a,0 ; if underflow happened, take care of it
 
 MLM_set_channel_volume_skip_mvol_calc:
 		ld iyl,a ; Backup scaled MLM chvol 
@@ -1039,135 +1041,6 @@ MLM_set_channel_volume_FM:
 	pop bc
 	pop hl
 	ret
-
-; TODO: REFACTOR
-MLM_reset_active_chvols:
-	push ix
-	push hl
-	push de
-	push iy
-		; ==== RESET PA CHVOLS ====
-		ld ix,MLM_channel_volumes
-		ld hl,MLM_channel_control
-		ld iy,PA_channel_volumes
-MLM_reset_acvls_counter set 0
-		dup PA_CHANNEL_COUNT
-			bit 0,(hl)
-			jr z,$+40+2                             ; +2  = 2b
-			push hl                                 ; +37 = 39b
-				; Else, since cvol : 255 = x : mvol, calculate x using 
-				; cvol*mvol / 256 (It's much faster to divide by 256 
-				; than to divide by 255, a small error to pay for speed)
-				ld e,(ix+0)
-				ld a,(master_volume)
-				ld h,a
-				call H_Times_E
-				ld de,128 ; - Rounds the next "division"
-				add hl,de ; /
-				ld a,h    ; No division needs to be done, hl / 256 = h
-                
-				; Scale down volume
-				; ($00~$FF -> $00~$1F)
-				rrca
-				rrca
-				rrca
-				and a,$1F
-
-				; Store volume in 
-				; PA_channel_volumes[channel]
-				ld (iy+0),a
-
-				; If MLM_volume isn't 0, OR volume 
-				; with PA_channel_pannings[channel]
-				dec h ; - cp h,0
-				inc h ; /
-				jr z,$+2+3                                       ; +2b
-				or a,(iy+PA_channel_pannings-PA_channel_volumes) ; +3b                                         
-				
-				; Set CVOL register
-				ld e,a 
-				ld a,MLM_reset_acvls_counter
-				add a,REG_PA_CVOL
-				ld d,a
-				rst RST_YM_WRITEB
-			pop hl                                  ; +1  = 40b
-			inc hl
-			inc ix
-MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
-		edup
-
-		; ==== RESET FM CHVOLS ====
-		;ld iy,FM_channel_volumes
-MLM_reset_acvls_counter set 0
-		dup FM_CHANNEL_COUNT
-			bit 0,(hl)
-			jr z,$+36+2                             ; +2  = 2b
-			push hl                                 ; +33 = 35b 
-				; Else, since cvol : 255 = x : mvol, calculate x using 
-				; cvol*mvol / 256 (It's much faster to divide by 256 
-				; than to divide by 255, a small error to pay for speed)
-				ld e,(ix+0)
-				ld a,(master_volume)
-				ld h,a
-				call H_Times_E
-				ld de,128 ; - Rounds the next "division"
-				add hl,de ; / 
-				ld a,h    ; No division needs to be done, hl / 256 = h
-
-				; Store volume in WRAM
-				srl a     ; $00~$FF -> $00~$7F
-				and a,127 ; Wrap volume inbetween 0 and 127
-				ld (iy+MLM_reset_acvls_counter),a
-
-				; set channel volume update flag
-			;	ld hl,FM_channel_enable
-				add hl,bc
-			;	ld a,(iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes))
-				or a,FMCNT_VOL_UPDATE
-			;	ld (iy+MLM_reset_acvls_counter+(FM_channel_enable-FM_channel_volumes)),a
-			pop hl                                  ; +1  = 36b
-			inc hl
-			inc ix
-MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
-		edup
-		
-		; ==== RESET SSG CHVOLS ====
-		ld iy,SSGCNT_volumes
-MLM_reset_acvls_counter set 0
-		dup SSG_CHANNEL_COUNT
-			bit 0,(hl)
-			jr z,$+26+2                             
-			push hl                                 
-				; Else, since cvol : 255 = x : mvol, calculate x using 
-				; cvol*mvol / 256 (It's much faster to divide by 256 
-				; than to divide by 255, a small error to pay for speed)
-				ld e,(ix+0)
-				ld a,(master_volume)
-				ld h,a
-				call H_Times_E
-				ld de,128 ; - Rounds the next "division"
-				add hl,de ; / 
-				ld a,h    ; No division needs to be done, hl / 256 = h
-
-				; Scale down volume ($00~$FF -> $00~$0F)
-				; and store result into SSGCNT WRAM
-				rrca
-				rrca
-				rrca
-				rrca
-				and a,$0F
-				ld (iy+MLM_reset_acvls_counter),a
-			pop hl                                 
-			inc hl
-			inc ix
-MLM_reset_acvls_counter set MLM_reset_acvls_counter+1
-		edup
-	pop iy
-	pop de
-	pop hl
-	pop ix
-	ret
-
 
 MLM_reset_active_chvols_apply_mvol:
 	
