@@ -925,7 +925,8 @@ MLM_set_channel_volume:
 		ld b,a ; backup cvol in b
 		ld a,$FF
 		sub a,(hl)
-		ld iyl,a ; backup negated mvol in iyl
+		ld iyl,a ; backup negated mvol in iyl...
+		ld iyh,a ; ...and iyh
 		ld a,b   ; store cvol back in a
 		sub a,iyl
 
@@ -976,6 +977,11 @@ MLM_set_channel_volume_PA:
 		ld a,c
 		ld c,b
 
+		sub a,iyh
+		jp nc,$+5 ; +3 = 3b
+		ld a,0    ; +2 = 5b
+		ld iyl,a 
+
 		; Scale down volume
 		; ($00~$FF -> $00~$1F)
 		rrca
@@ -993,13 +999,17 @@ MLM_set_channel_volume_PA:
 			; if the scaled MLM chvol isn't 0, load 
 			; panning from PA_channel_pannings[channel]
 			; and OR it with the volume
-			dec iyl ; - cp ixl,0
-			inc iyl ; /
+			ld b,PANNING_NONE
+			ld e,a ; backup cvol in e
+			ld a,iyl 
+			cp a,0 ; cp a,0
+			ld a,e ; store cvol back in a
 			jp z,MLM_set_channel_volume_PA_no_pan
 			ld de,PA_channel_pannings-PA_channel_volumes
 			add hl,de
+			ld b,(hl)
 MLM_set_channel_volume_PA_no_pan:
-			or a,(hl) ; ORs the volume and panning
+			or a,b ; ORs the volume and panning
 			ld e,a
 			
 			; Set CVOL register
@@ -1070,16 +1080,34 @@ ch_counter set 0
 			sub a,b
 			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b
+			sub a,b
+			jp nc,$+5 ; +3 = 3b
+			ld a,0    ; +2 = 5b
+			ld iyl,a
 
 			rrca
 			rrca
 			rrca
 			and a,$1F
-
+			
 			ld (PA_channel_volumes+ch_counter),a
 			ld c,a
 			ld a,(PA_channel_pannings+ch_counter)
 			or a,c
+
+			; if the scaled MLM chvol isn't 0, load 
+			; panning from PA_channel_pannings[channel]
+			; and OR it with the volume
+			ld d,PANNING_NONE
+			ld e,a            ; backup cvol in e
+			ld a,iyl 
+			or a,a ; cp a,0
+			jr z,$+6                              ; +2 = 2b
+			ld a,(PA_channel_pannings+ch_counter) ; +3 = 5b
+			ld d,a                                ; +1 = 6b
+			ld a,e                                
+
+			or a,d ; ORs the volume and panning
 
 			; Set CVOL register
 			ld e,a
