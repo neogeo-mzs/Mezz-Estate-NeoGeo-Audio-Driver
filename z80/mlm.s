@@ -929,7 +929,7 @@ MLM_set_channel_volume:
 		ld a,b   ; store cvol back in a
 		sub a,iyl
 
-		jp po,MLM_set_channel_volume_skip_mvol_calc ; if no overflow happened...
+		jp nc,MLM_set_channel_volume_skip_mvol_calc ; if no overflow happened...
 		ld a,0 ; if underflow happened, take care of it
 
 MLM_set_channel_volume_skip_mvol_calc:
@@ -1068,7 +1068,7 @@ ch_counter set 0
 			; scale the result down (0~255 -> 0~31)
 			ld a,(MLM_channel_volumes+ch_counter)
 			sub a,b
-			jp po,$+5 ; +3 = 3b
+			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b
 
 			rrca
@@ -1090,7 +1090,7 @@ ch_counter set 0
 			; scale the result down (0~255 -> 0~127)
 			ld a,(MLM_channel_volumes+MLM_CH_FM1+ch_counter)
 			sub a,b
-			jp po,$+5 ; +3 = 3b
+			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b
 			srl a
 			and a,127
@@ -1108,7 +1108,7 @@ ch_counter set 0
 			; scale the result down (0~255 -> 0~15)
 			ld a,(MLM_channel_volumes+MLM_CH_SSG1+ch_counter)
 			sub a,b
-			jp po,$+5 ; +3 = 3b
+			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b
 			rrca
 			rrca
