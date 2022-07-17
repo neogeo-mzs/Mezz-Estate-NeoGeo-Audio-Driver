@@ -1081,6 +1081,11 @@ ch_counter set 0
 			ld a,(PA_channel_pannings+ch_counter)
 			or a,c
 
+			; Set CVOL register
+			ld e,a
+			ld d,REG_PA_CVOL+ch_counter
+			rst RST_YM_WRITEB
+
 ch_counter set ch_counter+1
 		edup
 
