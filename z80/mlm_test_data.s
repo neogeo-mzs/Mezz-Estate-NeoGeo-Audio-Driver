@@ -183,11 +183,14 @@ MLM_el_fm1:
 	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
 
 MLM_el_fm:
-	db $02,2                    ; Set instrument to 2
-	db $80 | 24, 11 | (4 << 4)  ; Play C4 then wait 24 ticks
-	db $0C, 32                  ; Slide down at 32 per tick
-	dw 1136                     ; till A3
-	db $03, 24-1                ; Wait 24 tickw
+	db $02,2                   ; Set instrument to 2
+	db $80 | 24, 11 | (3 << 4) ; Play A3 then wait 24 ticks
+	db $0C, 32                 ; Slide (down) at 32 per tick
+	db 2 | (3 << 4)            ; until D3
+	db $03, 24-1               ; Wait 24 ticks
+	db $0C, 64                 ; Slide (up) at 64 per tick
+	db 4 | (4 << 4)            ; until E4
+	db $03,128-1               ; Wait 128 ticks
 	db $00
 
 MLM_fm_vib_macro:
