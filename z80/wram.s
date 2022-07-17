@@ -88,6 +88,7 @@ IRQ_TA_tick_time_counter: ds 1 ; u8
 current_bank:             ds 1 ; u8
 has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has expired)
 master_volume:            ds 1 ; u8
+do_reset_chvols:          ds 1 ; bool 
 tmp2:                     ds 2
 
 ; ======== SFX Playback System =======
