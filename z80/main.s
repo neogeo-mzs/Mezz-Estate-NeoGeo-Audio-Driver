@@ -45,7 +45,7 @@ j_IRQ:
 	di
 	jp IRQ
 
-	db "MZS driver v. 11.1-beta by GbaCretin"
+	db "MZS driver v. 13.0-beta by GbaCretin"
 
 	org $0066
 NMI:
@@ -172,7 +172,6 @@ main_loop:
 execute_tmb_tick:
 	ld a,$FF
 	ld (has_a_timer_expired),a
-	call FDCNT_irqB 
 	ret
 
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
@@ -196,8 +195,8 @@ execute_tma_tick:
 	xor a,a ; ld a,0
 	ld (IRQ_TA_tick_time_counter),a
 
+	call FADE_irq
 	call MLM_irq
-	call FDCNT_irqA
 	call FMCNT_irq
 	call SSGCNT_irq
 	ret
@@ -373,7 +372,6 @@ softlock:
 	include "mlm.s"
 	include "math.s"
 	include "sfxps.s"
-	include "fade.s"
 	include "macro.s"
 	
 ;#code SDATA,$6000,$1800
