@@ -1,12 +1,14 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
-	; Reset master volumes if the reset
-	; chvols flag is enabled, then reset said flag.
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
 	call nz,MLM_reset_channel_volumes
+	ld a,(do_stop_song)
+	or a,a ; cp a,0
+	call nz,MLM_stop
 	xor a,a
 	ld (do_reset_chvols),a
+	ld (do_stop_song),a
 
 	ld iyl,0 ; Clear active mlm channel counter
 

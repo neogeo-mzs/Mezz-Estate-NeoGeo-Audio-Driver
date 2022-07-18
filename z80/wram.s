@@ -88,7 +88,8 @@ IRQ_TA_tick_time_counter: ds 1 ; u8
 current_bank:             ds 1 ; u8
 has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has expired)
 master_volume:            ds 1 ; u8
-do_reset_chvols:          ds 1 ; bool 
+do_reset_chvols:          ds 1 ; bool (if this flag is set, MLM_irq will reset all channel volumes and clear the flag)
+do_stop_song:             ds 1 ; bool (if this flag is set, MLM_irq will stop the current song and clear the flag)
 tmp2:                     ds 2
 
 ; ======== SFX Playback System =======
@@ -99,3 +100,6 @@ SFXPS_channel_sample_ids:      ;ds PA_CHANNEL_COUNT ; u8[6]
 SFXPS_channel_taken_status:    ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 taken? 1 = yes, 0 = no)
 SFXPS_channel_playback_status: ds 1                ; u8 (%--654321; is ADPCM-A channel 1~6 playing? 1 = yes, 0 = no)
 SFXPS_WRAM_end:
+
+; ======== Fade system ======== 
+FADE_offset: ds 1 ; s8
