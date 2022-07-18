@@ -292,6 +292,31 @@ FMCNT_MAX_FNUM equ $07FF
 		.db \eg
 	endm
 
+	; [INPUT]
+	; 	a: result
+	; 	carry flag must be preserved from addition
+	; [OUTPUT]
+	; 	a: clamped result
+	;   z flag: opposite of unclamped result's 7th bit
+	;   n flag: 1
+	;   h flag: 0
+	; S AND P/V FLAGS ARE UNDEFINED
+	macro clamp_u8_plus_s8
+	.local
+		bit 7,a
+		jr nz,bit7_set 
+
+		jr nc,return ; - B7: 0; CARRY: 0 (  +2 + +4 = +6   OK)
+		ld a,255     ; \
+		jr return    ; - B7: 0; CARRY: 1 (+254 + +4 = +2   NOT OK, SHOULD BE 255)
+.bit7_set:
+		jr c,return  ; - B7: 1; CARRY: 1 (+254 + -4 = +250 OK)
+		ld a,0       ; \
+		jr return    ; - B7: 1; CARRY: 0 (  +2 + -4 = +254 NOT OK, SHOULD BE 0)
+.return:
+	.endlocal
+	endm
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    STRUCT                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -307,13 +332,14 @@ ControlMacro.loop_pt equ 4
 ControlMacro.curr_pt equ 5
 ControlMacro.SIZE    equ 8
 
-FM_Channel.lramspms:   equ 0 ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
-FM_Channel.op_enable:  equ 1 ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
-FM_Channel.frequency:  equ 2 ; u16 (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
-FM_Channel.volume:     equ 4 ; u8 (0 is lowest, 127 is highest)
-FM_Channel.enable:     equ 5 ; u8 (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
-FM_Channel.algo:       equ 6 ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
-FM_Channel.pslide_ofs: equ 7 ; s16
-FM_Channel.pitch_ofs:  equ 9 ; s16
+FM_Channel.lramspms:   equ 0  ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
+FM_Channel.op_enable:  equ 1  ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
+FM_Channel.frequency:  equ 2  ; u16 (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
+FM_Channel.volume:     equ 4  ; u8 (0 is lowest, 127 is highest)
+FM_Channel.enable:     equ 5  ; u8 (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
+FM_Channel.algo:       equ 6  ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
+FM_Channel.pslide_ofs: equ 7  ; s16
+FM_Channel.pitch_ofs:  equ 9  ; s16
 FM_Channel.fnum_clamp: equ 11 ; u16 bit 15: custom clamp enable, bit 14: clamp direction (0: below, 1: above)
-FM_Channel.SIZE        equ 12+4 ; size + padding
+FM_Channel.bufrd_note: equ 13 ; u8 (Used to avoid glitches with chains of clamped slide effects)
+FM_Channel.SIZE        equ 13+3 ; size + padding
