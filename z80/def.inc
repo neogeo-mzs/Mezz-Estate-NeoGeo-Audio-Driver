@@ -292,31 +292,6 @@ FMCNT_MAX_FNUM equ $07FF
 		.db \eg
 	endm
 
-	; [INPUT]
-	; 	a: result
-	; 	carry flag must be preserved from addition
-	; [OUTPUT]
-	; 	a: clamped result
-	;   z flag: opposite of unclamped result's 7th bit
-	;   n flag: 1
-	;   h flag: 0
-	; S AND P/V FLAGS ARE UNDEFINED
-	macro clamp_u8_plus_s8
-	.local
-		bit 7,a
-		jr nz,bit7_set 
-
-		jr nc,return ; - B7: 0; CARRY: 0 (  +2 + +4 = +6   OK)
-		ld a,255     ; \
-		jr return    ; - B7: 0; CARRY: 1 (+254 + +4 = +2   NOT OK, SHOULD BE 255)
-.bit7_set:
-		jr c,return  ; - B7: 1; CARRY: 1 (+254 + -4 = +250 OK)
-		ld a,0       ; \
-		jr return    ; - B7: 1; CARRY: 0 (  +2 + -4 = +254 NOT OK, SHOULD BE 0)
-.return:
-	.endlocal
-	endm
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                    STRUCT                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
