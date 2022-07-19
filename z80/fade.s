@@ -16,7 +16,7 @@ FADE_irq:
     ; clear the fade offset and buffer a song stop.
     ld b,a
     bit 7,a
-    jr nz,FADE_irq
+    jr nz,FADE_irq_bit7_set
 
     jr nc,FADE_irq_cend ; - B7: 0; CARRY: 0 (  +2 + +4 = +6   OK)
 
