@@ -1,14 +1,12 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
+	xor a,a
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
 	call nz,MLM_reset_channel_volumes
 	ld a,(do_stop_song)
 	or a,a ; cp a,0
 	call nz,MLM_stop
-	xor a,a
-	ld (do_reset_chvols),a
-	ld (do_stop_song),a
 
 	ld iyl,0 ; Clear active mlm channel counter
 
@@ -217,6 +215,7 @@ MLM_stop:
 		ld (EXT_2CH_mode),a
 		ld (IRQ_TA_tick_base_time),a
 		ld (IRQ_TA_tick_time_counter),a
+		ld (do_stop_song),a
 
 		call ssg_stop
 		call fm_stop
@@ -1064,6 +1063,7 @@ MLM_set_channel_volume_FM:
 
 ; Should be called after 
 ; setting the master volume
+; clears do_reset_chvols
 MLM_reset_channel_volumes:
 	push af
 	push bc
@@ -1154,6 +1154,9 @@ ch_counter set 0
 			ld (SSGCNT_volumes+ch_counter),a
 ch_counter set ch_counter+1
 		edup
+
+		xor a,a
+		ld (do_reset_chvols),a
 	pop bc
 	pop af
 	ret
