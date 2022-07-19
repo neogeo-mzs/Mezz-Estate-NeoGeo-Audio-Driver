@@ -184,11 +184,10 @@ UCOM_command_vectors:
     dw UCOM_CMD_nop,               UCOM_CMD_play_song
     dw UCOM_CMD_stop_song,         UCOM_CMD_sfxps_buffer_cvol
     dw UCOM_CMD_sfxps_buffer_prio, UCOM_CMD_sfxps_play_smp
-    dw UCOM_CMD_invalid,           UCOM_CMD_invalid
-    dw UCOM_CMD_invalid,           UCOM_CMD_invalid
-    dw UCOM_CMD_invalid,           UCOM_CMD_sfxps_retrig_smp
     dw UCOM_CMD_set_master_vol,    UCOM_CMD_set_master_vol
-    dup 114
+    dw UCOM_CMD_set_fade,          UCOM_CMD_set_fade
+    dw UCOM_CMD_invalid,           UCOM_CMD_sfxps_retrig_smp
+    dup 116
         dw UCOM_CMD_invalid
     edup
 
@@ -253,22 +252,6 @@ UCOM_CMD_sfxps_play_smp:
     pop bc
     jp UCOM_run_command_return
 
-; b: %0SSSSSSS
-; c: $0B
-UCOM_CMD_sfxps_retrig_smp:
-    push bc
-    push iy
-    push af
-        ld a,(com_sfxps_buffered_cvol)
-        ld iyl,a
-        ld a,(com_sfxps_buffered_prio)
-        ld c,a
-        call SFXPS_retrigger_sfx
-    pop af
-    pop iy
-    pop bc
-    jp UCOM_run_command_return
-
 ; b: %1MMMMMMM
 ; c: %1000011L
 UCOM_CMD_set_master_vol:
@@ -285,6 +268,34 @@ UCOM_CMD_set_master_vol:
         ld (do_reset_chvols),a
     pop bc
     pop af
+    jp UCOM_run_command_return
+
+; b: %0LLLLLLL (offset LSB)
+; c: %0000100M (offset MSB)
+UCOM_CMD_set_fade:
+    push af
+        ld a,c
+        and a,1 ; %0000'100M -> %0000'000M 
+        rrca    ; %0000'000M -> %M000'0000
+        or a,b  ; %M000'0000 -> %MLLL'LLLL
+        ld (FADE_offset),a
+    pop af
+    jp UCOM_run_command_return
+
+; b: %0SSSSSSS
+; c: $0B
+UCOM_CMD_sfxps_retrig_smp:
+    push bc
+    push iy
+    push af
+        ld a,(com_sfxps_buffered_cvol)
+        ld iyl,a
+        ld a,(com_sfxps_buffered_prio)
+        ld c,a
+        call SFXPS_retrigger_sfx
+    pop af
+    pop iy
+    pop bc
     jp UCOM_run_command_return
 
 UCOM_CMD_invalid:
