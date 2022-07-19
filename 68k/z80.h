@@ -9,7 +9,7 @@
 #define Z80_UCOM_BUFFER_SFXPS_PRIO(prio)      Z80_send_user_command(0x04, prio)
 #define Z80_UCOM_PLAY_SFXPS_SMP(smp)          Z80_send_user_command(0x05, smp)
 #define Z80_UCOM_SET_MLM_MVOL(mvol)           Z80_send_user_command(0x06 | (mvol & 1), mvol >> 1)
-#define Z80_UCOM_SET_FADE(ofs)                Z80_send_user_command(0x08 | (ofs >> 7), ofs | 0x7F)
+#define Z80_UCOM_SET_FADE(ofs)                Z80_send_user_command(0x08 | (ofs >> 7), ofs & 0x7F)
 #define Z80_UCOM_RETRIG_SFXPS_SMP(smp)        Z80_send_user_command(0x0B, smp)
 
 typedef enum {
