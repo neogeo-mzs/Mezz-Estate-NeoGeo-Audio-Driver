@@ -1,6 +1,5 @@
 ; DOESN'T BACKUP REGISTERS  
 FADE_irq:
-    brk
     ; If the fade offset is 0, 
     ; the fade system is disabled.
     ld a,(FADE_offset)
