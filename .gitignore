@@ -5,7 +5,7 @@
 *.vgm.txt
 *.tr
 build
-src/listing.txt
+*/listing.txt
 src/adpcma_sample_lut.bin
 src/m1rom_sdata.bin
 src/m1rom.bin
@@ -13,4 +13,5 @@ src/._m1rom_sdata.bin
 history
 neogeo.zip
 vrom.bin
+sdata.bin
 driver.m1

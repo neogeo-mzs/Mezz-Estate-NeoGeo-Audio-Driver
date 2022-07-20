@@ -1,9 +1,8 @@
 ######## Mezz'Estate Studios NeoGeo SROM Makefile ########
 
-SFILES := mzs_8x8_font.s1
+include ../../Makefile.config
 
-# Tools
-ROMWAK := romwak
+SFILES := mzs_8x8_font.s1
 
 ROM_PAD_KBS := 128
 

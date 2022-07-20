@@ -1,10 +1,6 @@
+include ../../../Makefile.config
 
-# Tool
-ROMWAK    := romwak
-ADPCMA    := adpcma
-ADPCMB    := adpcmb
-VROM_TOOL := python3 ../scripts/vrom_tool.py
-MV        := mv
+VROM_TOOL := $(PYTHON) ../../../$(SCRIPT_PATH)/vrom_tool.py
 
 RAW_ADPCMA_FILES := GRAND_PIANO_C3.raw GRAND_PIANO_C\#3.raw GRAND_PIANO_D3.raw GRAND_PIANO_D\#3.raw GRAND_PIANO_E3.raw GRAND_PIANO_F3.raw \
                     GRAND_PIANO_F\#3.raw GRAND_PIANO_G3.raw GRAND_PIANO_G\#3.raw GRAND_PIANO_A3.raw GRAND_PIANO_A\#3.raw GRAND_PIANO_B3.raw \
