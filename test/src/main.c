@@ -1,5 +1,7 @@
+#define MZS_IMPLEMENTATION
+
 #include "neogeo/neogeo.h"
-#include "z80.h"
+#include "../../mzs.h"
 #include "fix.h"
 #include "utils.h"
 
@@ -83,22 +85,22 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            Z80_UCOM_stop_song();
-            Z80_UCOM_set_mlm_vol(0);
-            Z80_UCOM_set_fade(16);
-            Z80_UCOM_play_song(selected_song);
+            MZS_UCOM_stop_song();
+            MZS_UCOM_set_mlm_vol(0);
+            MZS_UCOM_set_fade(16);
+            MZS_UCOM_play_song(selected_song);
         }
         if (BIOS_P1CHANGE->B)
         {
-            Z80_UCOM_set_fade(-8);
+            MZS_UCOM_set_fade(-8);
         }
         if (BIOS_P1CHANGE->C)
         {
             panning = WRAP(panning+1, 0, 4);
-            Z80_UCOM_buffer_sfxps_cvol(panning<<5, 0x1F);
+            MZS_UCOM_buffer_sfxps_cvol(panning<<5, 0x1F);
         }
         if (BIOS_P1CHANGE->D)
-            Z80_UCOM_play_sfxps_smp(smp_id);
+            MZS_UCOM_play_sfxps_smp(smp_id);
             
         FIX_SetCursor(8, 7);
         FIX_PrintNibble(selected_song >> 4);
