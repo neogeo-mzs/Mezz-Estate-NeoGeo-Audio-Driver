@@ -1,18 +1,9 @@
-# Tools
-MAKE   := make
-MV     := mv
-CP     := cp
-RM     := rm
-DD     := dd
-ZASM   := zasm
-ROMWAK := romwak
-PYTHON := python3
+include Makefile.config
 
 SRC_PATH  := src
 SRC_MAIN  := $(SRC_PATH)/main.s
 SRC_OUT   := driver.m1
 LIST_PATH := $(SRC_PATH)/listing.txt
-SCRIPT_PATH := scripts
 
 .PHONY: clean build
 
