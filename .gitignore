@@ -5,11 +5,11 @@
 *.vgm.txt
 *.tr
 build
-z80/listing.txt
-z80/adpcma_sample_lut.bin
-z80/m1rom_sdata.bin
-z80/m1rom.bin
-z80/._m1rom_sdata.bin
+src/listing.txt
+src/adpcma_sample_lut.bin
+src/m1rom_sdata.bin
+src/m1rom.bin
+src/._m1rom_sdata.bin
 history
 neogeo.zip
 vrom.bin
