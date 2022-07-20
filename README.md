@@ -1,17 +1,7 @@
 # Mezz'Estate Neogeo Audio Driver
-Check the wiki for most information!
 
-## Deflemask to NeogeoDev Wiki FM parameters
-Deflemask | NeogeoDevWiki
-----------|--------------
-DT        | DT
-MUL       | MUL
-RS        | KS
-A         | AR
-D         | DR
-S         | SL
-D2        | SR
-R         | RR
+Audio driver for the NeoGeo MVS and AES made in assembly.<br/>
+Check [the wiki](https://github.com/stereomimi/Mezz-Estate-NeoGeo-Audio-Driver/wiki) for further information
 
 ## Z80 memory map
 Address space | Description           | Usage
