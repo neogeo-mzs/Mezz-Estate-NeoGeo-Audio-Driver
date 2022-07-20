@@ -907,6 +907,7 @@ MLM_set_channel_volume:
 	push bc
 	push af
 	push iy
+		brk
 		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
@@ -915,10 +916,11 @@ MLM_set_channel_volume:
 
 		; If master volume is 255, there's 
 		; no need to alter the volume
+		ld iyh,b ; b is 0
 		ld hl,master_volume
 		ld b,(hl)
 		inc b ; cp b,255
-		jp z,MLM_set_channel_volume_skip_mvol_calc
+		jr z,MLM_set_channel_volume_skip_mvol_calc
 
 		; Else, negate the master vol and
 		; subtract it from the channel vol
