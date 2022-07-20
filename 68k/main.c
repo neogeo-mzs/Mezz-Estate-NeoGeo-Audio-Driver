@@ -81,23 +81,24 @@ int main()
         if (BIOS_P1CHANGE->right)
             smp_id = WRAP(smp_id+1, 0, 128);
 
-        Z80_UCOM_SET_MLM_MVOL(255 - (smp_id*2));
-
         if (BIOS_P1CHANGE->A)
         {
-            Z80_UCOM_PLAY_SONG(selected_song);
+            Z80_UCOM_stop_song();
+            Z80_UCOM_set_mlm_vol(0);
+            Z80_UCOM_set_fade(16);
+            Z80_UCOM_play_song(selected_song);
         }
         if (BIOS_P1CHANGE->B)
         {
-            Z80_UCOM_STOP();
+            Z80_UCOM_set_fade(-8);
         }
         if (BIOS_P1CHANGE->C)
         {
             panning = WRAP(panning+1, 0, 4);
-            Z80_UCOM_BUFFER_SFXPS_CVOL(panning<<5, 0x1F);
+            Z80_UCOM_buffer_sfxps_cvol(panning<<5, 0x1F);
         }
         if (BIOS_P1CHANGE->D)
-            Z80_UCOM_PLAY_SFXPS_SMP(smp_id);
+            Z80_UCOM_play_sfxps_smp(smp_id);
             
         FIX_SetCursor(8, 7);
         FIX_PrintNibble(selected_song >> 4);
