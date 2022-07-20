@@ -10,6 +10,9 @@ src/adpcma_sample_lut.bin
 src/m1rom_sdata.bin
 src/m1rom.bin
 src/._m1rom_sdata.bin
+src/fm_vol_lut.bin
+src/ssg_pitch_lut.bin
+src/ssg_vol_lut.bin
 history
 neogeo.zip
 vrom.bin
