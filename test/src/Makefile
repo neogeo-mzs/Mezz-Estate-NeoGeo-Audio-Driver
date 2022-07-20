@@ -1,19 +1,18 @@
 ######## Mezz'Estate Studios NeoGeo PROM Makefile ########
 
+include ../../Makefile.config
+
+AS        := $(CROSS)as
+LD        := $(CROSS)gcc
+CC        := $(CROSS)gcc
+OBJCOPY   := $(CROSS)objcopy
+
 SFILES := $(wildcard *.s)
 CFILES := $(wildcard *.c) $(wildcard neogeo/*.c)
 
 SOBJS := $(SFILES:.s=.o)
 COBJS := $(CFILES:.c=.o)
 OBJS := $(SOBJS) $(COBJS)
-
-# Tool paths
-CROSS    := m68k-neogeo-elf-
-AS       := $(CROSS)as
-LD       := $(CROSS)gcc
-CC       := $(CROSS)gcc
-OBJCOPY  := $(CROSS)objcopy
-ROMWAK   := romwak
 
 #ASFLAGS :=
 #CFLAGS  := -std=c99 -fomit-frame-pointer -g -Og -Wall -Wextra -Wpedantic -Winline -funsigned-char
@@ -24,7 +23,7 @@ build: prom.bin
 
 prom.bin: prom.elf
 	$(OBJCOPY) -v -O binary -S -R .comment $< $@
-	dd if=$@ of=$@ conv=notrunc,swab
+	$(DD) if=$@ of=$@ conv=notrunc,swab
 
 prom.elf: $(OBJS)
 	$(LD) $^ $(LDFLAGS) -o $@

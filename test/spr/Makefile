@@ -1,8 +1,7 @@
+include ../../Makefile.config
+
 C1FILES := example_sprite.c1
 C2FILES := $(C1FILES:.c1=.c2)
-
-# tools
-ROMWAK := romwak
 
 # In kb
 PADDING := 1024
