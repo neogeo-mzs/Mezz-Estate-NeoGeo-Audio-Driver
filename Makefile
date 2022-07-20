@@ -1,98 +1,33 @@
 # Tools
-MAKE  := make
-MV    := mv
-CP    := cp
-RM    := rm
-MAME  := mame
-GNGEO := ngdevkit-gngeo
-ZIP   := zip
-LN    := ln 
-NEOSDCONV := neosdconv
-DD := dd
+MAKE   := make
+MV     := mv
+CP     := cp
+RM     := rm
+DD     := dd
+ZASM   := zasm
+ROMWAK := romwak
+PYTHON := python3
 
-PROM_PATH  := 68k
-M1ROM_PATH := z80
-SROM_PATH  := fix
-CROMS_PATH := spr
-VROM_PATH  := smp
+SRC_PATH  := src
+SRC_MAIN  := $(SRC_PATH)/main.s
+SRC_OUT   := driver.m1
+LIST_PATH := $(SRC_PATH)/listing.txt
+SCRIPT_PATH := scripts
 
-BUILD_PATH := build
-MAME_ROM_PATH=$(HOME)/.mame/roms/neogeo
- 
-ROM_NAME := homebrew
+.PHONY: clean build
 
-build: srom croms vrom m1rom prom
-	rm -rf build
-	mkdir build
-	$(MV) $(PROM_PATH)/prom.bin $(BUILD_PATH)/prom.bin
-	$(MV) $(M1ROM_PATH)/m1rom.bin $(BUILD_PATH)/m1rom.bin
-	$(MV) $(SROM_PATH)/srom.bin $(BUILD_PATH)/srom.bin
-	$(MV) $(CROMS_PATH)/c1rom.bin $(BUILD_PATH)/c1rom.bin
-	$(MV) $(CROMS_PATH)/c2rom.bin $(BUILD_PATH)/c2rom.bin
-	$(MV) $(VROM_PATH)/vrom.bin $(BUILD_PATH)/vrom.bin
-	
-	$(CP) $(BUILD_PATH)/prom.bin $(BUILD_PATH)/202-p1.p1
-	$(CP) $(BUILD_PATH)/m1rom.bin $(BUILD_PATH)/202-m1.m1
-	$(CP) $(BUILD_PATH)/srom.bin $(BUILD_PATH)/202-s1.s1
-	$(CP) $(BUILD_PATH)/c1rom.bin $(BUILD_PATH)/202-c1.c1
-	$(CP) $(BUILD_PATH)/c2rom.bin $(BUILD_PATH)/202-c2.c2
-	$(CP) $(BUILD_PATH)/vrom.bin $(BUILD_PATH)/202-v1.v1
+build: LUT
+	$(ZASM) -i $(SRC_MAIN) -o $(SRC_OUT).tmp -uwy -l ./$(LIST_PATH)
+	$(DD) if=./$(SRC_OUT).tmp of=./$(SRC_OUT) bs=1024 count=24
+	$(RM) $(SRC_OUT).tmp
 
-build_driver: m1rom
-	$(DD) if=./z80/m1rom.bin of=./driver.m1 bs=1024 count=24
-
-prom: 
-	$(MAKE) -C $(PROM_PATH)
-
-m1rom: vrom
-	$(MAKE) -C $(M1ROM_PATH)
-
-srom:
-	$(MAKE) -C $(SROM_PATH)
-
-croms:
-	$(MAKE) -C $(CROMS_PATH)
-
-vrom:
-	$(MAKE) -C $(VROM_PATH)
-	$(CP) $(VROM_PATH)/adpcma_sample_lut.bin $(M1ROM_PATH)/adpcma_sample_lut.bin
-	#$(CP) vrom.bin $(VROM_PATH)
-.PHONY: clean prom m1rom srom croms mame mame_debug gngeo gngeo_debug build_driver
+LUT:
+	$(PYTHON) $(SCRIPT_PATH)/fm_vol_lut.py
+	$(MV) fm_vol_lut.bin $(SRC_PATH)
+	$(PYTHON) $(SCRIPT_PATH)/ssg_pitch_lut.py
+	$(MV) ssg_pitch_lut.bin $(SRC_PATH)
+	$(PYTHON) $(SCRIPT_PATH)/ssg_vol_lut.py
+	$(MV) ssg_vol_lut.bin $(SRC_PATH)
 
 clean:
-	rm -rfv build history driver.m1
-	$(MAKE) -C $(PROM_PATH) clean
-	$(MAKE) -C $(M1ROM_PATH) clean
-	$(MAKE) -C $(SROM_PATH) clean
-	$(MAKE) -C $(CROMS_PATH) clean
-	$(MAKE) -C $(VROM_PATH) clean
-
-mame: build
-	$(RM) -r $(MAME_ROM_PATH)/$(ROM_NAME)
-	$(CP) -r $(BUILD_PATH) $(MAME_ROM_PATH)/$(ROM_NAME)
-	$(MAME) neogeo $(ROM_NAME) -window -prescale 1 $(mame_args)
-
-mame_debug: build
-	$(RM) -rf $(MAME_ROM_PATH)/$(ROM_NAME)
-	$(CP) -r $(BUILD_PATH) $(MAME_ROM_PATH)/$(ROM_NAME)
-	$(MAME) neogeo $(ROM_NAME) -window -debug $(mame_args)
-
-gngeo: build
-	$(ZIP) -r -j $(BUILD_PATH)/puzzledp.zip $(BUILD_PATH)/*.bin
-	$(CP) neogeo.zip $(BUILD_PATH)/neogeo.zip 
-	$(GNGEO) -i$(BUILD_PATH) --scale=3 --screen320 puzzledp
-
-gngeo_debug: build
-	$(ZIP) -r -j $(BUILD_PATH)/puzzledp.zip $(BUILD_PATH)/*.bin
-	$(CP) neogeo.zip $(BUILD_PATH)/neogeo.zip 
-	$(GNGEO) -i$(BUILD_PATH) --scale=2 --screen320 -D puzzledp
-
-neosdconv: build
-	rm $(BUILD_PATH)/*.bin
-	$(NEOSDCONV) -i $(BUILD_PATH) -o $(BUILD_PATH)/build.neo -n homebrew -y 2021 -m "Mezz'Estate"
-	
-ifneq ($(strip $(NEOSD_ROM_PATH)),)
-	echo "Moving neo rom to SD card"
-	rm -f "$(NEOSD_ROM_PATH)/build.neo"
-	$(CP) "$(BUILD_PATH)/build.neo" "$(NEOSD_ROM_PATH)/build.neo"
-endif
+	$(RM) -f $(SRC_OUT).tmp $(SRC_OUT) $(LIST_PATH) $(SRC_PATH)/fm_vol_lut.bin $(SRC_PATH)/ssg_pitch_lut.bin $(SRC_PATH)/ssg_vol_lut.bin
