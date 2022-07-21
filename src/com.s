@@ -108,7 +108,7 @@ UCOM_handle_command:
         ld b,a
         ld a,(com_buffer_idx_r) ; $F842
         cp a,b 
-        jr z,UCOM_handle_command_return
+        jr z,return$
 
         ; Load command into bc, then
         ; parse and execute it.
@@ -135,7 +135,7 @@ UCOM_handle_command:
         and a,COM_BUFFER_LENGTH-1
         ld (com_buffer_idx_r),a
 
-UCOM_handle_command_return:
+return$:
     pop hl
     pop bc
     pop af

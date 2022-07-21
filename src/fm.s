@@ -75,13 +75,13 @@ FMCNT_irq:
 	ld b,FM_CHANNEL_COUNT
 	ld ix,FM_ch4
 	
-FMCNT_irq_loop:
+loop$:
 	dec b
 		; If the channel's enable bit is 0,
 		; then continue to the next channel
 		ld a,(ix+FM_Channel.enable)
 		bit 0,a
-		jr z,FMCNT_irq_loop_skip
+		jr z,skip_loop$
 
 		; If if FMCNT vol upd. flag is enabled...
 		; (This check is executed inside the function
@@ -97,11 +97,11 @@ FMCNT_irq_loop:
 		and a,FMCNT_VOL_UPDATE ^ $FF
 		ld (ix+FM_Channel.enable),a 
 
-FMCNT_irq_loop_skip:
+skip_loop$:
 		ld de,-FM_Channel.SIZE
 		add ix,de
 	inc b
-	djnz FMCNT_irq_loop
+	djnz loop$
 	ret
 
 ; b:  channel (0~3)
@@ -128,9 +128,9 @@ FMCNT_update_frequency:
 			;   if custom clamp disabled or custom clamp
 			;   is a ceil clamp, use default value
 			bit 7,(ix+FM_Channel.fnum_clamp+1)
-			jp z,FMCNT_update_frequency_def_fclamp
+			jp z,default_floor_clamp$
 			bit 6,(ix+FM_Channel.fnum_clamp+1)
-			jp nz,FMCNT_update_frequency_def_fclamp ; custom clamp is ceil...
+			jp nz,default_floor_clamp$ ; custom clamp is ceil...
 
 			; Custom floor clamp
 			ld a,(ix+FM_Channel.fnum_clamp+1)
@@ -141,7 +141,7 @@ FMCNT_update_frequency:
 			or a,a
 			sbc hl,de
 			add hl,de
-			jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
+			jp nc,no_floor_clamp$ ; if hl >= MIN_FNUM...
 
 			; if the freq is below the custom floor,
 			; clear the pitch slide offset...
@@ -151,16 +151,16 @@ FMCNT_update_frequency:
 
 			; ...fix the value and skip the ceil clamp test
 			ld hl,de
-			jp FMCNT_update_frequency_no_cclamp
-FMCNT_update_frequency_no_fclamp:
+			jp no_ceil_clamp$
 
+no_floor_clamp$:
 			; Clamp frequency ceiling
 			;   if custom clamp disabled or custom clamp
 			;   is a ceil clamp, use default value
 			bit 7,(ix+FM_Channel.fnum_clamp+1)
-			jp z,FMCNT_update_frequency_def_cclamp
+			jp z,default_ceil_clamp$
 			bit 6,(ix+FM_Channel.fnum_clamp+1)
-			jp z,FMCNT_update_frequency_def_cclamp ; custom clamp is floor...
+			jp z,default_ceil_clamp$ ; custom clamp is floor...
 
 			; Custom ceiling clamp
 			ld a,(ix+FM_Channel.fnum_clamp+1)
@@ -171,14 +171,14 @@ FMCNT_update_frequency_no_fclamp:
 			or a,a
 			sbc hl,de
 			add hl,de
-			jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
+			jp c,no_ceil_clamp$ ; if hl < MAX_FNUM...
 
 			; clear the pitch slide offset...
 			xor a,a
 			ld (ix+FM_Channel.pslide_ofs+0),a
 			ld (ix+FM_Channel.pslide_ofs+1),a
 			ld hl,de
-FMCNT_update_frequency_no_cclamp:
+no_ceil_clamp$:
 		pop bc
 
 		; Write frequency to registers
@@ -206,7 +206,7 @@ FMCNT_update_frequency_no_cclamp:
 	pop af
 	ret
 
-FMCNT_update_frequency_def_fclamp:
+default_floor_clamp$:
 	ld a,b
 	or a,FMCNT_MIN_FNUM >> 8
 	ld d,a
@@ -214,15 +214,15 @@ FMCNT_update_frequency_def_fclamp:
 	or a,a
 	sbc hl,de
 	add hl,de
-	jp nc,FMCNT_update_frequency_no_fclamp ; if hl >= MIN_FNUM...
+	jp nc,no_floor_clamp$ ; if hl >= MIN_FNUM...
 	
 	xor a,a
 	ld (ix+FM_Channel.pslide_ofs+0),a
 	ld (ix+FM_Channel.pslide_ofs+1),a
 	ld hl,de
-	jp FMCNT_update_frequency_no_cclamp
+	jp no_ceil_clamp$
 
-FMCNT_update_frequency_def_cclamp:
+default_ceil_clamp$:
 	ld a,b
 	or a,FMCNT_MAX_FNUM >> 8
 	ld d,a
@@ -230,13 +230,13 @@ FMCNT_update_frequency_def_cclamp:
 	or a,a
 	sbc hl,de
 	add hl,de
-	jp c,FMCNT_update_frequency_no_cclamp ; if hl < MAX_FNUM...
+	jp c,no_ceil_clamp$ ; if hl < MAX_FNUM...
 
 	xor a,a
 	ld (ix+FM_Channel.pslide_ofs+0),a
 	ld (ix+FM_Channel.pslide_ofs+1),a
 	ld hl,de
-	jp FMCNT_update_frequency_no_cclamp
+	jp no_ceil_clamp$
 
 ; ix: address to FMCNT channel data
 ; b:  channel (0~3)
@@ -267,7 +267,7 @@ FMCNT_update_total_levels:
 		; isn't set, return
 		ld a,(ix+FM_Channel.enable)
 		bit 1,a
-		jp z,FMCNT_update_total_levels_ret
+		jp z,return$
 		
 		; If it is set, clear volume flag
 		; and proceed with the function
@@ -281,7 +281,7 @@ FMCNT_update_total_levels:
 		; the same, they can quickly be dealt with,
 		; without indexing the vector table
 		bit 3,e ; It'd normally check bit 2, but the algorithm is multiplied by two
-		jp z,FMCNT_update_total_levels_algo_0_1_2_3
+		jp z,algorithm_0_1_2_3$
 
 		; for all the other algorithms, you have
 		; to index the vector table.
@@ -290,13 +290,13 @@ FMCNT_update_total_levels:
 		add hl,de
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
 		jp (hl)
-FMCNT_update_total_levels_ret:
+return$:
 	pop af
 	pop hl
 	pop bc
 	ret
 
-FMCNT_update_total_levels_algo_0_1_2_3:
+algorithm_0_1_2_3$:
 		call FMCNT_update_modulator_tl ; OP1
 		inc c
 		call FMCNT_update_modulator_tl ; OP2
@@ -493,10 +493,10 @@ FMCNT_set_fbalgo:
 		; use register $B1, else use $B2
 		ld d,REG_FM_CH13_FBALGO
 		bit 0,c
-		jr z,FMCNT_set_fbalgo_even_ch
+		jr z,even_channel$
 		inc d
 
-FMCNT_set_fbalgo_even_ch:
+even_channel$:
 		; If the channel is 0 and 1,
 		; use port A, else (channel
 		; is 2 and 3) use port B
@@ -540,10 +540,10 @@ FMCNT_set_amspms:
 		; use register $B1, else use $B2
 		ld d,REG_FM_CH13_LRAMSPMS
 		bit 0,c
-		jr z,FMCNT_set_amspms_even_ch
+		jr z,even_channel$
 		inc d
 
-FMCNT_set_amspms_even_ch:
+even_channel$:
 		; If the channel is 0 and 1,
 		; use port A, else (channel
 		; is 2 and 3) use port B
@@ -587,10 +587,10 @@ FMCNT_set_panning:
 		; use register $B1, else use $B2
 		ld d,REG_FM_CH13_LRAMSPMS
 		bit 0,c
-		jr z,FMCNT_set_panning_even_ch
+		jr z,even_channel$
 		inc d
 
-FMCNT_set_panning_even_ch:
+even_channel$:
 		; If the channel is 0 and 1,
 		; use port A, else (channel
 		; is 2 and 3) use port B
@@ -674,7 +674,7 @@ FMCNT_set_operator:
 
 		; Set the operator registers
 		ld b,5 ; operator registers left count
-FMCNT_set_operator_loop:
+loop$:
 		ld e,(hl)
 		bit 1,c              ; \
 		call z,port_write_a  ; | If the channel is 0 and 1 use port a else use port b
@@ -686,7 +686,7 @@ FMCNT_set_operator_loop:
 		add a,d
 		ld d,a
 
-		djnz FMCNT_set_operator_loop
+		djnz loop$
 	pop bc
 	pop af
 	pop de
@@ -738,9 +738,9 @@ FMCNT_set_note:
 		ld d,REG_FM_CH13_FBLOCK
 		ld a,iyl
 		bit 0,a 
-		jr z,FMCNT_set_note_even_ch
+		jr z,even_channel
 		inc d
-FMCNT_set_note_even_ch:
+even_channel:
 		bit 1,a 
 		call z,port_write_a
 		call nz,port_write_b
@@ -801,17 +801,17 @@ FMCNT_get_note_with_block:
 		; shift FNum to the right.
 		ld a,b
 		cp a,e
-		jp z,FMCNT_get_note_with_block_equal      ; if equal...
-		jp nc,FMCNT_get_note_with_block_lower_blk ; if octave > block...
+		jp z,equal_block$      ; if equal...
+		jp nc,lower_block$ ; if octave > block...
 
 		; Else (octave < block)...
-FMCNT_get_note_with_block_hiblk_loop:
+higher_block$:
 		srl_hl ; shift hl to the right until octave == block
 		inc a
 		cp a,e 
-		jp nz,FMCNT_get_note_with_block_hiblk_loop
+		jp nz,higher_block$
 
-FMCNT_get_note_with_block_equal:
+equal_block$:
 		; OR the block and the FNum to obtain the final pitch
 		rlca
 		rlca
@@ -821,12 +821,12 @@ FMCNT_get_note_with_block_equal:
 	pop bc
 	ret
 
-FMCNT_get_note_with_block_lower_blk:
+lower_block$:
 	add hl,hl ; shift hl to the left until octave == block
 	dec a
 	cp a,e
-	jp nz,FMCNT_get_note_with_block_lower_blk
-	jp FMCNT_get_note_with_block_equal	
+	jp nz,lower_block$
+	jp equal_block$	
 
 ; Compatible with deflemask
 ; octave 0 = block 0, etc...

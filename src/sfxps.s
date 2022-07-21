@@ -71,7 +71,7 @@ SFXPS_set_channel_as_taken:
         ; channel, just return
         ld a,c
         cp a,SFXPS_CHANNEL_COUNT
-        jr nc,SFXPS_set_channel_as_taken_ret
+        jr nc,return$
         
         ld hl,PA_channel_on_masks
         ld b,0
@@ -79,7 +79,7 @@ SFXPS_set_channel_as_taken:
         ld a,(SFXPS_channel_taken_status)
         or a,(hl)
         ld (SFXPS_channel_taken_status),a
-SFXPS_set_channel_as_taken_ret:
+return$:
     pop af
     pop hl
     pop bc
@@ -108,21 +108,21 @@ SFXPS_find_free_channel:
         or a,c
 
         ld b,SFXPS_CHANNEL_COUNT
-SFXPS_find_free_channel_loop:
+loop$:
         ; if the channel is free (bit 0 is clear)
         ; then return the channel
         bit 0,a
-        jr z,SFXPS_find_free_channel_fchfound
+        jr z,free_channel_found$
 
         srl a ; Shift bitflag to the right
-        djnz SFXPS_find_free_channel_loop
+        djnz loop$
 
         ; Else, return $FF
         ld a,$FF
     pop bc
     ret
 
-SFXPS_find_free_channel_fchfound:
+free_channel_found$:
         ld a,SFXPS_CHANNEL_COUNT
         sub a,b
     pop bc
@@ -152,11 +152,11 @@ SFXPS_find_suitable_channel:
         ld hl,SFXPS_channel_priorities
         ld a,(SFXPS_channel_taken_status)
         ld e,a ; Keep a copy of the channel taken status in e
-SFXPS_find_suitable_channel_loop:
+loop$:
         ; If the channel is taken, skip this 
         ; iteration and check the next channel
         bit 0,a
-        jr nz,SFXPS_find_suitable_channel_loop_next
+        jr nz,loop_next$
 
         ; Else, the channel status is busy.
         ; compare the true priorities,
@@ -164,14 +164,14 @@ SFXPS_find_suitable_channel_loop:
         ; is higher or equal, return the channel.
         ld a,c
         cp a,(hl) ; if new_priority >= SFXPS_channel_priorities[channel]
-        jr nc,SFXPS_find_suitable_channel_loop_bch_found
+        jr nc,busy_channel_found$
 
-SFXPS_find_suitable_channel_loop_next:
+loop_next$:
         inc hl ; Index address of next SFXPS ch. priorities
         ld a,e ; Get channel taken status back
         srl a  ; Shift channel taken status bitflag
         ld e,a ; Update channel taken status copy
-        djnz SFXPS_find_suitable_channel_loop
+        djnz loop$
 
         ; Else, no channel was 
         ; found at all, return $FF
@@ -181,7 +181,7 @@ SFXPS_find_suitable_channel_loop_next:
     pop bc
     ret
 
-SFXPS_find_suitable_channel_loop_bch_found:
+busy_channel_found$:
         ld a,SFXPS_CHANNEL_COUNT
         sub a,b
     pop de
@@ -210,16 +210,16 @@ SFXPS_find_retrig_channel:
         ld a,b
         ld b,PA_CHANNEL_COUNT
         ld hl,SFXPS_channel_sample_ids
-SFXPS_find_retrig_channel_loop:
+loop$:
         ; If channel is taken, check next channel
         bit 0,e
-        jp nz,SFXPS_find_retrig_channel_next
+        jp nz,loop_next$
         cp a,(hl) ; if smp_id == sample_ids[ch] ...
-        jp z,SFXPS_find_retrig_channel_found ; then...
+        jp z,retriggerable_channel_found$ ; then...
 
-SFXPS_find_retrig_channel_next:
+loop_next$:
         inc hl
-        djnz SFXPS_find_retrig_channel_loop
+        djnz loop$
     pop de
     pop bc
     pop hl
@@ -227,7 +227,7 @@ SFXPS_find_retrig_channel_next:
     ; If none are found...
     jp SFXPS_find_suitable_channel
 
-SFXPS_find_retrig_channel_found:
+retriggerable_channel_found$:
         ld a,b
         dec a
     pop de
@@ -247,9 +247,8 @@ SFXPS_play_sfx:
         ; Find a suitable channel, if
         ; none is found return.
         call SFXPS_find_suitable_channel
-SFXPS_play_sfx_found_channel:
         cp a,$FF
-        jr z,SFXPS_play_sfx_ret
+        jr z,return$
 
         ; Else, there's a channel the 
         ; sample can be played in.
@@ -304,7 +303,7 @@ SFXPS_play_sfx_found_channel:
         ld e,a
         call PA_play_sample
         
-SFXPS_play_sfx_ret:
+return$:
     pop ix
     pop de
     pop hl
@@ -322,4 +321,66 @@ SFXPS_retrigger_sfx:
     push de
     push ix
         call SFXPS_find_retrig_channel
-        jp SFXPS_play_sfx_found_channel
+        cp a,$FF
+        jr z,return$
+
+        ; Else, there's a channel the 
+        ; sample can be played in.
+        ;   Store the sample id in WRAM
+        ld hl,SFXPS_channel_sample_ids
+        ld e,a
+        ld d,0
+        add hl,de
+        ld (hl),b
+
+        ;   Set the SFXPS ch. playback status to busy
+        ;   (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
+        ld hl,PA_channel_on_masks
+        add hl,de
+        ld a,(SFXPS_channel_playback_status)
+        or a,(hl)
+        ld (SFXPS_channel_playback_status),a
+
+        ;   Store the new priority in WRAM
+        ld hl,SFXPS_channel_priorities
+        add hl,de
+        ld (hl),c
+
+        ;   Index SFX ADPCM-A list
+        ld h,0    ; \
+        ld l,b    ; | ofs = new_smp_id
+        add hl,hl ; | ofs *= 4
+        add hl,hl ; /
+        push de
+            ld a,(SFXPS_adpcma_table)
+            ld e,a
+            ld a,(SFXPS_adpcma_table+1)
+            ld d,a
+            add hl,de
+        pop de
+
+        ;   Set ADPCM-A sample addresses
+        push hl ; - ix = hl
+        pop ix  ; /
+        ld a,e ; Load channel in a
+        call PA_set_sample_addr
+
+        ;   Set CVOL register
+        ld a,REG_PA_CVOL
+        add a,e
+        ld d,a
+        ld e,iyl
+        rst RST_YM_WRITEB
+
+        ;   Play the sample (and deal with status flags)
+        sub a,REG_PA_CVOL ; Get channel back
+        ld e,a
+        call PA_play_sample
+        
+return$:
+    pop ix
+    pop de
+    pop hl
+    pop bc
+    pop af
+    ret
