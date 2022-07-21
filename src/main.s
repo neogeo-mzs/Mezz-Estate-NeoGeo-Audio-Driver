@@ -57,7 +57,7 @@ NMI:
 	push iy
 		in a,(READ_68K)
 		or a,a ; cp a,$00
-		jr z,NMI_do_nothing
+		jr z,do_nothing$
 		cp a,$01
 		jp z,BCOM_prepare_switch
 		cp a,$03
@@ -71,7 +71,7 @@ NMI:
 		out (WRITE_68K),a    ; reply to 68k
 		out (READ_68K),a     ; clear sound code
 
-NMI_do_nothing:
+do_nothing$:
 	pop iy
 	pop ix
 	pop hl
@@ -133,7 +133,7 @@ startup:
 	rst RST_YM_WRITEA
 	out (ENABLE_NMI),a 
 
-main_loop:
+main_loop$:
 	; Check the timer B flag, if so 
 	; execute tma based function
 	in a,(4)
@@ -156,7 +156,7 @@ main_loop:
 	; flag only works when the timer counter is 0.
 	ld a,(has_a_timer_expired)
 	or a,a ; cp a,0
-	jr z,main_loop ; if no timer has expired, continue
+	jr z,main_loop$ ; if no timer has expired, continue
 
 	; Loads load counter, enables interrupts 
 	; and resets flags of timer A and B.
@@ -166,7 +166,7 @@ main_loop:
 	rst RST_YM_WRITEA
 	xor a,a ; ld a,0
 	ld (has_a_timer_expired),a
-	jr main_loop
+	jr main_loop$
 
 ; Only backs up AF
 execute_tmb_tick:
@@ -249,7 +249,7 @@ set_banks:
 		; been switched into place, return
 		ld a,(current_bank)
 		cp a,b
-		jp z,set_banks_ret
+		jp z,return$
 
 		; Store bank in WRAM
 		ld a,b
@@ -280,7 +280,7 @@ set_banks:
 		add a,2
 		in a,($08)
 		
-set_banks_ret:
+return$:
 	pop bc
 	pop af
 	ret
@@ -370,6 +370,7 @@ softlock:
 	include "fm.s"
 	include "timer.s"
 	include "mlm.s"
+	include "mlmcom.s"
 	include "math.s"
 	include "sfxps.s"
 	include "macro.s"

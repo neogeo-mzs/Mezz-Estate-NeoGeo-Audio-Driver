@@ -41,14 +41,14 @@ NMACRO_read:
 		; return the least significant nibble,
 		; else return the most significant one.
 		bit 0,(ix+ControlMacro.curr_pt)
-		jr z,NMACRO_read_even_pt
+		jr z,even_point$
 
 		srl a ; \
 		srl a ;  | a >>= 4
 		srl a ;  | (VVVV---- => 0000VVVV)
 		srl a ; /
 
-NMACRO_read_even_pt:
+even_point$:
 		and a,$0F
 	pop de
 	pop hl
@@ -64,21 +64,21 @@ MACRO_update:
 		; decremented by one)
 		ld a,(ix+ControlMacro.length)
 		cp a,(ix+ControlMacro.loop_pt)
-		jr nc,MACRO_update_valid_loop_pt ; if macro.length >= macro.loop_pt ...
+		jr nc,valid_loop_point$ ; if macro.length >= macro.loop_pt ...
 
 		ld (ix+ControlMacro.loop_pt),a ; macro.loop_pt = macro.length (length is stored decremented by 1)
-MACRO_update_valid_loop_pt:
 
+valid_loop_point$:
 		; increment macro.curr_pt, if it
 		; overflows set it to macro.loop_pt
 		inc (ix+ControlMacro.curr_pt)
 		cp a,(ix+ControlMacro.curr_pt)
-		jr nc,MACRO_update_return ; if macro.length >= macro.curr_pt
+		jr nc,return$ ; if macro.length >= macro.curr_pt
 
 		ld a,(ix+ControlMacro.loop_pt)
 		ld (ix+ControlMacro.curr_pt),a
 
-MACRO_update_return:
+return$:
 	pop af
 	ret
 
@@ -103,7 +103,7 @@ MACRO_set:
 		or a,a    ; Clear carry flag
 		sbc hl,de ; cp hl,de
 		pop hl
-		jr z,MACRO_set_return
+		jr z,return$
 
 		; Set macro's length
 		ld a,(hl)
@@ -122,7 +122,7 @@ MACRO_set:
 		; Set other variables
 		ld (ix+ControlMacro.enable),$FF
 		ld (ix+ControlMacro.curr_pt),0
-MACRO_set_return:
+return$:
 	pop de
 	pop hl
 	pop af

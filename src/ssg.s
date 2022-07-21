@@ -25,7 +25,7 @@ SSGCNT_init:
 		ldir
 
 		ld b,3
-SSGCNT_init_loop:
+loop$:
 		ld a,b
 		dec a
 
@@ -33,7 +33,7 @@ SSGCNT_init_loop:
 		ld c,15
 		call SSGCNT_set_vol
 
-		djnz SSGCNT_init_loop
+		djnz loop$
 	pop hl
 	pop de
 	pop af
@@ -44,14 +44,14 @@ SSGCNT_init_loop:
 SSGCNT_irq:
 	ld b,3
 
-SSGCNT_irq_vol_loop:
+channel_loop$:
 	dec b
 	call SSGCNT_update_volume
 	call SSGCNT_update_note
 	call SSGCNT_update_pitch_ofs
 	call SSGCNT_update_channels_mix
 	inc b
-	djnz SSGCNT_irq_vol_loop
+	djnz channel_loop$
 
 	call SSGCNT_update_mixing
 	call SSGCNT_update_noise_tune
@@ -60,10 +60,11 @@ SSGCNT_irq_vol_loop:
 	ld b,9                   ; total amount of macros
 	ld de,ControlMacro.SIZE  ; de = sizeof(ControlMacro)
 	ld ix,SSGCNT_macros
-SSGCNT_irq_vol_macro_loop:
+
+macro_loop$:
 	call MACRO_update
 	add ix,de
-	djnz SSGCNT_irq_vol_macro_loop
+	djnz macro_loop$
 
 	ret
 
@@ -136,7 +137,7 @@ SSGCNT_get_ym2610_ch_volume:
 		; using the macro's data
 		ld a,(ix+ControlMacro.enable)
 		or a,a ; cp a,0
-		jr z,SSGCNT_get_ym2610_ch_volume_return
+		jr z,return$
 
 		; Calculate pointer to current
 		; volume array (a LUT is used to 
@@ -158,7 +159,7 @@ SSGCNT_get_ym2610_ch_volume:
 		add hl,de
 		ld c,(hl)
 
-SSGCNT_get_ym2610_ch_volume_return:
+return$:
 	pop af
 	pop ix
 	pop de
@@ -198,7 +199,7 @@ SSGCNT_update_note:
 		; just use the value in SSGCNT_notes[channel]
 		xor a,a ; ld a,0
 		cp a,(ix+ControlMacro.enable)
-		jr z,SSGCNT_update_note_macro_disabled
+		jr z,macro_is_disabled$
 		
 		; Else (the macro is enabled) add to
 		; the value in SSGCNT_notes[channel]
@@ -208,7 +209,7 @@ SSGCNT_update_note:
 		ld l,a
 		;ld ixl,a
 
-SSGCNT_update_note_macro_disabled:
+macro_is_disabled$:
 		; Load tune from LUT into hl
 		ld h,0
 		ld de,SSGCNT_note_LUT
@@ -237,8 +238,8 @@ SSGCNT_update_note_macro_disabled:
 		add ix,de
 		add ix,de
 		bit 7,(ix+1)
-		jp nz,SSGCNT_update_note_custom_clamp
-SSGCNT_update_note_def_clamp:
+		jp nz,custom_clamp$
+
 		; Check for underflow (upward pitch slide)
 		;   SSG tune values go inbetween $0000 and $0FFF,
 		;   if the most significant nibble isn't 0, then
@@ -251,9 +252,9 @@ SSGCNT_update_note_def_clamp:
 		rrca      ;  /
 		and a,$0F ; /
 		or a,a    ; cp a,0
-		jp nz,SSGCNT_update_note_solve_overunderflow
+		jp nz,solve_over_and_underflow$
 
-SSGCNT_update_note_solve_overunderflow_ret:
+solve_under_and_over_flow_return$:
 		; Load coarse tune and write
 		; it to correct register
 		ld a,REG_SSG_CHA_COARSE_TUNE
@@ -280,7 +281,7 @@ SSGCNT_update_note_solve_overunderflow_ret:
 ; [OUTPUT]
 ;   hl: clamped pitch offset
 ;   d: pitch slide offset MSB
-SSGCNT_update_note_solve_overunderflow:
+solve_over_and_underflow$:
 	; Load pitch slide offset MSB
 	push hl
 		ld hl,SSGCNT_pitch_slide_ofs+1
@@ -292,15 +293,15 @@ SSGCNT_update_note_solve_overunderflow:
 	; If pitch slide offset is 
 	; positive, solve overflow
 	bit 7,d
-	jp z,SSGCNT_update_note_solve_overflow
+	jp z,solve_overflow$
 
 	; Else, solve underflow
 	ld hl,$0000
-	jp SSGCNT_update_note_solve_overunderflow_ret
+	jp solve_under_and_over_flow_return$
 
-SSGCNT_update_note_solve_overflow:
+solve_overflow$:
 	ld hl,$0FFF
-	jp SSGCNT_update_note_solve_overunderflow_ret
+	jp solve_under_and_over_flow_return$
 
 ; [INPUT]
 ;   hl: pitch 
@@ -311,18 +312,18 @@ SSGCNT_update_note_solve_overflow:
 ;   REGISTER DE ISNT BACKED UP
 ;   TO REFACTOR
 ;   TO FIX: REDIRECT TO DEFAULT CLAMP IF CLAMP LIMIT IS 0
-SSGCNT_update_note_custom_clamp:
+custom_clamp$:
 	; if custom clamp is a clamp on the minimum 
 	; value, use default limit
 	bit 6,(ix+1)
-	jp nz,SSGCNT_update_note_custom_clamp_no_def
+	jp nz,default_overflow$
 
 	; if pitch < limit: skip to underflow check
 	ld de,$0FFF ; DEFAULT
 	or a,a ; clear carry flag
 	sbc hl,de
 	add hl,de
-	jp c,SSGCNT_update_note_custom_clamp_under
+	jp c,custom_underflow$
 
 	; clamp result and reset pslide offset
 	ld hl,de
@@ -333,9 +334,9 @@ SSGCNT_update_note_custom_clamp:
 	add ix,de
 	ld (ix+0),d
 	ld (ix+1),d
-	jp SSGCNT_update_note_solve_overunderflow_ret
+	jp solve_under_and_over_flow_return$
 
-SSGCNT_update_note_custom_clamp_no_def:
+default_overflow$:
 	; Load maximum clamp value in de
 	ld e,(ix+0)
 	ld a,(ix+1)
@@ -346,7 +347,7 @@ SSGCNT_update_note_custom_clamp_no_def:
 	or a,a ; clear carry flag
 	sbc hl,de
 	add hl,de
-	jp c,SSGCNT_update_note_custom_clamp_under
+	jp c,custom_underflow$
 	
 	; clamp result and reset pslide offset
 	ld hl,de
@@ -357,20 +358,20 @@ SSGCNT_update_note_custom_clamp_no_def:
 	add ix,de
 	ld (ix+0),d
 	ld (ix+1),d
-	jp SSGCNT_update_note_solve_overunderflow_ret
+	jp solve_under_and_over_flow_return$
 
-SSGCNT_update_note_custom_clamp_under:
+custom_underflow$:
 	; else, solve underflow
 	;   if custom clamp is a clamp on the maximum
 	;   value, use default overflow handler
 	bit 6,(ix+1)
-	jp z,SSGCNT_update_note_def_clamp_under_no_def
+	jp z,default_underflow$
 
 	ld de,$0000
 	or a,a ; clear carry flag
 	sbc hl,de
 	add hl,de
-	jp nc,SSGCNT_update_note_solve_overunderflow_ret
+	jp nc,solve_under_and_over_flow_return$
 
 	; clamp result and reset pslide offset
 	ld hl,de
@@ -381,9 +382,9 @@ SSGCNT_update_note_custom_clamp_under:
 	add ix,de
 	ld (ix+0),d
 	ld (ix+1),d
-	jp SSGCNT_update_note_solve_overunderflow_ret
+	jp solve_under_and_over_flow_return$
 
-SSGCNT_update_note_def_clamp_under_no_def:
+default_underflow$:
 	; Load minimum clamp value in de
 	ld e,(ix+0)
 	ld a,(ix+1)
@@ -394,7 +395,7 @@ SSGCNT_update_note_def_clamp_under_no_def:
 	or a,a ; clear carry flag
 	sbc hl,de
 	add hl,de
-	jp nc,SSGCNT_update_note_solve_overunderflow_ret
+	jp nc,solve_under_and_over_flow_return$
 	
 	; clamp result and reset pslide offset
 	ld hl,de
@@ -405,7 +406,7 @@ SSGCNT_update_note_def_clamp_under_no_def:
 	add ix,de
 	ld (ix+0),d
 	ld (ix+1),d
-	jp SSGCNT_update_note_solve_overunderflow_ret
+	jp solve_under_and_over_flow_return$
 
 ; b: channel (0~2)
 SSGCNT_update_pitch_ofs:
@@ -441,6 +442,7 @@ SSGCNT_update_pitch_ofs:
 	pop de
 	pop ix
 	ret
+
 ; b: channel (0~2)
 ;	Updates the channel's mixing according to the macros,
 ;   if the channel's mix macros are disabled this won't
@@ -464,7 +466,7 @@ SSGCNT_update_channels_mix:
 		; If the selected channel's mix macro is
 		; disabled (enable == $00) then return
 		or a,a ; cp a,0
-		jr z,SSGCNT_update_mixing_macros_return
+		jr z,return$
 
 		call NMACRO_read ; Stores macro value in a
 		ld ixl,a ; backup macro value in ixl
@@ -486,7 +488,7 @@ SSGCNT_update_channels_mix:
 		ld e,SSGCNT_MIX_EN_NOISE ; Tune/Noise select parameter
 		call SSGCNT_set_mixing
 
-SSGCNT_update_mixing_macros_return:
+return$:
 	pop bc
 	pop af
 	pop de
