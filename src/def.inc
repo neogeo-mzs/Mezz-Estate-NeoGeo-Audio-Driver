@@ -291,6 +291,19 @@ ControlMacro.loop_pt equ 4
 ControlMacro.curr_pt equ 5
 ControlMacro.SIZE    equ 8
 
+
+MLM_Channel.playback_ptr:     equ 0  ; void*
+MLM_Channel.start_ptr:        equ 2  ; void*
+MLM_Channel.flags:            equ 4  ; u8 (%0000'000E; channel Enable)
+MLM_Channel.timing:           equ 5  ; u8  
+MLM_Channel.set_timing:       equ 6  ; u8 (MLM_set_timing sets this and MLM_Channel.timing, only the latter decreases.) 
+MLM_Channel.instrument:       equ 7  ; u8
+MLM_Channel.panning:          equ 8  ; u8
+MLM_Channel.volume:           equ 9  ; u8
+MLM_Channel.return_ptr:       equ 10 ; void*
+MLM_Channel.SIZE              equ MLM_Channel.return_ptr+1
+
+
 FM_Channel.lramspms:   equ 0  ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
 FM_Channel.op_enable:  equ 1  ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
 FM_Channel.frequency:  equ 2  ; u16 (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)

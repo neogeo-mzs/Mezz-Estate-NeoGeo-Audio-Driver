@@ -1,6 +1,5 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
-	xor a,a
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
 	call nz,MLM_reset_channel_volumes
@@ -8,7 +7,8 @@ MLM_irq:
 	or a,a ; cp a,0
 	call nz,MLM_stop
 
-	ld iyl,0 ; Clear active mlm channel counter
+	xor a,a ; clear a
+	ld (MLM_active_ch_counter),a 
 
 	ld c,0
 	ld hl,MLM_channel_control
@@ -29,7 +29,7 @@ MLM_irq:
 	; if active mlm channel counter is 0,
 	; then all channels have stopped, proceed
 	; to call MLM_stop
-	ld a,iyl
+	ld a,(MLM_active_ch_counter)
 	or a,a ; cp a,0
 	call z,MLM_stop
 
@@ -37,12 +37,12 @@ MLM_irq:
 
 ; [INPUT]
 ; 	c: channel
-; [OUTPUT]
-;	iyl: active channel count
 ; Doesn't backup AF, HL, DE, B, IX, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
-	inc iyl ; increment active mlm channel counter
+	ld a,(MLM_active_ch_counter)
+	inc a 
+	ld (MLM_active_ch_counter),a
 
 	; decrement MLM_playback_timings[ch],
 	; if afterwards it isn't 0 return
