@@ -31,24 +31,17 @@ MLM_command_argc:
 	ds 89, 0  ; Invalid commands
 
 ; c: channel
+; iy: pointer to MLM_Channel
 MLMCOM_end_of_list:
-	push hl
-	push de
-		; Clear all channel playback control flags
-		ld h,0
-		ld l,c
-		ld de,MLM_channel_control
-		add hl,de
-		ld (hl),0
+	xor a,a
+	ld (iy+MLM_Channel.flags),a
 
-		; Set timing to 1
-		; (This is done to be sure that
-		;  the next event won't be executed)
-		ld a,c
-		ld bc,1
-		call MLM_set_timing
-	pop de
-	pop hl
+	; Set timing to 1
+	; (This is done to be sure that
+	;  the next event won't be executed)
+	ld a,c
+	ld c,a
+	call MLM_set_timing
 	jp MLM_parse_command_end
 
 ; c: channel

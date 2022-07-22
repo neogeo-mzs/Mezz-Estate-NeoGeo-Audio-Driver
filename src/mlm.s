@@ -11,18 +11,16 @@ MLM_irq:
 	ld (MLM_active_ch_counter),a 
 
 	ld c,0
-	ld hl,MLM_channel_control
+	ld iy,MLM_channels
+	ld de,MLM_Channel.SIZE
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
-		bit MLM_CH_ENABLE_BIT,(hl)            ; channel is disabled if MLM_channel_control[ch]'s bit 0 is cleared
-		jr z,$+7                              ; +2 = 2b
-
-		push hl                               ; +1 = 3b
-			call MLM_update_channel_playback  ; +3 = 6b
-		pop hl                                ; +1 = 7b
+		bit MLM_CH_ENABLE_BIT,(iy+MLM_Channel.flags)            
+		jr z,$+6                          ; +2 = 2b
+		call MLM_update_channel_playback  ; +3 = 6b
 
 		inc c
-		inc hl
+		add iy,de
 	edup
 
 	; if active mlm channel counter is 0,
@@ -36,63 +34,51 @@ MLM_irq:
 
 ; [INPUT]
 ; 	c: channel
+;   iy: pointer to channel WRAM data
 ; Doesn't backup AF, HL, DE, B, IX, HL', BC' and DE'
 ; OPTIMIZED
 MLM_update_channel_playback:
-	ld a,(MLM_active_ch_counter)
-	inc a 
-	ld (MLM_active_ch_counter),a
+	push iy
+		ld a,(MLM_active_ch_counter)
+		inc a 
+		ld (MLM_active_ch_counter),a
 
-	; decrement MLM_playback_timings[ch],
-	; if afterwards it isn't 0 return
-	ld hl,MLM_playback_timings
-	ld d,0 
-	ld e,c 
-	add hl,de
-	dec (hl)
-	ld b,(hl)
-	ld hl,MLM_playback_set_timings
-	add hl,de ; get pointer to MLM_playback_set_timings[ch]
-	xor a,a   ; ld a,0
-	cp a,b    ; compare 0 to MLM_playback_timings[ch]
-	ret nz
+		; decrement timing,
+		; if afterwards it isn't 0 return
+		ld a,(iy+MLM_Channel.timing)
+		dec a 
+		ld (iy+MLM_Channel.timing),a 
+		or a,a ; cp a,0
+		jp nz,return$
 
 parse_event$:
-	push hl
-		; ======== Update events ========
-		; de = MLM_playback_pointers[ch]
-		ld h,0
-		ld l,c
-		add hl,hl
-		ld de,MLM_playback_pointers
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		
-		; If the first byte's most significant bit is 0, then
-		; parse it and evaluate it as a note, else parse 
-		; and evaluate it as a command
-		ex de,hl
-		ld a,(hl)
-		bit 7,a
-		call z,MLM_parse_command ; hl, de, c
-		call nz,MLM_parse_note
-	pop hl
+		push hl
+			; if the note's first byte is cleared,
+			; parse it as a command.
+			; If it's set, parse it as a note.
+			ld hl,(iy+MLM_Channel.playback_ptr)
+			ld a,(hl)
+			bit 7,a
+			call z,MLM_parse_command
+			call nz,MLM_parse_note
+		pop hl
 
-	; if MLM_playback_set_timings[ch] == 0
-	; update events again
-	xor a,a
-	cp a,(hl) ; cp 0,(hl)
-	jr z,parse_event$
+		ld a,(iy+MLM_Channel.set_timing)
+		or a,a ; cp 0,0
+		jr z,parse_event$
+return$:
+	pop iy
 	ret
 
+; c: channel
+; hl: pointer to note in sdata
+; ix: pointer to MLM_Channel
 ; DOESN'T BACKUP AF, HL
 MLM_parse_note:
 	push bc 
 		ld a,(hl)
 		and a,$7F ; Clear bit 7 of the note's first byte
-		ld b,a
+		ld b,a    ; move timing in b
 		ld a,c    ; move channel in a
 		inc hl
 		ld c,(hl)
@@ -100,10 +86,10 @@ MLM_parse_note:
 		
 		; if (channel < 6) MLM_parse_note_pa()
 		cp a,MLM_CH_FM1
-		jp c,MLM_play_adpcma_note
+		jp c,play_adpcma_note$
 
 		cp a,MLM_CH_SSG1
-		jp c,MLM_play_fm_note
+		jp c,play_fm_note$
 		
 		; Else, Play note SSG...
 		sub a,MLM_CH_SSG1
@@ -114,34 +100,21 @@ MLM_parse_note:
 		add a,MLM_CH_SSG1
 		ld c,b
 		call MLM_set_timing
-MLM_parse_note_end:
-		; store playback pointer into WRAM
-		ex de,hl
-		ld (hl),d
-		dec hl
-		ld (hl),e
+parse_end$:
+		ld (iy+MLM_Channel.playback_ptr),hl
 	pop bc
 	ret 
 
-; [INPUT]
-;   a:  channel
-;   bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
-; Doesn't backup BC, IX and AF'
-; OPTIMIZED
-MLM_play_adpcma_note:
+; a:  channel
+; bc: source   (-TTTTTTT SSSSSSSS (Timing; Sample))
+; iy: pointer to MLM_Channel
+; Doesn't backup BC, IX
+play_adpcma_note$:
 	push de
 	push hl
-		; Load current instrument index into hl
-		ld h,0
-		ld l,a 
-		ld de,MLM_channel_instruments
-		add hl,de
-		ld l,(hl)
-		ld h,0
-
 		; Load pointer to instrument data
 		; from WRAM into de
-		ex af,af'
+		push af
 			ld a,(MLM_instruments)
 			ld e,a
 			ld a,(MLM_instruments+1)
@@ -149,6 +122,8 @@ MLM_play_adpcma_note:
 
 			; Calculate pointer to the current
 			; instrument's data and store it in hl
+			ld l,(iy+MLM_Channel.instrument)
+			ld h,0
 			add hl,hl ; \
 			add hl,hl ;  \
 			add hl,hl ;   | hl *= 32
@@ -166,8 +141,7 @@ MLM_play_adpcma_note:
 			; it to obtain the actual address
 			ld hl,MLM_HEADER
 			add hl,de
-			ld e,l
-			ld d,h
+			ld de,hl
 
 			; Check if sample id is valid;
 			; if it isn't softlock.
@@ -175,7 +149,7 @@ MLM_play_adpcma_note:
 			cp a,(hl)
 			jp nc,softlock ; if smp_id >= smp_count
 			inc de ; Increment past sample count
-		ex af,af'
+		pop af
 
 		; ix = $ADPCM_sample_table[sample_idx]
 		ld h,0
@@ -191,7 +165,6 @@ MLM_play_adpcma_note:
 
 		; Set timing
 		ld c,b
-		ld b,0
 		call MLM_set_timing
 		
 		; play sample
@@ -204,16 +177,17 @@ MLM_play_adpcma_note:
 		rst RST_YM_WRITEB
 	pop hl
 	pop de
-	jp MLM_parse_note_end
+	jp parse_end$
 
-; [INPUT]
-;   a:  channel+6
-;   bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
-; Doesn't backup AF, IX, IY and C
-MLM_play_fm_note:
+
+; a:  channel+6
+; bc: source (-TTTTTTT -OOONNNN (Timing; Octave; Note))
+; iy: pointer to MLM_Channel
+; Doesn't backup AF, IX, and C
+play_fm_note$:
 	push de
 	push hl
-	push ix
+	push iy
 		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
 
 		; Calculate address of FM channel data
@@ -268,27 +242,22 @@ MLM_play_fm_note:
 		add a,MLM_CH_FM1
 		ld c,b
 		call MLM_set_timing
-	pop ix
+	pop iy
 	pop hl
 	pop de
-	jp MLM_parse_note_end
+	jp parse_end$
 
 ;   c:  channel
 ;   hl: source (playback pointer)
-;   de: $MLM_playback_pointers[channel]+1
+;   iy: pointer to MLM_Channel
 MLM_parse_command:
 	push bc
 	push hl
 	push de
 	push af
-		; Backup $MLM_playback_pointers[channel]+1
-		; into ix
-		ld ixl,e
-		ld ixh,d
-
-		; backup the command's first byte into iyl
+		; backup the command's first byte into ixl
 		ld a,(hl)
-		ld iyl,a
+		ld ixl,a
 
 		; Lookup command argc and store it into a
 		push hl
@@ -316,7 +285,7 @@ MLM_parse_command:
 		; If the command's argc is 0, 
 		; just execute the command
 		or a,a ; cp a,0
-		jr z,MLM_parse_command_execute
+		jr z,execute$
 
 		; if it isn't, load arguments into
 		; MLM_event_arg_buffer beforehand
@@ -330,24 +299,14 @@ MLM_parse_command:
 		pop bc
 		pop de
 
-MLM_parse_command_execute:
+execute$:
+		; TODO, NEW PLAYBACK PTRS ARE NOW SET BEFORE
+		; THE COM IS ISSUED
+		ld (iy+MLM_Channel.playback_ptr),de 
+
 		ex de,hl
 		jp (hl)
 MLM_parse_command_end:
-		ex de,hl
-		
-		; Load $MLM_playback_pointers[channel]+1
-		; back into de
-		ld e,ixl
-		ld d,ixh
-
-		; store playback pointer into WRAM
-		ex de,hl
-		ld (hl),d
-		dec hl
-		ld (hl),e
-
-MLM_parse_command_end_skip_playback_pointer_set:
 	pop af
 	pop de
 	pop hl
@@ -881,26 +840,11 @@ set_ssg_instrument$:
 	pop de
 	jp return$
 
-; a: channel
+; iy: pointer to MLM_Channel
 ; c: timing
 MLM_set_timing:
-	push hl
-	push de
-	push af
-		; MLM_playback_timings[channel] = c
-		ld hl,MLM_playback_timings
-		ld e,a
-		ld d,0
-		add hl,de
-		ld (hl),c
-
-		; MLM_playback_set_timings[channel] = c
-		ld de,MLM_playback_set_timings-MLM_playback_timings
-		add hl,de
-		ld (hl),c
-	pop af
-	pop de
-	pop hl
+	ld (iy+MLM_Channel.timing),c
+	ld (iy+MLM_Channel.set_timing),c
 	ret
 
 ; a: channel (MLM)
