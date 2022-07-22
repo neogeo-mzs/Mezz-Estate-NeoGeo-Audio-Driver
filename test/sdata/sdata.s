@@ -114,11 +114,10 @@ MLM_song_pa6:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_pa: ; Start in Zone 3
-	db $30 | 8 | (8-1) ; Offset volume by -8
+
 	db $80 | 30, 0     ; Play ADPCM-A sample 0 (C)
 	db $01, 30         ; Stop note and wait 30 ticks
 
-	db $30 | (8-1)     ; Offset volume by +8
 	db $80 | 30, 2     ; Play ADPCM-A sample 2 (D)
 	db $01, 30
 	db $0B
@@ -159,7 +158,7 @@ MLM_song_fm4:
 	db 1  ; base time (0 is invalid)
 	dw MLM_song_instruments-MLM_header
 
-MLM_el_fm2:
+MLM_el_fm:
 	db $02,2                     ; Set instrument to 2
 	db $05,$FF                   ; Set channel volume
 	db $06,%11000000             ; Set panning to CENTER
@@ -174,33 +173,6 @@ MLM_el_fm2:
 	db $01, 30                   ; Stop note and wait 30 ticks
 	db $0B
 	dw MLM_el_fm-MLM_header
-
-MLM_el_fm1:
-	db $02,2                 ; Set instrument to 2
-	db $22,255               ; Set pitch slide to -255
-	db $80 | 2, 0 | (4 << 4) ; Play FM note C4 and wait 2 ticks
-	db $21,32                ; Set pitch slide to +32
-	db $03,16                ; Wait 16 ticks
-	db $23                   ; Reset pitch slide
-	db $03,64                ; Wait 64 ticks
-	db $0B
-	dw MLM_el_fm-MLM_header  ; Jump to MLM_el_fm
-
-MLM_el_fm:
-	db $02,2                   ; Set instrument to 2
-	db $80 | 24, 11 | (3 << 4) ; Play A3 then wait 24 ticks
-	db $0C, 32                 ; Slide (down) at 32 per tick
-	db 2 | (3 << 4)            ; until D3
-	db $03, 24-1               ; Wait 24 ticks
-	db $0C, 64                 ; Slide (up) at 64 per tick
-	db 4 | (4 << 4)            ; until E4
-	db $03,128-1               ; Wait 128 ticks
-	db $00
-
-MLM_fm_vib_macro:
-	db 8-1 ; Length: 8
-	db 0   ; Loop point: 0
-	db 0, 24, 32, 24, 0, -24, 32, -24
 
 #code SDATA_BANK2,$8000,$8000
 MLM_song_ssg1:
@@ -229,12 +201,7 @@ MLM_song_ssg3:
 MLM_el_ssg:
 	db $02,1                    ; Set instrument to 1
 	db $80 | 24, 12*(4-2) + 0   ; Play C4 then wait 24 ticks
-	db $0C, 32                  ; Slide at 32 per tick
-	db 12*(3-2) + 9             ; till A3
-	db $03, 24-1                ; Wait 24 ticks
-	db $0C, 64                  ; Slide at 64 per tick
-	db 12*(4-2) + 7             ; till G4
-	db $03, 128-1               ; Wait 128 ticks
+	db $80 | 24, 12*(4-2) + 2   ; Play D4 then wait 24 ticks
 	db $00
 
 MLM_ssg_pmacro:
