@@ -15,12 +15,11 @@ MLM_irq:
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		bit MLM_CH_ENABLE_BIT,(hl)            ; channel is disabled if MLM_channel_control[ch]'s bit 0 is cleared
-		jr z,$+10                             ; +2 = 2b
+		jr z,$+7                              ; +2 = 2b
 
 		push hl                               ; +1 = 3b
 			call MLM_update_channel_playback  ; +3 = 6b
 		pop hl                                ; +1 = 7b
-		call MLM_update_ch_macro              ; +3 = 10b
 
 		inc c
 		inc hl
@@ -58,72 +57,71 @@ MLM_update_channel_playback:
 	cp a,b    ; compare 0 to MLM_playback_timings[ch]
 	ret nz
 
-	push iy
-MLM_update_channel_playback_next_event:
-		push hl
-			; ======== Update events ========
-			; de = MLM_playback_pointers[ch]
-			ld h,0
-			ld l,c
-			add hl,hl
-			ld de,MLM_playback_pointers
-			add hl,de
-			ld e,(hl)
-			inc hl
-			ld d,(hl)
-			
-			; If the first byte's most significant bit is 0, then
-			; parse it and evaluate it as a note, else parse 
-			; and evaluate it as a command
-			ex de,hl
-			ld a,(hl)
-			bit 7,a
-			jp z,MLM_parse_command ; hl, de, c
+parse_event$:
+	push hl
+		; ======== Update events ========
+		; de = MLM_playback_pointers[ch]
+		ld h,0
+		ld l,c
+		add hl,hl
+		ld de,MLM_playback_pointers
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+		
+		; If the first byte's most significant bit is 0, then
+		; parse it and evaluate it as a note, else parse 
+		; and evaluate it as a command
+		ex de,hl
+		ld a,(hl)
+		bit 7,a
+		call z,MLM_parse_command ; hl, de, c
+		call nz,MLM_parse_note
+	pop hl
 
-			; ======== Parse note ========
-			push bc ;;;; CRASHES PARSING NOTE
-				ld a,(hl)
-				and a,$7F ; Clear bit 7 of the note's first byte
-				ld b,a
-				ld a,c    ; move channel in a
-				inc hl
-				ld c,(hl)
-				inc hl
-				
-				; if (channel < 6) MLM_parse_note_pa()
-				cp a,MLM_CH_FM1
-				jp c,MLM_play_adpcma_note
-
-				cp a,MLM_CH_SSG1
-				jp c,MLM_play_fm_note
-				
-				; Else, Play note SSG...
-				sub a,MLM_CH_SSG1
-				call SSGCNT_set_note
-				call SSGCNT_enable_channel
-				call SSGCNT_start_channel_macros
-
-				add a,MLM_CH_SSG1
-				ld c,b
-				call MLM_set_timing
-MLM_parse_note_end:
-				; store playback pointer into WRAM
-				ex de,hl
-				ld (hl),d
-				dec hl
-				ld (hl),e
-			pop bc
-
-MLM_update_channel_playback_check_set_t:
-		pop hl
-
-		; if MLM_playback_set_timings[ch] == 0
-		; update events again
-		xor a,a
-		cp a,(hl) ; cp 0,(hl)
-		jr z,MLM_update_channel_playback_next_event
-	pop iy
+	; if MLM_playback_set_timings[ch] == 0
+	; update events again
+	xor a,a
+	cp a,(hl) ; cp 0,(hl)
+	jr z,parse_event$
 	ret
+
+; DOESN'T BACKUP AF, HL
+MLM_parse_note:
+	push bc 
+		ld a,(hl)
+		and a,$7F ; Clear bit 7 of the note's first byte
+		ld b,a
+		ld a,c    ; move channel in a
+		inc hl
+		ld c,(hl)
+		inc hl
+		
+		; if (channel < 6) MLM_parse_note_pa()
+		cp a,MLM_CH_FM1
+		jp c,MLM_play_adpcma_note
+
+		cp a,MLM_CH_SSG1
+		jp c,MLM_play_fm_note
+		
+		; Else, Play note SSG...
+		sub a,MLM_CH_SSG1
+		call SSGCNT_set_note
+		call SSGCNT_enable_channel
+		call SSGCNT_start_channel_macros
+
+		add a,MLM_CH_SSG1
+		ld c,b
+		call MLM_set_timing
+MLM_parse_note_end:
+		; store playback pointer into WRAM
+		ex de,hl
+		ld (hl),d
+		dec hl
+		ld (hl),e
+	pop bc
+	ret 
 
 ; [INPUT]
 ;   a:  channel
@@ -282,6 +280,7 @@ MLM_parse_command:
 	push bc
 	push hl
 	push de
+	push af
 		; Backup $MLM_playback_pointers[channel]+1
 		; into ix
 		ld ixl,e
@@ -349,51 +348,10 @@ MLM_parse_command_end:
 		ld (hl),e
 
 MLM_parse_command_end_skip_playback_pointer_set:
+	pop af
 	pop de
 	pop hl
 	pop bc
-	jp MLM_update_channel_playback_check_set_t
-
-; c: channel
-MLM_update_ch_macro:
-	; Calculate address to channel macro
-	ld ix,MLM_channel_pitch_macros
-	ld a,c
-	sla a ; \
-	sla a ; | a *= 8
-	sla a ; /
-	ld e,a
-	ld d,0
-	add ix,de
-
-	; If control macro is disabled, return.
-	xor a,a ; ld a,0
-	cp a,(ix+ControlMacro.enable)
-	ret z
-
-	ld a,c
-	cp a,MLM_CH_FM1  ; If channel is ADPCMA...
-	ret c            ; return, because ADPCMA has no pitch.
-	cp a,MLM_CH_SSG1 ; If channel is FM...
-	jp c,MLM_update_ch_macro_fm
-
-	push hl
-	push bc
-		; Else, channel is SSG...
-		; Calculate address to pitch offset in WRAM
-		ld hl,SSGCNT_pitch_ofs-(MLM_CH_SSG1*2)
-		sla a ; a *= 2
-		ld e,a
-		add hl,de
-
-		call BMACRO_read
-		call AtoBCextendendsign
-		ld (hl),c
-		inc hl
-		ld (hl),b
-		call MACRO_update
-	pop bc
-	pop hl
 	ret
 
 ; a: channel
