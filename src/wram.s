@@ -26,9 +26,11 @@ MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
 MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
 MLM_sub_el_return_pointers:   ds 2*CHANNEL_COUNT     ; void*[13]
 
-MLM_event_arg_buffer:         ds 32                  ; u8[32]
-MLM_active_ch_counter:        ds 1                   ; u8
-MLM_instruments:              ds 2                   ; void*
+MLM_channels:          ds MLM_Channel.SIZE*CHANNEL_COUNT
+
+MLM_event_arg_buffer:  ds 32                  ; u8[32]
+MLM_active_ch_counter: ds 1                   ; u8
+MLM_instruments:       ds 2                   ; void*
 MLM_wram_end:
 
 ; ======== SSG Controller variables ========
