@@ -72,7 +72,7 @@ return$:
 
 ; c: channel
 ; hl: pointer to note in sdata
-; ix: pointer to MLM_Channel
+; iy: pointer to MLM_Channel
 ; DOESN'T BACKUP AF, HL
 MLM_parse_note:
 	push bc 
@@ -303,39 +303,19 @@ execute$:
 		; TODO, NEW PLAYBACK PTRS ARE NOW SET BEFORE
 		; THE COM IS ISSUED
 		ld (iy+MLM_Channel.playback_ptr),de 
-
-		ex de,hl
+		
+		; By pushing the return address to the stack,
+		; functions can use the ret instruction to
+		; return, making them more versatile.
+		ex hl,de
+		ld de,command_end$
+		push de
 		jp (hl)
-MLM_parse_command_end:
+command_end$:
 	pop af
 	pop de
 	pop hl
 	pop bc
-	ret
-
-; a: channel
-; d: 0
-MLM_update_ch_macro_fm:
-	push hl
-	push bc
-		; Calculate address to FM Channel pitch offset
-		ld hl,FM_ch1+FM_Channel.pitch_ofs-(MLM_CH_FM1*16)
-		sla a ; -\
-		sla a ;  | a *= 16
-		sla a ;  /
-		sla a ; /
-		ld e,a
-		add hl,de
-
-		call BMACRO_read
-		call AtoBCextendendsign
-		ld (hl),c
-		inc hl
-		ld (hl),b
-								
-		call MACRO_update
-	pop bc
-	pop hl  
 	ret
 
 ; stop song
@@ -419,12 +399,13 @@ MLM_play_song:
 		add hl,de ; Get pointer from offset
 
 		;     For each channel...
-		ld de,MLM_playback_pointers
-		ld ix,MLM_channel_control
+		ld iy,MLM_channels
+		ld de,MLM_Channel.SIZE
 		ld b,1
 
 		dup CHANNEL_COUNT
 			call MLM_playback_init
+			add iy,de
 			inc b
 		edup
 
@@ -458,51 +439,36 @@ MLM_play_song:
 		ld a,h
 		ld (MLM_instruments+1),a
 
-		; Copy MLM_playback_pointers
-		; to MLM_playback_start_pointers
-		ld hl,MLM_playback_pointers
-		ld de,MLM_playback_start_pointers
-		ld bc,2*CHANNEL_COUNT
-		ldir
-
 		; Set ADPCM-A master volume
 		ld de,REG_PA_MVOL<<8 | $3F
 		rst RST_YM_WRITEB
 
 		; For each channel initialize its
 		; parameters if it is enabled.
-		ld b,CHANNEL_COUNT
-loop$:
-		xor a,a
-		cp a,(ix-1)
-		call nz,MLM_ch_parameters_init
-		dec ix
-		djnz loop$
+		ld de,MLM_Channel.SIZE
+		ld b,1
+		dup CHANNEL_COUNT
+			call MLM_ch_parameters_init
+			add iy,de
+			inc b
+		edup
 	pop af
 	pop ix
 	pop de
 	pop bc
 	pop hl
 	ret
-
-; [INPUT]
-;	b:	channel+1
-;	de:	$MLM_playback_pointers[ch]
-;	ix:	$MLM_channel_control[ch]
-;   hl: song_header[ch]
-; [OUTPUT]
-;	de:	$MLM_playback_pointers[ch+1]
-;	ix:	$MLM_channel_control[ch+1]
-;   hl: song_header[ch+1]
+	
+; b:	channel+1
+; iy: pointer to MLM_Channel
+; hl: song_header[ch]
+; DOESN'T BACKUP AF AND BC
 MLM_playback_init:
-	push bc
-	push af
-	push iy
+	push hl
 		; Set the channel timing to 1
 		ld a,b
 		dec a
-		ld iyl,a ; backup channel in iyl
-		ld bc,1
+		ld c,1
 		call MLM_set_timing
 
 		; Load channel's playback offset
@@ -521,100 +487,85 @@ MLM_playback_init:
 		ld a,MLM_HEADER>>8
 		add a,b
 
-		; store said pointer into
-		; MLM_playback_pointers[ch]
-		ex de,hl
-			ld (hl),c
-			inc hl
-			ld (hl),a
-			inc hl
-		ex de,hl
+		; store said pointer into WRAM
+		ld (iy+MLM_Channel.playback_ptr+0),c 
+		ld (iy+MLM_Channel.playback_ptr+1),a
+		ld (iy+MLM_Channel.start_ptr+0),c 
+		ld (iy+MLM_Channel.start_ptr+1),a
 
 		; If the playback pointer isn't
 		; equal to 0, set the channel's
 		; playback control to $FF, and
 		; also set SFXPS ch. status to taken
-		push hl
-			ld hl,0
-			or a,a ; Clear carry flag
-			sbc hl,bc
-			jr z,no_playback
-			ld (ix+0),MLM_CH_ENABLE ; Set playback control channel enable flag
-no_playback:
-			inc ix
-		pop hl
-	pop iy
-	pop af
-	pop bc
+		ld hl,0
+		or a,a ; Clear carry flag
+		sbc hl,bc
+		jr z,no_playback$
+		ld (iy+MLM_Channel.flags),MLM_CH_ENABLE ; Set playback control channel enable flag
+no_playback$:
+	pop hl
 	ret
 
 ; b: channel+1
+; iy: pointer to MLM_Channel
+; DOESN'T BACKUP AF AND BC
 ;	Initializes channel parameters
 MLM_ch_parameters_init:
-	push af
-	push bc
-		ld a,b
-		dec a
-		ld c,PANNING_CENTER
-		call MLM_set_channel_panning
+	bit MLM_CH_ENABLE_BIT,(iy+MLM_Channel.flags)
+	ret z 
 
-		ld a,0
-		ld c,b
-		dec c
-		call MLM_set_instrument
+	ld a,b
+	dec a
+	ld c,PANNING_CENTER
+	call MLM_set_channel_panning
 
-		ld a,$FF
-		call MLM_set_channel_volume
+	ld a,0
+	ld c,b
+	dec c
+	call MLM_set_instrument
 
-		; If the channel is ADPCM-A, initialize 
-		; specific ADPCM-A parameters
-		ld a,c
-		cp a,MLM_CH_FM1                ; if a < MLM_CH_FM1 
-		jr c,init_adpcma_channel$ ; then ...
+	ld a,$FF
+	call MLM_set_channel_volume
 
-		; If the channel is FM, initialize
-		; specific FM parameters
-		cp a,MLM_CH_SSG1               ; if a < MLM_CH_SSG1
-		jr c,init_fm_channel$     ; then ...
+	; If the channel is ADPCM-A, initialize 
+	; specific ADPCM-A parameters
+	ld a,c
+	cp a,MLM_CH_FM1                ; if a < MLM_CH_FM1 
+	jr c,init_adpcma_channel$ ; then ...
 
-		; Else the channel is SSG, there's
-		; no specific SSG parameters to set.
-	pop bc
-	pop af
+	; If the channel is FM, initialize
+	; specific FM parameters
+	cp a,MLM_CH_SSG1               ; if a < MLM_CH_SSG1
+	jr c,init_fm_channel$     ; then ...
+
+	; Else the channel is SSG, there's
+	; no specific SSG parameters to set.
 	ret
 
 ; a: channel
 init_adpcma_channel$:
-		; Tell SFXPS that this channel  
-		; is reserved for music playback
-		ld c,a
-		call SFXPS_set_channel_as_taken 
-	pop bc
-	pop af
+	; Tell SFXPS that this channel  
+	; is reserved for music playback
+	ld c,a
+	call SFXPS_set_channel_as_taken 
 	ret
 
 ; a: channel
 init_fm_channel$:
-		; Enable FMCNT for the channel
-		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
-		ld c,a
-		call FMCNT_enable_channel
-	pop bc
-	pop af
+	; Enable FMCNT for the channel
+	sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
+	ld c,a
+	call FMCNT_enable_channel
 	ret
 
 ; a: instrument
 ; c: channel
+; iy: pointer to MLM_Channel
 ; COULD OPTIMIZE
 MLM_set_instrument:
 	push bc
-	push hl
 	push af
-		; Store instrument in MLM_channel_instruments
-		ld b,0
-		ld hl,MLM_channel_instruments
-		add hl,bc
-		ld (hl),a
+		ld (iy+MLM_Channel.instrument),a
 
 		; if the channel is ADPCM-A nothing
 		; else needs to be done: return
@@ -630,7 +581,6 @@ MLM_set_instrument:
 		jr set_ssg_instrument$
 return$: 
 	pop af
-	pop hl
 	pop bc
 	ret
 
@@ -685,7 +635,6 @@ set_fm_instrument$:
 		call FMCNT_set_amspms
 
 		; Set OP enable
-		
 		inc hl
 		ld a,(hl)
 		ld (ix+FM_Channel.op_enable),a
@@ -852,10 +801,10 @@ MLM_set_timing:
 MLM_stop_note:
 	push af
 		cp a,MLM_CH_FM1
-		jp c,MLM_stop_note_PA
+		jp c,channel_is_adpcma$
 
 		cp a,MLM_CH_SSG1
-		jp c,MLM_stop_note_FM
+		jp c,channel_is_fm$
 
 		; Else, Stop SSG note...
 		sub a,MLM_CH_SSG1
@@ -863,12 +812,12 @@ MLM_stop_note:
 	pop af
 	ret
 
-MLM_stop_note_PA:
+channel_is_adpcma$:
 		call PA_stop_sample
 	pop af
 	ret
 
-MLM_stop_note_FM:
+channel_is_fm$:
 	push bc
 		sub a,MLM_CH_FM1
 		ld c,a
@@ -879,6 +828,7 @@ MLM_stop_note_FM:
 
 ; a: volume
 ; c: channel
+; iy: pointer to MLM_Channel
 ;	This sets MLM_channel_volumes,
 ;   the register writes are done in
 ;   the IRQ
@@ -886,17 +836,12 @@ MLM_set_channel_volume:
 	push hl
 	push bc
 	push af
-	push iy
-		brk
-		; Store unaltered channel volume in WRAM
-		ld hl,MLM_channel_volumes
-		ld b,0
-		add hl,bc
-		ld (hl),a
+	push ix
+		ld (iy+MLM_Channel.volume),a
 
 		; If master volume is 255, there's 
 		; no need to alter the volume
-		ld iyh,b ; b is 0
+		ld ixh,b ; b is 0
 		ld hl,master_volume
 		ld b,(hl)
 		inc b ; cp b,255
@@ -908,16 +853,16 @@ MLM_set_channel_volume:
 		ld b,a ; backup cvol in b
 		ld a,$FF
 		sub a,(hl)
-		ld iyl,a ; backup negated mvol in iyl...
-		ld iyh,a ; ...and iyh
+		ld ixl,a ; backup negated mvol in ixl...
+		ld ixh,a ; ...and ixh
 		ld a,b   ; store cvol back in a
-		sub a,iyl
+		sub a,ixl
 
 		jp nc,skip_mvol_calculation$ ; if no overflow happened...
 		ld a,0 ; if underflow happened, take care of it
 
 skip_mvol_calculation$:
-		ld iyl,a ; Backup scaled MLM chvol 
+		ld ixl,a ; Backup scaled MLM chvol 
 
 		; Swap a and c
 		ld b,a
@@ -948,7 +893,7 @@ skip_mvol_calculation$:
 		ld b,0
 		add hl,bc
 		ld (hl),a
-	pop iy
+	pop ix
 	pop af
 	pop bc
 	pop hl
@@ -960,10 +905,10 @@ set_adpcma_channel_volume$:
 		ld a,c
 		ld c,b
 
-		sub a,iyh
+		sub a,ixh
 		jp nc,$+5 ; +3 = 3b
 		ld a,0    ; +2 = 5b
-		ld iyl,a 
+		ld ixl,a 
 
 		; Scale down volume
 		; ($00~$FF -> $00~$1F)
@@ -984,7 +929,7 @@ set_adpcma_channel_volume$:
 			; and OR it with the volume
 			ld b,PANNING_NONE
 			ld e,a ; backup cvol in e
-			ld a,iyl 
+			ld a,ixl 
 			cp a,0 ; cp a,0
 			ld a,e ; store cvol back in a
 			jp z,adpcma_keep_panning_none$
@@ -1001,7 +946,7 @@ adpcma_keep_panning_none$:
 			ld d,a
 			rst RST_YM_WRITEB
 		pop de
-	pop iy
+	pop ix
 	pop af
 	pop bc
 	pop hl
@@ -1010,34 +955,32 @@ adpcma_keep_panning_none$:
 set_fm_channel_volume$:
 		sub a,MLM_CH_FM1 ; Transform into FMCNT channel range (6~9 -> 0~3)
 
-		push ix
-			; Obtain address to FM_Channel
-			push af
-				rlca       ; -\
-				rlca       ;  | offset = channel*16
-				rlca       ;  /
-				rlca       ; /
-				ld ixl,a
-				ld ixh,0
-				ld de,FM_ch1
-				add ix,de
-			pop af
+		; Obtain address to FM_Channel
+		push af
+			rlca       ; -\
+			rlca       ;  | offset = channel*16
+			rlca       ;  /
+			rlca       ; /
+			ld ixl,a
+			ld ixh,0
+			ld de,FM_ch1
+			add ix,de
+		pop af
 
-			; Swap a and c again
-			ld b,a
-			ld a,c
-			ld c,b
+		; Swap a and c again
+		ld b,a
+		ld a,c
+		ld c,b
 
-			srl a ; $00~$FF -> $00~$7F
-			and a,127 ; Wrap volume inbetween 0 and 127
-			ld (ix+FM_Channel.volume),a
+		srl a ; $00~$FF -> $00~$7F
+		and a,127 ; Wrap volume inbetween 0 and 127
+		ld (ix+FM_Channel.volume),a
 
-			; set channel volume update flag
-			ld a,(ix+FM_Channel.enable)
-			or a,FMCNT_VOL_UPDATE
-			ld (ix+FM_Channel.enable),a
-		pop ix
-	pop iy
+		; set channel volume update flag
+		ld a,(ix+FM_Channel.enable)
+		or a,FMCNT_VOL_UPDATE
+		ld (ix+FM_Channel.enable),a
+	pop ix
 	pop af
 	pop bc
 	pop hl
@@ -1060,7 +1003,7 @@ ch_counter set 0
 		dup PA_CHANNEL_COUNT
 			; Load MLM volume, subtract mvol and 
 			; scale the result down (0~255 -> 0~31)
-			ld a,(MLM_channel_volumes+ch_counter)
+			ld a,(MLM_channels+(MLM_Channel.SIZE*ch_counter)+MLM_Channel.volume)
 			sub a,b
 			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b
@@ -1105,7 +1048,7 @@ ch_counter set 0
 		dup FM_CHANNEL_COUNT
 			; Load MLM volume, subtract mvol and 
 			; scale the result down (0~255 -> 0~127)
-			ld a,(MLM_channel_volumes+MLM_CH_FM1+ch_counter)
+			ld a,(MLM_channels+(MLM_Channel.SIZE*(MLM_CH_FM1+ch_counter))+MLM_Channel.volume)
 			sub a,b
 			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b
@@ -1123,7 +1066,7 @@ ch_counter set 0
 		dup SSG_CHANNEL_COUNT
 			; Load MLM volume, subtract mvol and 
 			; scale the result down (0~255 -> 0~15)
-			ld a,(MLM_channel_volumes+MLM_CH_SSG1+ch_counter)
+			ld a,(MLM_channels+(MLM_Channel.SIZE*(MLM_CH_SSG1+ch_counter))+MLM_Channel.volume)
 			sub a,b
 			jp nc,$+5 ; +3 = 3b
 			ld a,0    ; +2 = 5b

@@ -16,15 +16,6 @@ com_buffer_byte_significance:  ds 1                   ; u8
 
 ; ======== MLM player ========
 MLM_wram_start:
-MLM_playback_pointers:        ds 2*CHANNEL_COUNT     ; void*[13]
-MLM_playback_start_pointers:  ds 2*CHANNEL_COUNT     ; void*[13]
-MLM_channel_control:          ds CHANNEL_COUNT       ; bool[13] (%0000'000E; channel Enable)
-MLM_playback_timings:         ds CHANNEL_COUNT       ; u8[13]   
-MLM_playback_set_timings:     ds CHANNEL_COUNT       ; u8[13]   
-MLM_channel_instruments:      ds CHANNEL_COUNT       ; u8[13]
-MLM_channel_pannings:         ds CHANNEL_COUNT       ; u8[13]
-MLM_channel_volumes:          ds CHANNEL_COUNT       ; u8[13]
-MLM_sub_el_return_pointers:   ds 2*CHANNEL_COUNT     ; void*[13]
 
 MLM_channels:          ds MLM_Channel.SIZE*CHANNEL_COUNT
 
