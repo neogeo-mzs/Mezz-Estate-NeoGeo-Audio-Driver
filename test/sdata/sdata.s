@@ -114,16 +114,11 @@ MLM_song_pa6:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_pa: ; Start in Zone 3
-
-	db $80 | 30, 0     ; Play ADPCM-A sample 0 (C)
-	db $01, 30         ; Stop note and wait 30 ticks
-
-	db $80 | 30, 2     ; Play ADPCM-A sample 2 (D)
-	db $01, 30
-	db $0B
-	dw MLM_el_pa-MLM_header
-
-	db $00 ; End of song
+	pa_note NOTE_C,30
+	note_off 30
+	pa_note NOTE_D,30
+	note_off 30
+	jump MLM_el_pa-MLM_header
 
 #code SDATA_BANK1,$8000,$8000
 MLM_song_fm1:
@@ -159,20 +154,18 @@ MLM_song_fm4:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_fm:
-	db $02,2                     ; Set instrument to 2
-	db $05,$FF                   ; Set channel volume
-	db $06,%11000000             ; Set panning to CENTER
-	db $80 | (8*3), 0 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
-	db $80 | (8*3), 2 | (4 << 4) ; Play FM note D4 and wait 8*3 ticks
-	db $01, 30                   ; Stop note and wait 30 ticks
-	db $05,$E8                   ; Set channel volume
-	db $06,%10000000             ; Set panning to LEFT
-	db $80 | (8*3), 4 | (4 << 4) ; Play FM note E4 and wait 8*3 ticks
-	db $06,%01000000             ; Set panning to RIGHT
-	db $80 | (8*3), 5 | (4 << 4) ; Play FM note C4 and wait 8*3 ticks
-	db $01, 30                   ; Stop note and wait 30 ticks
-	db $0B
-	dw MLM_el_fm-MLM_header
+	set_inst 2
+	set_pan PANNING_CENTER,0
+	fm_note NOTE_C,4,24
+	fm_note NOTE_D,4,24
+	note_off 30
+	set_vol $E8
+	set_pan PANNING_LEFT,0
+	fm_note NOTE_E,4,24
+	set_pan PANNING_RIGHT,0
+	fm_note NOTE_C,4,24
+	note_off 30
+	jump MLM_el_fm-MLM_header
 
 #code SDATA_BANK2,$8000,$8000
 MLM_song_ssg1:
@@ -199,10 +192,10 @@ MLM_song_ssg3:
 	dw MLM_song_instruments-MLM_header
 	
 MLM_el_ssg:
-	db $02,1                    ; Set instrument to 1
-	db $80 | 24, 12*(4-2) + 0   ; Play C4 then wait 24 ticks
-	db $80 | 24, 12*(4-2) + 2   ; Play D4 then wait 24 ticks
-	db $00
+	set_inst 1
+	ssg_note NOTE_C,4,24
+	ssg_note NOTE_D,4,24
+	end_of_el
 
 MLM_ssg_pmacro:
 	db 16-1 ; Length:     16
