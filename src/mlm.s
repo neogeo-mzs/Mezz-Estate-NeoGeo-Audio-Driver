@@ -359,6 +359,7 @@ MLM_play_song:
 	push de
 	push ix
 	push af
+		brk
 		call MLM_stop
 
 		; First song index validity check
@@ -407,6 +408,8 @@ MLM_play_song:
 			call MLM_playback_init
 			add iy,de
 			inc b
+			inc hl 
+			inc hl
 		edup
 
 		; Load timer a counter load
@@ -445,6 +448,7 @@ MLM_play_song:
 
 		; For each channel initialize its
 		; parameters if it is enabled.
+		ld iy,MLM_channels
 		ld de,MLM_Channel.SIZE
 		ld b,1
 		dup CHANNEL_COUNT
@@ -459,12 +463,13 @@ MLM_play_song:
 	pop hl
 	ret
 	
-; b:	channel+1
+; b:  channel+1
 ; iy: pointer to MLM_Channel
 ; hl: song_header[ch]
-; DOESN'T BACKUP AF AND BC
+; DOESN'T BACKUP AF 
 MLM_playback_init:
 	push hl
+	push bc
 		; Set the channel timing to 1
 		ld a,b
 		dec a
@@ -503,6 +508,7 @@ MLM_playback_init:
 		jr z,no_playback$
 		ld (iy+MLM_Channel.flags),MLM_CH_ENABLE ; Set playback control channel enable flag
 no_playback$:
+	pop bc
 	pop hl
 	ret
 
