@@ -7,7 +7,7 @@ LIST_PATH := $(SRC_PATH)/listing.txt
 
 TEST_PATH := test
 
-.PHONY: clean build run sdata
+.PHONY: clean build run debug sdata
 
 build: LUT
 	$(ZASM) -i $(SRC_MAIN) -o $(SRC_OUT).tmp -uwy -l ./$(LIST_PATH)
@@ -25,6 +25,9 @@ LUT:
 run: build
 	$(MAKE) -C $(TEST_PATH) run
 
+debug: build
+	$(MAKE) -C $(TEST_PATH) debug
+	
 sdata:
 	$(MAKE) -C $(TEST_PATH) sdata
 	
