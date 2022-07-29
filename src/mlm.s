@@ -52,6 +52,7 @@ MLM_update_channel_playback:
 		jp nz,return$
 
 parse_event$:
+		brk2
 		push hl
 			; if the note's first byte is cleared,
 			; parse it as a command.
@@ -250,6 +251,7 @@ play_fm_note$:
 ;   c:  channel
 ;   hl: source (playback pointer)
 ;   iy: pointer to MLM_Channel
+;   BUG: HL IS CORRUPT SOMETIMES
 MLM_parse_command:
 	push bc
 	push hl
@@ -300,9 +302,7 @@ MLM_parse_command:
 		pop de
 
 execute$:
-		; TODO, NEW PLAYBACK PTRS ARE NOW SET BEFORE
-		; THE COM IS ISSUED
-		ld (iy+MLM_Channel.playback_ptr),de 
+		ld (iy+MLM_Channel.playback_ptr),hl
 		
 		; By pushing the return address to the stack,
 		; functions can use the ret instruction to
@@ -359,8 +359,8 @@ MLM_play_song:
 	push de
 	push ix
 	push af
-		brk
 		call MLM_stop
+		brk
 
 		; First song index validity check
 		;	If the song is bigger or equal to 128
