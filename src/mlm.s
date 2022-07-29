@@ -52,7 +52,6 @@ MLM_update_channel_playback:
 		jp nz,return$
 
 parse_event$:
-		brk2
 		push hl
 			; if the note's first byte is cleared,
 			; parse it as a command.
@@ -251,7 +250,6 @@ play_fm_note$:
 ;   c:  channel
 ;   hl: source (playback pointer)
 ;   iy: pointer to MLM_Channel
-;   BUG: HL IS CORRUPT SOMETIMES
 MLM_parse_command:
 	push bc
 	push hl
@@ -360,7 +358,6 @@ MLM_play_song:
 	push ix
 	push af
 		call MLM_stop
-		brk
 
 		; First song index validity check
 		;	If the song is bigger or equal to 128
