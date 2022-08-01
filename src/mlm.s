@@ -52,6 +52,7 @@ MLM_update_channel_playback:
 		jp nz,return$
 
 parse_event$:
+		brk
 		push hl
 			; if the note's first byte is cleared,
 			; parse it as a command.
@@ -588,7 +589,7 @@ return$:
 	ret
 
 ; a:  channel
-; hl: $MLM_channel_instruments[channel]
+; iy: pointer to MLM_Channel
 set_fm_instrument$:
 	push hl
 	push de
@@ -618,7 +619,7 @@ set_fm_instrument$:
 		pop af
 
 		; Calculate pointer to instrument
-		ld l,(hl)
+		ld l,(iy+MLM_Channel.instrument)
 		ld h,0
 		add hl,hl ; \
 		add hl,hl ;  \
@@ -678,7 +679,7 @@ set_fm_instrument$:
 	jr return$
 
 ; a:  channel
-; hl: $MLM_channel_instruments[channel]
+; iy: pointer to MLM_Channel
 set_ssg_instrument$:
 	push de
 	push hl
@@ -695,7 +696,7 @@ set_ssg_instrument$:
 		pop af
 
 		; Calculate pointer to instrument
-		ld l,(hl)
+		ld l,(iy+MLM_Channel.instrument)
 		ld h,0
 		add hl,hl ; \
 		add hl,hl ;  \
