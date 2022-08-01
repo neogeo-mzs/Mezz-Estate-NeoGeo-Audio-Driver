@@ -52,7 +52,6 @@ MLM_update_channel_playback:
 		jp nz,return$
 
 parse_event$:
-		brk
 		push hl
 			; if the note's first byte is cleared,
 			; parse it as a command.
