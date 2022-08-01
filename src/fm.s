@@ -89,9 +89,6 @@ loop$:
 		bit 1,a
 		call nz,FMCNT_update_total_levels
 
-		call FMCNT_update_frequency
-		call FMCNT_update_pslide
-
 		; Clear all the update bitflags
 		ld a,(ix+FM_Channel.enable)
 		and a,FMCNT_VOL_UPDATE ^ $FF
@@ -102,157 +99,6 @@ skip_loop$:
 		add ix,de
 	inc b
 	djnz loop$
-	ret
-
-; b:  channel (0~3)
-; ix: address to FMCNT channel data
-; DOESN'T BACKUP HL AND DE
-;  Adds frequency and pitch offset together
-;  and sets the YM2610 registers
-FMCNT_update_frequency:
-	push af
-		push bc
-			ld a,(ix+FM_Channel.frequency+1)
-			and a,%00111000 ; Mask out F-Num to get the Block
-			ld b,a
-
-			; Offset frequency
-			ld e,(ix+FM_Channel.frequency+0)
-			ld d,(ix+FM_Channel.frequency+1)
-			ex hl,de
-			ld e,(ix+FM_Channel.pitch_ofs+0)
-			ld d,(ix+FM_Channel.pitch_ofs+1)
-			add hl,de
-
-			; Clamp frequency floor
-			;   if custom clamp disabled or custom clamp
-			;   is a ceil clamp, use default value
-			bit 7,(ix+FM_Channel.fnum_clamp+1)
-			jp z,default_floor_clamp$
-			bit 6,(ix+FM_Channel.fnum_clamp+1)
-			jp nz,default_floor_clamp$ ; custom clamp is ceil...
-
-			; Custom floor clamp
-			ld a,(ix+FM_Channel.fnum_clamp+1)
-			and a,%00000111 ; Get fnum minimum
-			or a,b 
-			ld d,a
-			ld e,(ix+FM_Channel.fnum_clamp)
-			or a,a
-			sbc hl,de
-			add hl,de
-			jp nc,no_floor_clamp$ ; if hl >= MIN_FNUM...
-
-			; if the freq is below the custom floor,
-			; clear the pitch slide offset...
-			xor a,a
-			ld (ix+FM_Channel.pslide_ofs+0),a
-			ld (ix+FM_Channel.pslide_ofs+1),a
-
-			; ...fix the value and skip the ceil clamp test
-			ld hl,de
-			jp no_ceil_clamp$
-
-no_floor_clamp$:
-			; Clamp frequency ceiling
-			;   if custom clamp disabled or custom clamp
-			;   is a ceil clamp, use default value
-			bit 7,(ix+FM_Channel.fnum_clamp+1)
-			jp z,default_ceil_clamp$
-			bit 6,(ix+FM_Channel.fnum_clamp+1)
-			jp z,default_ceil_clamp$ ; custom clamp is floor...
-
-			; Custom ceiling clamp
-			ld a,(ix+FM_Channel.fnum_clamp+1)
-			and a,%00000111 ; Get fnum minimum
-			or a,b 
-			ld d,a
-			ld e,(ix+FM_Channel.fnum_clamp)
-			or a,a
-			sbc hl,de
-			add hl,de
-			jp c,no_ceil_clamp$ ; if hl < MAX_FNUM...
-
-			; clear the pitch slide offset...
-			xor a,a
-			ld (ix+FM_Channel.pslide_ofs+0),a
-			ld (ix+FM_Channel.pslide_ofs+1),a
-			ld hl,de
-no_ceil_clamp$:
-		pop bc
-
-		; Write frequency to registers
-		; CH1, CH3 (b = 0, 2): $A5
-		; CH2, CH4 (b = 1, 3): $A6
-		ld a,b
-		and a,%00000001
-		add a,REG_FM_CH13_FBLOCK
-
-		; Write to Block & F-Num 2 register
-		ld e,h 
-		ld d,a
-		bit 1,b
-		call z,port_write_a
-		call nz,port_write_b
-
-		; Write to F-Num 1 register
-		ld a,-4  ; \
-		add a,d  ; | d -= 4
-		ld d,a   ; / 
-		ld e,l
-		bit 1,b
-		call z,port_write_a
-		call nz,port_write_b
-	pop af
-	ret
-
-default_floor_clamp$:
-	ld a,b
-	or a,FMCNT_MIN_FNUM >> 8
-	ld d,a
-	ld e,FMCNT_MIN_FNUM & $FF
-	or a,a
-	sbc hl,de
-	add hl,de
-	jp nc,no_floor_clamp$ ; if hl >= MIN_FNUM...
-	
-	xor a,a
-	ld (ix+FM_Channel.pslide_ofs+0),a
-	ld (ix+FM_Channel.pslide_ofs+1),a
-	ld hl,de
-	jp no_ceil_clamp$
-
-default_ceil_clamp$:
-	ld a,b
-	or a,FMCNT_MAX_FNUM >> 8
-	ld d,a
-	ld e,FMCNT_MAX_FNUM & $FF
-	or a,a
-	sbc hl,de
-	add hl,de
-	jp c,no_ceil_clamp$ ; if hl < MAX_FNUM...
-
-	xor a,a
-	ld (ix+FM_Channel.pslide_ofs+0),a
-	ld (ix+FM_Channel.pslide_ofs+1),a
-	ld hl,de
-	jp no_ceil_clamp$
-
-; ix: address to FMCNT channel data
-; b:  channel (0~3)
-; DOESN'T BACKUP AF, HL AND DE
-; Adds the pitch slide offset to
-; the pitch offset
-FMCNT_update_pslide:
-	ld e,(ix+FM_Channel.pitch_ofs+0)
-	ld d,(ix+FM_Channel.pitch_ofs+1)
-	ex hl,de
-	ld e,(ix+FM_Channel.pslide_ofs+0)
-	ld d,(ix+FM_Channel.pslide_ofs+1)
-	add hl,de
-	ex hl,de
-	ld (ix+FM_Channel.pitch_ofs+0),e
-	ld (ix+FM_Channel.pitch_ofs+1),d
 	ret
 
 ; b:  channel (0~3)
@@ -701,11 +547,8 @@ FMCNT_set_note:
 	push de
 	push af
 	push bc
-		; Store new note in WRAM buffer
-		ld a,iyh ; load note in a
-		ld (ix+FM_Channel.bufrd_note),a
-
 		; Load base pitch from FMCNT_pitch_LUT in bc
+		ld a,iyh
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
 		ld l,a
 		ld h,0
@@ -722,15 +565,6 @@ FMCNT_set_note:
 		srl a           ; Get octave in the right position (block needs to be set to octave)
 		or a,b          ; OR block with F-Num 2
 		ld b,a
-
-		; Store pitch in WRAM
-		ld (ix+FM_Channel.frequency+0),c ; F-Num 1
-		ld (ix+FM_Channel.frequency+1),b ; Block and F-Num 2
-
-		; Reset pitch offset
-		xor a,a ; ld a,0
-		ld (ix+FM_Channel.pitch_ofs+0),a
-		ld (ix+FM_Channel.pitch_ofs+1),a
 
 		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
 		; Write Block and F-Num 2 

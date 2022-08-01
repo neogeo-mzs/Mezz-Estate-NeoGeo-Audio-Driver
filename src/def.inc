@@ -310,8 +310,4 @@ FM_Channel.frequency:  equ 2  ; u16 (--BBBFFF'FFFFFFFF; Block, F-Num 2 & 1)
 FM_Channel.volume:     equ 4  ; u8 (0 is lowest, 127 is highest)
 FM_Channel.enable:     equ 5  ; u8 (%0000'00VE; update Volume; Enable Channel. every update flag is cleared every tick)
 FM_Channel.algo:       equ 6  ; u8 (Stored multiplied by 2, thus shifted to the left once; ----AAA-)
-FM_Channel.pslide_ofs: equ 7  ; s16
-FM_Channel.pitch_ofs:  equ 9  ; s16
-FM_Channel.fnum_clamp: equ 11 ; u16 bit 15: custom clamp enable, bit 14: clamp direction (0: below, 1: above)
-FM_Channel.bufrd_note: equ 13 ; u8 (Used to avoid glitches with chains of clamped slide effects)
-FM_Channel.SIZE        equ 13+3 ; size + padding
+FM_Channel.SIZE        equ 16 ; size + padding
