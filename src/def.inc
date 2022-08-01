@@ -301,7 +301,7 @@ MLM_Channel.instrument:       equ 7  ; u8
 MLM_Channel.panning:          equ 8  ; u8
 MLM_Channel.volume:           equ 9  ; u8
 MLM_Channel.return_ptr:       equ 10 ; void*
-MLM_Channel.SIZE              equ MLM_Channel.return_ptr+1
+MLM_Channel.SIZE              equ MLM_Channel.return_ptr+2
 
 
 FM_Channel.lramspms:   equ 0  ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
