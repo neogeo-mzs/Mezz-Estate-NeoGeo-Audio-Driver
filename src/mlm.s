@@ -188,7 +188,6 @@ play_adpcma_note$:
 play_fm_note$:
 	push de
 	push hl
-	push iy
 		sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
 
 		; Calculate address of FM channel data
@@ -224,9 +223,11 @@ play_fm_note$:
 		rst RST_YM_WRITEA
 
 		; Set pitch
-		ld iyh,c
-		ld iyl,a
-		call FMCNT_set_note
+		push iy
+			ld iyh,c
+			ld iyl,a
+			call FMCNT_set_note
+		pop iy
 		
 		; Play FM channel
 		;   Calculate pointer enabled operators 
@@ -243,7 +244,6 @@ play_fm_note$:
 		add a,MLM_CH_FM1
 		ld c,b
 		call MLM_set_timing
-	pop iy
 	pop hl
 	pop de
 	jp parse_end$
