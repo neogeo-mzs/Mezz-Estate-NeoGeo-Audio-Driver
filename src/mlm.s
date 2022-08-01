@@ -16,8 +16,8 @@ MLM_irq:
 	dup CHANNEL_COUNT
 		; If the channel is disabled, don't update playback...
 		bit MLM_CH_ENABLE_BIT,(iy+MLM_Channel.flags)            
-		jr z,$+6                          ; +2 = 2b
-		call MLM_update_channel_playback  ; +3 = 6b
+		jr z,$+5                          ; +2 = 2b
+		call MLM_update_channel_playback  ; +3 = 5b
 
 		inc c
 		add iy,de
