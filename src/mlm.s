@@ -1092,41 +1092,20 @@ ch_counter set ch_counter+1
 
 ; a: channel
 ; c: panning (LR------)
-; TO REFACTOR. USING A VECTOR ARRAY FOR THIS IS STUPID.
 MLM_set_channel_panning:
-	push hl
-	push de
-	push af
-		ld h,0
-		ld l,a
-		ld de,MLM_set_ch_pan_vectors
-		add hl,hl
-		add hl,de
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		jp (hl)
-MLM_set_ch_pan_ret:
-	pop af
-	pop de
-	pop hl
+	cp a,MLM_CH_FM1
+	jp c,channel_is_adpcma$ ; if ch is adpcma
+	cp a,MLM_CH_SSG1
+	jp c,channel_is_fm$ ; if ch is fm
+
+	; else, return...
 	ret
 
-MLM_set_ch_pan_vectors:
-	dw MLM_set_ch_pan_PA,MLM_set_ch_pan_PA
-	dw MLM_set_ch_pan_PA,MLM_set_ch_pan_PA
-	dw MLM_set_ch_pan_PA,MLM_set_ch_pan_PA
-	dw MLM_set_ch_pan_FM,MLM_set_ch_pan_FM
-	dw MLM_set_ch_pan_FM,MLM_set_ch_pan_FM
-	dw MLM_set_ch_pan_ret,MLM_set_ch_pan_ret
-	dw MLM_set_ch_pan_ret ; SSG is mono
-
-MLM_set_ch_pan_PA:
+channel_is_adpcma$:
 	call PA_set_channel_panning
-	jr MLM_set_ch_pan_ret
+	ret
 
-MLM_set_ch_pan_FM:
+channel_is_fm$:
 	push bc
 	push af
 		sub a,MLM_CH_FM1
@@ -1136,7 +1115,7 @@ MLM_set_ch_pan_FM:
 		call FMCNT_set_panning
 	pop af
 	pop bc
-	jr MLM_set_ch_pan_ret
+	ret
 
 ; [INPUT]
 ;   c: channel
