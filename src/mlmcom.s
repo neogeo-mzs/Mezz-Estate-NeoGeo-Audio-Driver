@@ -325,9 +325,9 @@ MLMCOM_FM_TL_set:
 	ld e,a
 	ld hl,FM_ch1+FM_Channel.enable
 	add hl,de
-	ld a,(hl)
-	or a,FMCNT_VOL_UPDATE
-	ld (hl),a
+	
+	ld b,c
+	call FMCNT_update_total_levels
 	ret 
 
 ; invalid command, plays a noisy beep

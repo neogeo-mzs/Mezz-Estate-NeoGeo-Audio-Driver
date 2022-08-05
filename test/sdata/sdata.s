@@ -152,14 +152,15 @@ MLM_song_fm4:
 
 MLM_el_fm:
 	set_inst 2
+	set_vol $FF
 	set_pan PANNING_CENTER,0
 	fm_note NOTE_C,4,24
 	fm_note NOTE_D,4,24
 	note_off 30
-	set_vol $E8
-	set_pan PANNING_LEFT,0
+	set_vol $E0
+	;set_pan PANNING_LEFT,0
 	fm_note NOTE_E,4,24
-	set_pan PANNING_RIGHT,0
+	;set_pan PANNING_RIGHT,0
 	fm_note NOTE_C,4,24
 	note_off 30
 	jump MLM_el_fm-MLM_header
