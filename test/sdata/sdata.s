@@ -26,13 +26,10 @@ MLM_song_instruments:
 	ds 30,0 ; padding
 
 	; Instrument 1 (SSG)
-	db 1                               ; Mixing: Tone ON; Noise OFF
+	db SSG_MIX_TONE                    ; Mixing: Tone ON; Noise OFF
 	db 0                               ; EG enable: OFF
 	ds 3                               ; Skip EG information since EG is disabled
-	dw $0000                           ; Mix macro      | MLM_odata_mix_macro1-MLM_header
-	dw $0000                           ; Volume macro   | MLM_odata_vol_macro1-MLM_header
-	dw $0000                           ; Arpeggio macro | MLM_odata_arp_macro1-MLM_header
-	ds 21 ; Padding
+	ds 27 ; Padding
 	
 	; Instrument 2 (FM)
 	fm_ch_data 2,0,0,0                 ; feedback, algorithm, pms, ams

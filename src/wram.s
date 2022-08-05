@@ -24,36 +24,6 @@ MLM_active_ch_counter: ds 1                   ; u8
 MLM_instruments:       ds 2                   ; void*
 MLM_wram_end:
 
-; ======== SSG Controller variables ========
-SSGCNT_wram_start:
-SSGCNT_volumes:			ds SSG_CHANNEL_COUNT   ; u8[3]
-SSGCNT_mix_flags:    	ds 1                   ; u8 (Buffer for the YM2610's $07 Port A register)
-SSGCNT_noise_tune:		ds 1                   ; u8
-SSGCNT_channel_enable:	ds SSG_CHANNEL_COUNT   ; bool[3]
-SSGCNT_notes:			ds SSG_CHANNEL_COUNT   ; u8[3]
-SSGCNT_pitch_ofs:       ds SSG_CHANNEL_COUNT*2 ; s16[3]
-SSGCNT_pitch_slide_ofs: ds SSG_CHANNEL_COUNT*2 ; s16[3]
-SSGCNT_pitch_slide_clamp: ds SSG_CHANNEL_COUNT*2 ; u16[3] bit 15: custom clamp enable, bit 14: clamp direction (0: below, 1: above)
-SSGCNT_buffered_note:   ds SSG_CHANNEL_COUNT ; u8[3] Used to avoid issues with multiple clamped slides effects in a row.
-
-; IF THE ORDER OF THESE MACROS IS 
-; CHANGED THEN "MLM_set_instrument_ssg"
-; AND "SSGCNT_start_channel_macros"
-; MIGHT STOP FUNCTIONING CORRECTLY 
-SSGCNT_macros:
-SSGCNT_mix_macro_A:		ControlMacro
-SSGCNT_mix_macro_B:		ControlMacro
-SSGCNT_mix_macro_C:		ControlMacro
-SSGCNT_vol_macro_A: 	ControlMacro 
-SSGCNT_vol_macro_B: 	ControlMacro
-SSGCNT_vol_macro_C:		ControlMacro
-SSGCNT_arp_macro_A: 	ControlMacro 
-SSGCNT_arp_macro_B: 	ControlMacro
-SSGCNT_arp_macro_C:		ControlMacro
-;SSGCNT_noise_macro:	ControlMacro
-
-SSGCNT_wram_end:
-
 ; ======== FM ========
 
 FM_wram_start:        
@@ -73,8 +43,6 @@ PA_channel_pannings: ds PA_CHANNEL_COUNT
 PA_status_register: ds 1	
 PA_wram_end:
 
-; ======== FDCNT ========
-
 ; ======== Others ========
 EXT_2CH_mode:             ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
 IRQ_TA_tick_base_time:    ds 1 ; u8
@@ -84,6 +52,8 @@ has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has e
 master_volume:            ds 1 ; u8
 do_reset_chvols:          ds 1 ; bool (if this flag is set, MLM_irq will reset all channel volumes and clear the flag)
 do_stop_song:             ds 1 ; bool (if this flag is set, MLM_irq will stop the current song and clear the flag)
+SSG_inst_mix_flags:    	  ds 1 ; u8 (Contains the mix flags defined by SSG instruments)
+SSG_mix_flags_buffer:     ds 1 ; u8 (Actual mix flag buffer)
 tmp2:                     ds 2
 
 ; ======== SFX Playback System =======
