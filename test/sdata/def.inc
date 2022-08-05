@@ -16,10 +16,10 @@ PANNING_NONE   equ %00000000
 PANNING_RIGHT  equ %01000000
 PANNING_LEFT   equ %10000000
 PANNING_CENTER equ %11000000
-SSG_MIX_NONE      equ %0000
-SSG_MIX_TONE      equ %0001
-SSG_MIX_NOISE     equ %1000
-SSG_MIX_TONENOISE equ %1001
+SSG_MIX_NONE      equ %00000000
+SSG_MIX_TONE      equ %00000001
+SSG_MIX_NOISE     equ %00001000
+SSG_MIX_TONENOISE equ %00001001
 
 ; ================ Instrument macros ================
     macro fm_ch_data fb,algo,ams,pms
