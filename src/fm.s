@@ -70,37 +70,6 @@ FMCNT_init:
 	pop hl
 	ret
 
-; DOESN'T BACKUP REGISTERS !!!
-FMCNT_irq:
-	ld b,FM_CHANNEL_COUNT
-	ld ix,FM_ch4
-	
-loop$:
-	dec b
-		; If the channel's enable bit is 0,
-		; then continue to the next channel
-		ld a,(ix+FM_Channel.enable)
-		bit 0,a
-		jr z,skip_loop$
-
-		; If if FMCNT vol upd. flag is enabled...
-		; (This check is executed inside the function
-		;  too, this is to save time in most scenarios)
-		bit 1,a
-		call nz,FMCNT_update_total_levels
-
-		; Clear all the update bitflags
-		ld a,(ix+FM_Channel.enable)
-		and a,FMCNT_VOL_UPDATE ^ $FF
-		ld (ix+FM_Channel.enable),a 
-
-skip_loop$:
-		ld de,-FM_Channel.SIZE
-		add ix,de
-	inc b
-	djnz loop$
-	ret
-
 ; b:  channel (0~3)
 ; ix: address to FMCNT channel data
 ; (FM_channel_volumes[channel]): volume (0~7F)
@@ -109,17 +78,6 @@ FMCNT_update_total_levels:
 	push bc
 	push hl
 	push af
-		; if the FMCNT vol enable flag
-		; isn't set, return
-		ld a,(ix+FM_Channel.enable)
-		bit 1,a
-		jp z,return$
-		
-		; If it is set, clear volume flag
-		; and proceed with the function
-		and a,FMCNT_VOL_UPDATE ^ $FF
-		ld (ix+FM_Channel.enable),a
-
 		ld e,(ix+FM_Channel.algo)
 		ld c,1 ; Prepare operator value
 
@@ -329,6 +287,7 @@ FM_op_register_offsets_LUT:
 ; a:  fbalgo (--FFFAAA; Feedback, Algorithm)
 ; c:  channel (0~3)
 ; ix: Pointer to FMCNT channel data
+; Total levels must be updated afterwards
 FMCNT_set_fbalgo:
 	push de
 	push af
@@ -355,11 +314,6 @@ even_channel$:
 		and a,%00000111 ; --FFFAAA -> 00000AAA
 		rlca ; algorithm *= 2
 		ld (ix+FM_Channel.algo),a
-
-		; Set FM volume update flag
-		ld a,(ix+FM_Channel.enable)
-		or a,FMCNT_VOL_UPDATE
-		ld (ix+FM_Channel.enable),a
 	pop hl
 	pop af
 	pop de
@@ -458,10 +412,6 @@ FMCNT_set_operator:
 	push af
 	push bc
 		push hl
-			ld a,(ix+FM_Channel.enable)
-			or a,FMCNT_VOL_UPDATE
-			ld (ix+FM_Channel.enable),a
-			
 			; Load OP register offset in a, then 
 			; add said offset to DTMUL base address.
 			; After that, move result to d
@@ -566,7 +516,6 @@ FMCNT_set_note:
 		or a,b          ; OR block with F-Num 2
 		ld b,a
 
-		; WRITE TO REGISTERS DIRECTLY DO NOT BUFFER IN WRAM FOR NO ABSOLUTE REASON
 		; Write Block and F-Num 2 
 		ld e,b 
 		ld d,REG_FM_CH13_FBLOCK

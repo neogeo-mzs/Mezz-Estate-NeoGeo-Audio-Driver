@@ -667,10 +667,8 @@ set_fm_instrument$:
 		call FMCNT_set_operator
 		add hl,de
 
-		; Set volume update flag
-		ld a,(ix+FM_Channel.enable)
-		or a,FMCNT_VOL_UPDATE
-		ld (ix+FM_Channel.enable),a
+		ld b,c
+		call FMCNT_update_total_levels
 	pop ix
 	pop af
 	pop bc
@@ -910,10 +908,8 @@ set_fm_channel_volume$:
 		and a,127 ; Wrap volume inbetween 0 and 127
 		ld (ix+FM_Channel.volume),a
 
-		; set channel volume update flag
-		ld a,(ix+FM_Channel.enable)
-		or a,FMCNT_VOL_UPDATE
-		ld (ix+FM_Channel.enable),a
+		ld b,c
+		call FMCNT_update_total_levels
 	pop ix
 	pop af
 	pop bc
@@ -990,9 +986,8 @@ ch_counter set 0
 			and a,127
 
 			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.volume),a
-			ld a,(FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.enable)
-			or a,FMCNT_VOL_UPDATE
-			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.enable),a
+			ld b,ch_counter 
+			call FMCNT_update_total_levels
 ch_counter set ch_counter+1
 		edup
 
