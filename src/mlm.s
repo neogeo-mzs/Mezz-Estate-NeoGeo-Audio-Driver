@@ -208,7 +208,7 @@ play_fm_note$:
 		; before playing a note
 		ld h,b ; backup timing in h
 		ld b,a
-		call FMCNT_update_total_levels
+		call FM_update_total_levels
 		ld b,h ; store timing back into b
 
 		; Stop FM channel  
@@ -227,7 +227,7 @@ play_fm_note$:
 		push iy
 			ld iyh,c
 			ld iyl,a
-			call FMCNT_set_note
+			call FM_set_note
 		pop iy
 		
 		; Play FM channel
@@ -324,7 +324,7 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		call FMCNT_init
+		call FM_init
 		call SFXPS_set_taken_channels_free
 
 		; clear MLM WRAM
@@ -342,7 +342,7 @@ MLM_stop:
 		ld (do_stop_song),a
 
 		call ssg_stop
-		call fm_stop
+		call FM_stop
 		call PA_reset
 		call pb_stop
 	pop af
@@ -559,7 +559,7 @@ init_fm_channel$:
 	; Enable FMCNT for the channel
 	sub a,MLM_CH_FM1 ; Calculate FM channel range (6~9 -> 0~3)
 	ld c,a
-	call FMCNT_enable_channel
+	call FM_enable_channel
 	ret
 
 ; a: instrument
@@ -631,12 +631,12 @@ set_fm_instrument$:
 		; Set feedback & algorithm
 		ld c,a
 		ld a,(hl)
-		call FMCNT_set_fbalgo
+		call FM_set_fbalgo
 
 		; Set AMS and PMS
 		inc hl
 		ld a,(hl)
-		call FMCNT_set_amspms
+		call FM_set_amspms
 
 		; Set OP enable
 		inc hl
@@ -649,26 +649,26 @@ set_fm_instrument$:
 		ld de,7 ; operator data size
 
 		; Set OP 1
-		call FMCNT_set_operator
+		call FM_set_operator
 		add hl,de
 		inc b
 
 		; Set OP 2
-		call FMCNT_set_operator
+		call FM_set_operator
 		add hl,de
 		inc b
 
 		; Set OP 3
-		call FMCNT_set_operator
+		call FM_set_operator
 		add hl,de
 		inc b
 
 		; Set OP 4
-		call FMCNT_set_operator
+		call FM_set_operator
 		add hl,de
 
 		ld b,c
-		call FMCNT_update_total_levels
+		call FM_update_total_levels
 	pop ix
 	pop af
 	pop bc
@@ -752,7 +752,7 @@ channel_is_fm$:
 	push bc
 		sub a,MLM_CH_FM1
 		ld c,a
-		call FMCNT_stop_channel
+		call FM_stop_channel
 	pop bc
 	pop af
 	ret
@@ -909,7 +909,7 @@ set_fm_channel_volume$:
 		ld (ix+FM_Channel.volume),a
 
 		ld b,c
-		call FMCNT_update_total_levels
+		call FM_update_total_levels
 	pop ix
 	pop af
 	pop bc
@@ -987,7 +987,7 @@ ch_counter set 0
 
 			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.volume),a
 			ld b,ch_counter 
-			call FMCNT_update_total_levels
+			call FM_update_total_levels
 ch_counter set ch_counter+1
 		edup
 
@@ -1039,7 +1039,7 @@ channel_is_fm$:
 		ld b,c ; \
 		ld c,a ; | swap a and c
 		ld a,b ; /
-		call FMCNT_set_panning
+		call FM_set_panning
 	pop af
 	pop bc
 	ret

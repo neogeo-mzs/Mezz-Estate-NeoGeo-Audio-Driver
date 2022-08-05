@@ -99,7 +99,7 @@ startup:
 	ld (master_volume),a
 
 	; Silence YM2610
-	call fm_stop
+	call FM_stop
 	call PA_reset
 	call pb_stop
 	call ssg_stop
@@ -287,7 +287,7 @@ return$:
 ; and then enters an infinite loop
 fm_softlock:
 	di              
-	call fm_stop
+	call FM_stop
 
 	; Set FM channel 1 registers
 	ld d,REG_FM_CH13_FBLOCK

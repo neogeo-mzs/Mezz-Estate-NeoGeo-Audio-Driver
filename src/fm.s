@@ -1,4 +1,4 @@
-fm_stop:
+FM_stop:
 	push de
 		; Silence all OP4s
 		ld e,127
@@ -44,7 +44,7 @@ fm_stop:
 	pop de
 	ret
 
-FMCNT_init:
+FM_init:
 	push hl
 	push de
 	push bc
@@ -56,7 +56,7 @@ FMCNT_init:
 		ld (hl),0
 		ldir
 
-		call fm_stop
+		call FM_stop
 
 		; Set all channel pannings to CENTER
 		ld a,PANNING_CENTER
@@ -74,7 +74,7 @@ FMCNT_init:
 ; ix: address to FMCNT channel data
 ; (FM_channel_volumes[channel]): volume (0~7F)
 ; DOESN'T BACKUP DE
-FMCNT_update_total_levels:
+FM_update_total_levels:
 	push bc
 	push hl
 	push af
@@ -89,7 +89,7 @@ FMCNT_update_total_levels:
 
 		; for all the other algorithms, you have
 		; to index the vector table.
-		ld hl,FMCNT_tlupdate_vectors-8
+		ld hl,FM_tlupdate_vectors-8
 		ld d,0
 		add hl,de
 		;add hl,de ; Since the algorithm is stored multiplied by two, there's no need to add twice
@@ -101,13 +101,13 @@ return$:
 	ret
 
 algorithm_0_1_2_3$:
-		call FMCNT_update_modulator_tl ; OP1
+		call FM_update_modulator_tl ; OP1
 		inc c
-		call FMCNT_update_modulator_tl ; OP2
+		call FM_update_modulator_tl ; OP2
 		inc c
-		call FMCNT_update_modulator_tl ; OP3
+		call FM_update_modulator_tl ; OP3
 		inc c
-		call FMCNT_update_carrier_tl   ; OP4
+		call FM_update_carrier_tl   ; OP4
 	pop af
 	pop hl
 	pop bc
@@ -116,46 +116,46 @@ algorithm_0_1_2_3$:
 ; b: channel (0~3)
 ;   Indexed by FM channel algorithm
 ;   COULD BE MADE FASTER WITH JP INSTRUCTIONS
-FMCNT_tlupdate_vectors:
-	jr FMCNT_tlupdate_algo4
-	jr FMCNT_tlupdate_algo5_6
-	jr FMCNT_tlupdate_algo5_6
-	jr FMCNT_tlupdate_algo7
+FM_tlupdate_vectors:
+	jr FM_tlupdate_algo4
+	jr FM_tlupdate_algo5_6
+	jr FM_tlupdate_algo5_6
+	jr FM_tlupdate_algo7
 
-FMCNT_tlupdate_algo4:
-		call FMCNT_update_modulator_tl ; OP1
+FM_tlupdate_algo4:
+		call FM_update_modulator_tl ; OP1
 		inc c
-		call FMCNT_update_carrier_tl   ; OP2
+		call FM_update_carrier_tl   ; OP2
 		inc c
-		call FMCNT_update_modulator_tl ; OP3
+		call FM_update_modulator_tl ; OP3
 		inc c
-		call FMCNT_update_carrier_tl   ; OP4
+		call FM_update_carrier_tl   ; OP4
 	pop af
 	pop hl
 	pop bc
 	ret
 
-FMCNT_tlupdate_algo5_6:
-		call FMCNT_update_modulator_tl ; OP1
+FM_tlupdate_algo5_6:
+		call FM_update_modulator_tl ; OP1
 		inc c
-		call FMCNT_update_carrier_tl   ; OP2
+		call FM_update_carrier_tl   ; OP2
 		inc c
-		call FMCNT_update_carrier_tl   ; OP3
+		call FM_update_carrier_tl   ; OP3
 		inc c
-		call FMCNT_update_carrier_tl   ; OP4
+		call FM_update_carrier_tl   ; OP4
 	pop af
 	pop hl
 	pop bc
 	ret
 
-FMCNT_tlupdate_algo7:
-		call FMCNT_update_carrier_tl   ; OP1
+FM_tlupdate_algo7:
+		call FM_update_carrier_tl   ; OP1
 		inc c
-		call FMCNT_update_carrier_tl   ; OP2
+		call FM_update_carrier_tl   ; OP2
 		inc c
-		call FMCNT_update_carrier_tl   ; OP3
+		call FM_update_carrier_tl   ; OP3
 		inc c
-		call FMCNT_update_carrier_tl   ; OP4
+		call FM_update_carrier_tl   ; OP4
 	pop af
 	pop hl
 	pop bc
@@ -169,7 +169,7 @@ FMCNT_tlupdate_algo7:
 ;   relative to the channel volume,
 ;   and then sets the register based
 ;   on the result of said calculation.
-FMCNT_update_carrier_tl:
+FM_update_carrier_tl:
 	push hl
 	push af
 		; Load current op's TL from WRAM
@@ -239,7 +239,7 @@ FMCNT_update_carrier_tl:
 ; DOESN'T BACKUP DE
 ;	This just sets the operator's
 ;   Total Level without modifying it.
-FMCNT_update_modulator_tl:
+FM_update_modulator_tl:
 	push hl
 	push af
 		; Load current op's TL from WRAM into a
@@ -288,7 +288,7 @@ FM_op_register_offsets_LUT:
 ; c:  channel (0~3)
 ; ix: Pointer to FMCNT channel data
 ; Total levels must be updated afterwards
-FMCNT_set_fbalgo:
+FM_set_fbalgo:
 	push de
 	push af
 	push hl
@@ -322,7 +322,7 @@ even_channel$:
 ; a: amspms (--AA-PPP; Ams, Pms)
 ; c: channel (0~3)
 ; ix: Pointer to FMCNT channel data
-FMCNT_set_amspms:
+FM_set_amspms:
 	push de
 	push af
 	push hl
@@ -357,7 +357,7 @@ even_channel$:
 
 ; a: panning (LR------; Left and Right)
 ; c: channel (0~3)
-FMCNT_set_panning:
+FM_set_panning:
 	push de
 	push af
 	push ix
@@ -406,7 +406,7 @@ even_channel$:
 ; c:  channel (0~3)
 ; b:  operator (0~3)
 ; ix: Pointer to FMCNT channel data
-FMCNT_set_operator:
+FM_set_operator:
 	push hl
 	push de
 	push af
@@ -492,7 +492,7 @@ loop$:
 ; iyh: note (-OOONNNN; Octave, Note)
 ; iyl: channel
 ; ix:  pointer to FMCNT channel data
-FMCNT_set_note:
+FM_set_note:
 	push hl
 	push de
 	push af
@@ -502,7 +502,7 @@ FMCNT_set_note:
 		and a,$0F ; -OOONNNN -> 0000NNNN; Get note
 		ld l,a
 		ld h,0
-		ld de,FMCNT_pitch_LUT
+		ld de,FM_pitch_LUT
 		add hl,hl
 		add hl,de
 		ld c,(hl)
@@ -551,7 +551,7 @@ even_channel:
 ; DOESN'T BACKUP AF
 ; To convert an FM pitch from block to block-1,
 ; multiply the FNum by 2, and viceversa.
-FMCNT_get_note_with_block:
+FM_get_note_with_block:
 	push bc
 		; Load note in c and octave in b
 		ld a,d
@@ -567,7 +567,7 @@ FMCNT_get_note_with_block:
 
 		; Load FNum in hl
 		push bc
-			ld hl,FMCNT_pitch_LUT
+			ld hl,FM_pitch_LUT
 			ld b,0
 			add hl,bc
 			add hl,bc
@@ -613,7 +613,7 @@ lower_block$:
 
 ; Compatible with deflemask
 ; octave 0 = block 0, etc...
-FMCNT_pitch_LUT:
+FM_pitch_LUT:
 	;  C     C#    D     D#    E     F     F#    G     
 	dw $269, $28E, $2B5, $2DE, $30A, $338, $369, $39D 
 	;  G#    A     A#    B
@@ -621,7 +621,7 @@ FMCNT_pitch_LUT:
 	; 
 
 ; c: channel
-FMCNT_stop_channel:
+FM_stop_channel:
 	push af
 	push de
 	push hl
@@ -641,7 +641,7 @@ FMCNT_stop_channel:
 	ret
 
 ; c: channel (0~3)
-FMCNT_enable_channel:
+FM_enable_channel:
 	push af
 	push hl
 	push de

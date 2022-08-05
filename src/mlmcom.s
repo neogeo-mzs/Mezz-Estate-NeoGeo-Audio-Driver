@@ -327,7 +327,7 @@ MLMCOM_FM_TL_set:
 	add hl,de
 	
 	ld b,c
-	call FMCNT_update_total_levels
+	call FM_update_total_levels
 	ret 
 
 ; invalid command, plays a noisy beep
