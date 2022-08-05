@@ -42,10 +42,10 @@ SSG_CHA equ $00
 SSG_CHB equ $01
 SSG_CHC equ $02
 
-SSG_MIX_NONE      equ 0
-SSG_MIX_TONE      equ 1
-SSG_MIX_NOISE     equ 2
-SSG_MIX_TONENOISE equ 3
+SSG_MIX_NONE      equ %0000
+SSG_MIX_TONE      equ %0001
+SSG_MIX_NOISE     equ %1000
+SSG_MIX_TONENOISE equ %1001
 
 ; YM2610 FM registers
 REG_FM_LFO_CNT equ $22

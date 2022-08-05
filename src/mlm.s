@@ -93,10 +93,12 @@ MLM_parse_note:
 		
 		; Else, Play note SSG...
 		sub a,MLM_CH_SSG1
-		call SSGCNT_set_note
-		call SSGCNT_enable_channel
-		call SSGCNT_start_channel_macros
+		call SSG_set_note
+		ld c,(iy+MLM_Channel.volume)
+		call SSG_set_volume
+		call SSG_set_inst_mixing
 
+		; Set timing
 		add a,MLM_CH_SSG1
 		ld c,b
 		call MLM_set_timing
@@ -322,7 +324,6 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		call SSGCNT_init
 		call FMCNT_init
 		call SFXPS_set_taken_channels_free
 
@@ -682,9 +683,7 @@ set_fm_instrument$:
 set_ssg_instrument$:
 	push de
 	push hl
-	push bc
 	push af
-	push ix
 		; Load pointer to instrument data
 		; from WRAM into de
 		push af
@@ -707,87 +706,12 @@ set_ssg_instrument$:
 		; Calculate SSG channel
 		; in 0~2 range
 		sub a,MLM_CH_SSG1
-		ld d,a                    ; Channel parameter
 
-		; Enable tone if the mixing's byte
-		; bit 0 is 1, else disable it
-		ld a,(hl)
-		and a,%00000001 ; Get tone enable bit
-		ld c,a                    ; Enable/Disable parameter
-		ld e,SSGCNT_MIX_EN_TUNE   ; Tune/Noise select parameter
-		call SSGCNT_set_mixing
+		ld c,(hl)
+		call SSG_set_inst_mixing
 
-		; Enable noise if the mixing's byte
-		; bit 1 is 1, else disable it
-		ld a,(hl)
-		and a,%00000010 ; Get noise enable bit
-		srl a
-		ld c,a                   ; Enable/Disable parameter
-		ld e,SSGCNT_MIX_EN_NOISE ; Tune/Noise select parameter
-		call SSGCNT_set_mixing
-
-		; Skip EG parsing (TODO: parse EG information)
-		inc hl
-		inc hl
-		inc hl
-		inc hl
-		inc hl
-
-		; Calculate pointer to channel's mix macro
-		ld ixh,0
-		ld ixl,d 
-		add ix,ix ; \
-		add ix,ix ; | ix *= 8
-		add ix,ix ; /
-		ld bc,SSGCNT_mix_macro_A
-		add ix,bc
-
-		; Set mix macro
-		ld e,(hl) ; \
-		inc hl    ; | Store macro data
-		ld d,(hl) ; | offset in hl
-		ex de,hl  ; /
-		push de              ; \
-			ld de,MLM_HEADER ; | Add MLM header offset to
-			add hl,de        ; | obtain the actual address
-		pop de               ; /
-		call MACRO_set
-		
-		; Calculate pointer to volume macro
-		; initialization data (hl) and pointer
-		; to the volume macro in WRAM (ix)
-		ex de,hl
-		inc hl
-		ld bc,ControlMacro.SIZE*3
-		add ix,bc
-
-		; Set volume macro
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		push de              ; \
-			ld de,MLM_HEADER ; | Add MLM header offset to
-			add hl,de        ; | obtain the actual address
-		pop de               ; /
-		call MACRO_set
-
-		; Set arpeggio macro
-		ex de,hl
-		inc hl
-		add ix,bc
-		ld e,(hl)
-		inc hl
-		ld d,(hl)
-		ex de,hl
-		push de              ; \
-			ld de,MLM_HEADER ; | Add MLM header offset to
-			add hl,de        ; | obtain the actual address
-		pop de               ; /
-		call MACRO_set
-	pop ix
+		; TODO: EG PARSING
 	pop af
-	pop bc
 	pop hl
 	pop de
 	jp return$
@@ -809,9 +733,13 @@ MLM_stop_note:
 		cp a,MLM_CH_SSG1
 		jp c,channel_is_fm$
 
-		; Else, Stop SSG note...
-		sub a,MLM_CH_SSG1
-		call SSGCNT_disable_channel
+		; Else, Stop SSG note by setting 
+		; its mix flags to NONE
+		push bc
+			sub a,MLM_CH_SSG1
+			ld c,SSG_MIX_NONE
+			call SSG_set_mixing
+		pop bc
 	pop af
 	ret
 
@@ -884,18 +812,19 @@ skip_mvol_calculation$:
 		ld a,c
 		ld c,b
 
-		;   Scale down volume ($00~$FF -> $00~$0F)
+		; Scale down volume ($00~$FF -> $00~$0F)
 		rrca
 		rrca
 		rrca
 		rrca
 		and a,$0F
 
-		;   Store volume into SSGCNT WRAM
-		ld hl,SSGCNT_volumes-MLM_CH_SSG1
-		ld b,0
-		add hl,bc
-		ld (hl),a
+		; Store volume into SSGCNT WRAM
+		;   Swap a and c another time
+		ld b,a
+		ld a,c
+		ld c,b
+		call SSG_set_volume
 	pop ix
 	pop af
 	pop bc
@@ -1079,7 +1008,9 @@ ch_counter set 0
 			rrca
 			and a,$0F
 
-			ld (SSGCNT_volumes+ch_counter),a
+			ld c,a 
+			ld a,ch_counter 
+			call SSG_set_volume
 ch_counter set ch_counter+1
 		edup
 

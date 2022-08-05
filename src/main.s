@@ -198,7 +198,6 @@ execute_tma_tick:
 	call FADE_irq
 	call MLM_irq
 	call FMCNT_irq
-	call SSGCNT_irq
 	ret
 
 fast_beep:
