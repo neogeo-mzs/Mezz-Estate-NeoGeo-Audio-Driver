@@ -987,6 +987,7 @@ ch_counter set 0
 
 			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.volume),a
 			ld b,ch_counter 
+			ld ix,FM_ch1+(FM_Channel.SIZE*ch_counter)
 			call FM_update_total_levels
 ch_counter set ch_counter+1
 		edup
