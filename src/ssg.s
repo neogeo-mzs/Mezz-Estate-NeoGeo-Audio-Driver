@@ -17,6 +17,7 @@ ssg_stop:
 SSG_set_note:
     push de
     push hl
+    push af
         ; Index LUT
         ld e,c
         ld d,0
@@ -33,6 +34,7 @@ SSG_set_note:
         inc hl 
         ld e,(hl)
         rst RST_YM_WRITEA ; Coarse tune
+    pop af
     pop hl
     pop de
     ret
@@ -63,35 +65,12 @@ SSG_set_volume:
     ret
 
 ; a: channel
-;  Sets volume to 0
-SSG_silence_volume:
-    push de
-        ld d,a ; load ch in d
-        ld a,c ; load vol in a
-
-        ; Adapt volume to SSG register range
-        rrca 
-        rrca 
-        rrca 
-        rrca 
-        and a,$0F
-
-        ; Write to YM2610 register 
-        ld e,a
-        ld a,REG_SSG_CHA_VOL
-        add a,d 
-        ld d,a
-        rst RST_YM_WRITEA
-    pop af 
-    pop de
-    ret
-
-; a: channel
 ; c: mixing
 SSG_set_mixing:
     push bc
     push de
     push af
+        brk
         ; Depending on the channel used, shift 
         ; the mix flags and mask to the left
         ;   CHA: ----N--T
@@ -133,14 +112,12 @@ SSG_set_mixing_from_inst:
     push bc
     push de
     push af
+        brk
         ; Depending on the channel used, shift 
         ; the mix mask to the left
         ;   CHA: ----N--T
         ;   CHB: ---N--T-
         ;   CHC: --N--T--
-        ld b,a
-        call shift_left_c_by_b_bits
-        ld e,c ; backup result in e
         ld b,a 
         ld c,%1001
         call shift_left_c_by_b_bits
@@ -149,11 +126,10 @@ SSG_set_mixing_from_inst:
         ld d,a ; backup channel in d
         ld a,(SSG_inst_mix_flags)
         ld b,a
-        ld a,c 
-        xor a,$3F ; invert mask
-        and a,b   ; AND inverted mask and inst mix flags
-        ld e,a
-        
+        ld a,c
+        and a,b   ; AND mask and inst mix flags
+        ld e,a    ; store result in e
+
         ; AND buffered mix flag with inverted mask
         ; (resets the flags for that channel),
         ; and then OR the new flags.
@@ -182,6 +158,7 @@ SSG_set_inst_mixing:
     push bc
     push de
     push af
+        brk
         ; Depending on the channel used, shift 
         ; the mix flags and mask to the left
         ;   CHA: ----N--T

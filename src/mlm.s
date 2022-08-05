@@ -96,7 +96,7 @@ MLM_parse_note:
 		call SSG_set_note
 		ld c,(iy+MLM_Channel.volume)
 		call SSG_set_volume
-		call SSG_set_inst_mixing
+		call SSG_set_mixing_from_inst
 
 		; Set timing
 		add a,MLM_CH_SSG1
@@ -706,6 +706,8 @@ set_ssg_instrument$:
 		; Calculate SSG channel
 		; in 0~2 range
 		sub a,MLM_CH_SSG1
+
+		brk2
 
 		ld c,(hl)
 		call SSG_set_inst_mixing
