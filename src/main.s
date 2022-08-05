@@ -45,7 +45,7 @@ j_IRQ:
 	di
 	jp IRQ
 
-	db "MZS driver 2.0.0-alpha.0 by StereoMimi"
+	db "MZS driver 2.0.0-alpha.1 by StereoMimi"
 
 	org $0066
 NMI:
