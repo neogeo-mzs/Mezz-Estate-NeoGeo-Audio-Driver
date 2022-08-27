@@ -975,7 +975,7 @@ ch_counter set ch_counter+1
 		edup
 
 ch_counter set 0
-		dup FM_CHANNEL_COUNT
+		dup 0;FM_CHANNEL_COUNT
 			; Load MLM volume, subtract mvol and 
 			; scale the result down (0~255 -> 0~127)
 			ld a,(MLM_channels+(MLM_Channel.SIZE*(MLM_CH_FM1+ch_counter))+MLM_Channel.volume)
@@ -985,15 +985,15 @@ ch_counter set 0
 			srl a
 			and a,127
 
-			ld (FM_ch1+(ch_counter*FM_Channel.SIZE)+FM_Channel.volume),a
-			ld b,ch_counter 
 			ld ix,FM_ch1+(FM_Channel.SIZE*ch_counter)
+			ld (ix+FM_Channel.volume),a
+			ld b,ch_counter 
 			call FM_update_total_levels
 ch_counter set ch_counter+1
 		edup
 
 ch_counter set 0
-		dup SSG_CHANNEL_COUNT
+		dup 0;SSG_CHANNEL_COUNT
 			; Load MLM volume, subtract mvol and 
 			; scale the result down (0~255 -> 0~15)
 			ld a,(MLM_channels+(MLM_Channel.SIZE*(MLM_CH_SSG1+ch_counter))+MLM_Channel.volume)
