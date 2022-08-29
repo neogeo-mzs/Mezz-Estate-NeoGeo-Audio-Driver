@@ -40,6 +40,20 @@ j_port_write_b:
 j_port_read_a:
 	jp port_read_a
 
+
+	org $0030
+; Saw this in a driver. I don't know either but maybe if I remove 
+; this neogeos MV-123BCD blow up on saturdays or something. not risking it
+RST6:
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	
 	org $0038
 j_IRQ:
 	di
@@ -118,8 +132,8 @@ startup:
 	; Timer B to ~60Hz by default
 	ld hl,98
 	call ta_counter_load_set
-	ld de,REG_TMB_COUNTER<<8 | 198
-	rst RST_YM_WRITEA
+	;ld de,REG_TMB_COUNTER<<8 | 198
+	;rst RST_YM_WRITEA
 
 	; Reset timer counters to 0
 	ld de,REG_TIMER_CNT<<8 
@@ -136,9 +150,9 @@ startup:
 main_loop$:
 	; Check the timer B flag, if so 
 	; execute tma based function
-	in a,(4)
-	bit 1,a
-	call nz,execute_tmb_tick
+	;in a,(4)
+	;bit 1,a
+	;call nz,execute_tmb_tick
 
 	; Check the timer A flag, if so 
 	; execute tma based function
@@ -160,7 +174,6 @@ main_loop$:
 
 	; Loads load counter, enables interrupts 
 	; and resets flags of timer A and B.
-	;ld e,%00111111
 	ld e,%00010101
 	ld d,REG_TIMER_CNT
 	rst RST_YM_WRITEA
@@ -169,9 +182,13 @@ main_loop$:
 	jr main_loop$
 
 ; Only backs up AF
+;  THIS IS CALLED BY REAL HARDWARE EVEN IF THE TIMER IS NEVER ENABLED.
 execute_tmb_tick:
-	ld a,$FF
-	ld (has_a_timer_expired),a
+	push af
+		;jp softlock
+		ld a,$FF
+		ld (has_a_timer_expired),a
+	pop af
 	ret
 
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}

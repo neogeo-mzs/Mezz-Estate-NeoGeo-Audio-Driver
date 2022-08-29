@@ -90,7 +90,7 @@ has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has e
 master_volume:            ds 1 ; u8
 do_reset_chvols:          ds 1 ; bool (if this flag is set, MLM_irq will reset all channel volumes and clear the flag)
 do_stop_song:             ds 1 ; bool (if this flag is set, MLM_irq will stop the current song and clear the flag)
-tmp2:                     ds 2
+tmp:                     ds 1
 
 ; ======== SFX Playback System =======
 SFXPS_WRAM_start:
