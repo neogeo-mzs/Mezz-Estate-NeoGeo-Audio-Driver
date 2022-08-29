@@ -81,6 +81,34 @@ do_nothing$:
 	retn
 
 IRQ:
+	push af
+	push bc
+	push de
+		in a,(4)
+		ld c,a
+		bit 0,c
+		jp z,tma_not_triggered$
+		ld a,$FF 
+
+		ld (is_tma_triggered),a
+		ld e,%00011111
+		ld d,REG_TIMER_CNT
+		rst RST_YM_WRITEA
+
+tma_not_triggered$:
+		bit 1,c
+		jp z,tmb_not_triggered$
+		ld a,$FF 
+
+		ld (is_tmb_triggered),a
+		ld e,%00101111
+		ld d,REG_TIMER_CNT
+		rst RST_YM_WRITEA
+
+tmb_not_triggered$:
+	pop de
+	pop bc
+	pop af
 	reti
 
 startup:
@@ -128,75 +156,49 @@ startup:
 	; Loads load counters, enables interrupts 
 	; and resets flags of timer A and B.
 	; https://wiki.neogeodev.org/index.php?title=YM2610_timers
-	;ld e,%00111111 ; ADDING TMB CAUSES LAG ISSUES EVERY ~7.8s ?
-	ld e,%00010101
+	ld e,%00111111 ; ADDING TMB CAUSES LAG ISSUES EVERY ~7.8s ?
+	;ld e,%00010101
 	rst RST_YM_WRITEA
 	out (ENABLE_NMI),a 
 
 main_loop$:
-	; Check the timer B flag, if so 
-	; execute tma based function
-	in a,(4)
-	bit 1,a
-	call nz,execute_tmb_tick
-
-	; Check the timer A flag, if so 
-	; execute tma based function
-	in a,(4)
-	bit 0,a
+	ei
+	; Check the timer A and B flags,
+	; and executes their routines
+	; if required.
+	ld a,(is_tma_triggered)
+	cp a,0
 	call nz,execute_tma_tick
+	;call nz,execute_tmb_tick
 
 	call UCOM_handle_command
 	call SFXPS_update
 
-	; If at least one timer has expired, set all the 
-	; load counter and reset flags flags. Even if 
-	; the load counter flag of an unexpired timer has 
-	; been set, nothing will happen. The load counter 
-	; flag only works when the timer counter is 0.
-	ld a,(has_a_timer_expired)
-	or a,a ; cp a,0
-	jr z,main_loop$ ; if no timer has expired, continue
-
-	; Loads load counter, enables interrupts 
-	; and resets flags of timer A and B.
-	;ld e,%00111111
-	ld e,%00010101
-	ld d,REG_TIMER_CNT
-	rst RST_YM_WRITEA
-	xor a,a ; ld a,0
-	ld (has_a_timer_expired),a
 	jr main_loop$
 
-; Only backs up AF
 execute_tmb_tick:
-	ld a,$FF
-	ld (has_a_timer_expired),a
+	; Loads load counter, enables interrupts 
+	; and resets flags of timer B.
+	;ld e,%00111111
+	ld e,%00101010
+	ld d,REG_TIMER_CNT
+	rst RST_YM_WRITEA
 	ret
 
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
 ; wpset F800,1,w,wpdata==3A,{printf "TMA TICK --------"; go}
 execute_tma_tick:
-	ld a,$FF
-	ld (has_a_timer_expired),a
-	
-	; Increment base time counter, and if it's
-	; not equal to the song's base time, only
-	; update the YM2610 timer flags
-	ld a,(IRQ_TA_tick_time_counter) ; \
-	inc a                        ; | MLM_base_time_counter++
-	ld (IRQ_TA_tick_time_counter),a ; /
-	ld c,a ; Backup base time counter in c
-	ld a,(IRQ_TA_tick_base_time)
-	cp a,c
-	ret nz ; If MLM_base_time_counter != MLM_base_time return
-
-	; Else, clear the counter and carry on executing the tick
-	xor a,a ; ld a,0
-	ld (IRQ_TA_tick_time_counter),a
+	ld a,(tmp2)
+	inc a
+	ld (tmp2),a
+	cp a,60
+	jp z,softlock
 
 	call FADE_irq
 	call MLM_irq
+
+	xor a,a ; ld a,0
+	ld (is_tma_triggered),a
 	ret
 
 fast_beep:

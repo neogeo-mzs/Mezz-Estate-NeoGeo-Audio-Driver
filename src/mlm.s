@@ -1,5 +1,6 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
+	brk
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
 	call nz,MLM_reset_channel_volumes
@@ -704,8 +705,6 @@ set_ssg_instrument$:
 		; Calculate SSG channel
 		; in 0~2 range
 		sub a,MLM_CH_SSG1
-
-		brk2
 
 		ld c,(hl)
 		call SSG_set_inst_mixing

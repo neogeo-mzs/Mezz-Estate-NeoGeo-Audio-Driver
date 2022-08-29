@@ -48,12 +48,13 @@ EXT_2CH_mode:             ds 1 ; u8 (0: 2CH mode off; 64: 2CH mode on)
 IRQ_TA_tick_base_time:    ds 1 ; u8
 IRQ_TA_tick_time_counter: ds 1 ; u8
 current_bank:             ds 1 ; u8
-has_a_timer_expired:      ds 1 ; u8 (0 if no timer has expired, else timer has expired)
 master_volume:            ds 1 ; u8
 do_reset_chvols:          ds 1 ; bool (if this flag is set, MLM_irq will reset all channel volumes and clear the flag)
 do_stop_song:             ds 1 ; bool (if this flag is set, MLM_irq will stop the current song and clear the flag)
 SSG_inst_mix_flags:    	  ds 1 ; u8 (Contains the mix flags defined by SSG instruments)
 SSG_mix_flags_buffer:     ds 1 ; u8 (Actual mix flag buffer)
+is_tma_triggered:         ds 1 ; bool
+is_tmb_triggered:         ds 1 ; bool
 tmp2:                     ds 2
 
 ; ======== SFX Playback System =======

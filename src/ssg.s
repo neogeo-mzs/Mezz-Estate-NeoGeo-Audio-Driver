@@ -70,7 +70,6 @@ SSG_set_mixing:
     push bc
     push de
     push af
-        brk
         ; Depending on the channel used, shift 
         ; the mix flags and mask to the left
         ;   CHA: ----N--T
@@ -112,7 +111,6 @@ SSG_set_mixing_from_inst:
     push bc
     push de
     push af
-        brk
         ; Depending on the channel used, shift 
         ; the mix mask to the left
         ;   CHA: ----N--T
@@ -158,7 +156,6 @@ SSG_set_inst_mixing:
     push bc
     push de
     push af
-        brk
         ; Depending on the channel used, shift 
         ; the mix flags and mask to the left
         ;   CHA: ----N--T
