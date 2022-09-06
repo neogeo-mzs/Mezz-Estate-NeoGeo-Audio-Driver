@@ -111,7 +111,8 @@ SFXPS_find_free_channel:
 loop$:
         ; if the channel is free (bit 0 is clear)
         ; then return the channel
-        bit 0,a
+        ;bit 0,a
+        bit 5,a   ; reverse SPX channel search
         jr z,free_channel_found$
 
         srl a ; Shift bitflag to the right
@@ -123,8 +124,9 @@ loop$:
     ret
 
 free_channel_found$:
-        ld a,SFXPS_CHANNEL_COUNT
-        sub a,b
+        ;ld a,SFXPS_CHANNEL_COUNT
+        ;sub a,b
+        ld a,b ; 
     pop bc
     ret
 
