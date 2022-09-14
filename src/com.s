@@ -197,6 +197,7 @@ UCOM_CMD_nop:
 ; b: song
 ; c: $01
 UCOM_CMD_play_song:
+    ;jp UCOM_run_command_return
     push af
         ld a,b
         call MLM_play_song
