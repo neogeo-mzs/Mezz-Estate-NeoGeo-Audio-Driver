@@ -42,6 +42,7 @@ m1rom:
 	$(ROMWAK) /c ../driver.m1 sdata.bin m1rom.tmp.bin
 	$(ROMWAK) /p m1rom.tmp.bin m1rom.bin 512 255
 	rm m1rom.tmp.bin
+
 clean:
 	rm -rfv build history sdata.bin vrom.bin 
 	$(MAKE) -C $(TEST_SRC_PATH) clean
