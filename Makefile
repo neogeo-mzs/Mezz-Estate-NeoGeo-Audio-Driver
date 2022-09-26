@@ -25,6 +25,9 @@ LUT:
 run: build
 	$(MAKE) -C $(TEST_PATH) run
 
+debug: build
+	$(MAKE) -C $(TEST_PATH) debug
+
 sdata:
 	$(MAKE) -C $(TEST_PATH) sdata
 	

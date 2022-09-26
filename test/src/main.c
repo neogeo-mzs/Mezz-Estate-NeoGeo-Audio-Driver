@@ -92,7 +92,7 @@ int main()
         }
         if (BIOS_P1CHANGE->B)
         {
-            MZS_UCOM_set_fade(-8);
+            MZS_UCOM_set_fade(-3);
         }
         if (BIOS_P1CHANGE->C)
         {
