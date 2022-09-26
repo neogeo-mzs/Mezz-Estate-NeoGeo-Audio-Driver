@@ -22,6 +22,7 @@ MLM_channels:          ds MLM_Channel.SIZE*CHANNEL_COUNT
 MLM_event_arg_buffer:  ds 32                  ; u8[32]
 MLM_active_ch_counter: ds 1                   ; u8
 MLM_instruments:       ds 2                   ; void*
+MLM_is_song_playing:   ds 1                   ; bool
 MLM_wram_end:
 
 ; ======== FM ========

@@ -1,5 +1,10 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
+	; Avoids MLM_stop spam
+	ld a,(MLM_is_song_playing)
+	or a,a ; cp a,0
+	ret z 
+
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
 	call nz,MLM_reset_channel_volumes
@@ -343,7 +348,7 @@ MLM_stop:
 
 		call ssg_stop
 		call FM_stop
-		call PA_reset
+		;call PA_reset Resetting PAs messes with SFXPS
 		call pb_stop
 	pop af
 	pop bc
@@ -454,6 +459,9 @@ MLM_play_song:
 			add iy,de
 			inc b
 		edup
+
+		ld a,$FF
+		ld (MLM_is_song_playing),a
 	pop af
 	pop ix
 	pop de
