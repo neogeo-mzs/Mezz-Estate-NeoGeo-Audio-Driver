@@ -1,5 +1,10 @@
 ; DOESN'T BACKUP REGISTERS
 MLM_irq:
+	; Avoids MLM_stop spam
+	ld a,(MLM_is_song_playing)
+	or a,a ; cp a,0
+	ret z 
+
 	xor a,a
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
@@ -427,6 +432,7 @@ MLM_stop:
 	push de
 	push bc
 	push af
+		brk
 		call SSGCNT_init
 		call FMCNT_init
 		call SFXPS_set_taken_channels_free
@@ -445,9 +451,10 @@ MLM_stop:
 		ld (IRQ_TA_tick_time_counter),a
 		ld (do_stop_song),a
 
+		; DON'T RESET PAS, this messes with SFXPS
 		call ssg_stop
 		call fm_stop
-		call PA_reset
+		;call PA_reset
 		call pb_stop
 	pop af
 	pop bc
@@ -561,6 +568,9 @@ loop$:
 		call nz,MLM_ch_parameters_init
 		dec ix
 		djnz loop$
+
+		ld a,$FF
+		ld (MLM_is_song_playing),a
 	pop af
 	pop ix
 	pop de
@@ -985,7 +995,6 @@ MLM_set_channel_volume:
 	push bc
 	push af
 	push iy
-		brk
 		; Store unaltered channel volume in WRAM
 		ld hl,MLM_channel_volumes
 		ld b,0
