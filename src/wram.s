@@ -16,6 +16,7 @@ com_buffer_byte_significance:  ds 1                   ; u8
 
 ; ======== MLM player ========
 MLM_wram_start:
+MLM_is_song_playing:          ds 1                   ; bool
 MLM_playback_pointers:        ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_playback_start_pointers:  ds 2*CHANNEL_COUNT     ; void*[13]
 MLM_channel_control:          ds CHANNEL_COUNT       ; bool[13] (%0000'000E; channel Enable)
