@@ -85,14 +85,14 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            MZS_UCOM_stop_song();
-            MZS_UCOM_set_mlm_vol(0);
-            MZS_UCOM_set_fade(16);
-            //MZS_UCOM_play_song(selected_song);
+            //MZS_UCOM_stop_song();
+            //MZS_UCOM_set_mlm_vol(0);
+            //MZS_UCOM_set_fade(16);
+            MZS_UCOM_play_song(selected_song);
         }
         if (BIOS_P1CHANGE->B)
         {
-            MZS_UCOM_set_fade(-8);
+            MZS_UCOM_set_fade(-3);
             //MZS_UCOM_stop_song();
         }
         if (BIOS_P1CHANGE->C)

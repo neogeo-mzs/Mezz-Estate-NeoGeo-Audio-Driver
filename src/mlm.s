@@ -3,7 +3,7 @@ MLM_irq:
 	; Avoids MLM_stop spam
 	ld a,(MLM_is_song_playing)
 	or a,a ; cp a,0
-	ret z 
+	ret z
 
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0

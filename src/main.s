@@ -81,34 +81,6 @@ do_nothing$:
 	retn
 
 IRQ:
-	push af
-	push bc
-	push de
-		in a,(4)
-		ld c,a
-		bit 0,c
-		jp z,tma_not_triggered$
-		ld a,$FF 
-
-		ld (is_tma_triggered),a
-		ld e,%00011111
-		ld d,REG_TIMER_CNT
-		rst RST_YM_WRITEA
-
-tma_not_triggered$:
-		bit 1,c
-		jp z,tmb_not_triggered$
-		ld a,$FF 
-
-		ld (is_tmb_triggered),a
-		ld e,%00101111
-		ld d,REG_TIMER_CNT
-		rst RST_YM_WRITEA
-
-tmb_not_triggered$:
-	pop de
-	pop bc
-	pop af
 	reti
 
 startup:
@@ -156,8 +128,9 @@ startup:
 	; Loads load counters, enables interrupts 
 	; and resets flags of timer A and B.
 	; https://wiki.neogeodev.org/index.php?title=YM2610_timers
-	ld e,%00111111 ; ADDING TMB CAUSES LAG ISSUES EVERY ~7.8s ?
-	;ld e,%00010101
+	;ld e,%00111111 ; ADDING TMB CAUSES LAG ISSUES EVERY ~7.8s ?
+	ld d,REG_TIMER_CNT
+	ld e,%00010101
 	rst RST_YM_WRITEA
 	out (ENABLE_NMI),a 
 
@@ -166,13 +139,23 @@ main_loop$:
 	; Check the timer A and B flags,
 	; and executes their routines
 	; if required.
-	ld a,(is_tma_triggered)
-	cp a,0
+	in a,(4)
+	bit 0,a
 	call nz,execute_tma_tick
 	;call nz,execute_tmb_tick
 
 	call UCOM_handle_command
 	call SFXPS_update
+
+	ld a,(is_tma_triggered)
+	or a,a ; cp a,0
+	jr z,main_loop$
+
+	ld d,REG_TIMER_CNT
+	ld e,%00010101
+	rst RST_YM_WRITEA
+	xor a,a
+	ld (is_tma_triggered),a
 
 	jr main_loop$
 
@@ -188,16 +171,10 @@ execute_tmb_tick:
 ; wpset F800,1,w,wpdata==39,{printf "TMA IRQ ========"; go}
 ; wpset F800,1,w,wpdata==3A,{printf "TMA TICK --------"; go}
 execute_tma_tick:
-	ld a,(tmp2)
-	inc a
-	ld (tmp2),a
-	cp a,60
-	jp z,softlock
-
 	call FADE_irq
 	call MLM_irq
 
-	xor a,a ; ld a,0
+	ld a,$FF
 	ld (is_tma_triggered),a
 	ret
 
