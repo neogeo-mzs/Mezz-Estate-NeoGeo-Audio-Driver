@@ -125,6 +125,27 @@ AtoBCextendendsign:
   pop af
   ret
 
+;Inputs:
+;   A and DE
+;Outputs:
+;   AHL is the product, with A being the upper 8 bits
+;   BC = 0
+;   DE is preserved
+DE_Times_A:
+
+    ld bc,$0800
+    ld h,c
+    ld l,c
+loop$:
+    add hl,hl
+    rla          ; Check most-significant bit of accumulator
+    jr nc,skip$  ; If zero, skip addition
+    add hl,de
+    adc a,c
+skip$:
+    djnz loop$
+    ret
+
 ; Inputs:
 ;   c: c is the number to be shifted left
 ;   b: b is how many bits c has to be shifted

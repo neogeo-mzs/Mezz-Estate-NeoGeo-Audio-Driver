@@ -40,6 +40,44 @@ MLMMACRO_start_macro:
     add ix,de ; Points IX to MLM_Macro.macro
     inc hl    ; Points HL to the ControlMacro init. data
     call MACRO_set
-    
-    brk
+    ret
+
+; DOESN'T BACKUP AF, BC, DE, IX and IY
+MLMMACRO_update_all:
+macro_idx set 0
+    dup MLM_MACRO_COUNT
+        ld ix,MLM_macros+(macro_idx*MLM_Macro.SIZE)
+        bit MLM_MACRO_ENABLE_BIT,(ix+MLM_Macro.flags)
+        jr z, $+2+56
+
+        ; This remaining code is 56 bytes long
+            ld a,(ix+MLM_Macro.channel)
+            rla       ; \
+            rla       ;  \
+            rla       ;  | a *= 16
+            rla       ;  /
+            and a,$F0 ; /
+            ld e,a 
+            ld d,0
+            ld iy,MLM_channels
+            add iy,de
+
+            ld a,(ix+MLM_Macro.channel)
+            ld c,a
+            ld a,(ix+MLM_Macro.command)
+            ld (MLM_macro_command_buffer+0),a
+
+            ld ix,MLM_macros+(macro_idx*MLM_Macro.SIZE)+MLM_Macro.macro
+            call BMACRO_read
+            ld (MLM_macro_command_buffer+1),a
+            call MACRO_update
+
+            ld hl,MLM_macro_command_buffer
+            ld de,(iy+MLM_Channel.playback_ptr)
+                call MLM_parse_command
+            ld (iy+MLM_Channel.playback_ptr),de
+        ; End of 56 bytes long code
+
+macro_idx set macro_idx+1
+    edup 
     ret

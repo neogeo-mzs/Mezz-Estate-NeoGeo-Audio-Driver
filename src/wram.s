@@ -24,6 +24,7 @@ MLM_active_ch_counter: ds 1                   ; u8
 MLM_instruments:       ds 2                   ; void*
 MLM_is_song_playing:   ds 1                   ; bool
 MLM_macros:            ds MLM_Macro.SIZE*MLM_MACRO_COUNT
+MLM_macro_command_buffer: ds 2 ; u8[2] (Used to generate MLM commands on the fly from macros)
 MLM_wram_end:
 
 ; ======== FM ========

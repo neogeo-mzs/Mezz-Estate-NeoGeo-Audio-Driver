@@ -5,6 +5,8 @@ MLM_irq:
 	or a,a ; cp a,0
 	ret z
 
+	call MLMMACRO_update_all
+	
 	ld a,(do_reset_chvols)
 	or a,a ; cp a,0
 	call nz,MLM_reset_channel_volumes
@@ -256,7 +258,7 @@ play_fm_note$:
 
 ;   c:  channel
 ;   hl: source (playback pointer)
-;   iy: pointer to MLM_Channel
+;   iy: pointer to MLM_Channel ($0000 if being called by MLM Macro)
 MLM_parse_command:
 	push bc
 	push hl
