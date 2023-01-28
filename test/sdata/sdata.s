@@ -62,6 +62,12 @@ MLM_odata_arp_macro1:
 	db 2    ; Loop point
 	db -2,-2,-1,-1, 0, 0, 1, 1, 2, 2
 
+MLM_odata_mlm_macro1:
+	db $05 ; Command (Set volume)
+	db 4-1 ; Macro length
+	db 0   ; Loop point
+	db $FF, $F8, $E0, $F8 ; data
+
 #code SDATA_BANK0,$8000,$8000
 MLM_song_pa1:
 	dw MLM_el_pa-MLM_header
@@ -111,11 +117,13 @@ MLM_song_pa6:
 	dw MLM_song_instruments-MLM_header
 
 MLM_el_pa: ; Start in Zone 3
+	mlm_macro_set 0,MLM_odata_mlm_macro1-MLM_header
+MLM_el_pa_loop:
 	pa_note NOTE_C,30
 	note_off 30
 	pa_note NOTE_D,30
 	note_off 30
-	jump MLM_el_pa-MLM_header
+	jump MLM_el_pa_loop-MLM_header
 
 #code SDATA_BANK1,$8000,$8000
 MLM_song_fm1:

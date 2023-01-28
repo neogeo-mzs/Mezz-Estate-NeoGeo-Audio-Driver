@@ -104,3 +104,8 @@ SSG_MIX_TONENOISE equ %00001001
 	macro fm_tl_set operator,tl 
 		db $24 | operator,tl
 	endm
+
+	macro mlm_macro_set index,init_data_addr
+		db $40, \index
+		dw \init_data_addr
+	endm

@@ -191,14 +191,18 @@ MLM_CH_SSG3 equ 12
 MLM_CH_ENABLE_BIT equ 0
 MLM_CH_ENABLE equ (1<<MLM_CH_ENABLE_BIT)
 
+MLM_MACRO_COUNT equ 16
+MLM_MACRO_ENABLE_BIT equ 0
+MLM_MACRO_ENABLE     equ (1<<MLM_MACRO_ENABLE_BIT)
+
+
 ; Should always be a multiple of 2
 ; and also be smaller than 128
 COM_BUFFER_LENGTH equ 32
 
 UCOM_MASK         equ %01111111
 
-; SSG driver definitions (driver into 
-; the driver??? change name later)
+; SSG driver definitions
 SSGCNT_MIX_EN_TUNE	equ 0
 SSGCNT_MIX_EN_NOISE	equ 3
 
@@ -301,6 +305,11 @@ MLM_Channel.volume:           equ 9  ; u8
 MLM_Channel.return_ptr:       equ 10 ; void*
 MLM_Channel.SIZE              equ MLM_Channel.return_ptr+2
 
+MLM_Macro.flags:   equ 0 ; u8
+MLM_Macro.command: equ 1 ; u8
+MLM_Macro.channel: equ 2 ; u8
+MLM_Macro.macro:   equ 3 ; ControlMacro (check macro.s)
+MLM_Macro.SIZE:    equ 16 ; Code is optimized around this being a power of 2, changing this will required code changes.
 
 FM_Channel.lramspms:   equ 0  ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
 FM_Channel.op_enable:  equ 1  ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)

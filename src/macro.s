@@ -120,7 +120,7 @@ MACRO_set:
 		ld (ix+ControlMacro.data+1),h
 
 		; Set other variables
-		ld (ix+ControlMacro.enable),$FF
+		ld (ix+ControlMacro.enable),$FF ; Enable macro again
 		ld (ix+ControlMacro.curr_pt),0
 return$:
 	pop de

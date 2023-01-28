@@ -348,6 +348,7 @@ softlock:
 	include "timer.s"
 	include "mlm.s"
 	include "mlmcom.s"
+	include "mlmmacro.s"
 	include "math.s"
 	include "sfxps.s"
 	include "macro.s"

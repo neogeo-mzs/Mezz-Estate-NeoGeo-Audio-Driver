@@ -368,8 +368,6 @@ loop$:
 	bit MLM_CH_ENABLE_BIT,(hl)
 	jp z,skip_stop$
 
-	brk
-
 	; Else the PA channel was used, stop its function.
 	ld c,b ; - Move the channel from the loop range (1~6) to
 	dec c  ; - a zero based range used by the PA routines (0~5)

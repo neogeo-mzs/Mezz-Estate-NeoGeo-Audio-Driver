@@ -18,7 +18,11 @@ MLM_command_vectors:
 	dup 4
 		dw MLMCOM_FM_TL_set
 	edup
-	dup 89
+	dup 24
+		dw MLMCOM_invalid ; Invalid commands
+	edup
+	dw MLMCOM_macro_start,          MLMCOM_invalid
+	dup 62
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 
@@ -28,7 +32,9 @@ MLM_command_argc:
 	ds 16, $00 ; Wait ticks nibble
 	db $00, $00, $00, $00
 	ds 4, $01 ; FM OP TL Set
-	ds 89, 0  ; Invalid commands
+	ds 24, 0  ; Invalid commands
+	db $03, $00
+	ds 62, 0  ; Invalid commands
 
 ; c: channel
 ; iy: pointer to MLM_Channel
@@ -328,7 +334,38 @@ MLMCOM_FM_TL_set:
 	
 	ld b,c
 	call FM_update_total_levels
-	ret 
+	ret
+
+; c: channel
+; de: playback pointer
+; iy: pointer to MLM_Channel
+; Arguments:
+;   1. %IIIIIIII (mlm macro Index; 0~MLM_MACRO_COUNT-1)
+;   2. %MMMMMMMM (pointer to Macro Initialization data LSB)
+;   3. %MMMMMMMM (pointer to Macro Initialization data MSB)
+
+MLMCOM_macro_start:
+	push de
+		; Set timing to 0
+		push bc
+			ld a,c
+			ld c,0
+			call MLM_set_timing
+		pop bc
+
+		ld a,(MLM_event_arg_buffer+1) ; Macro init. LSB
+		ld l,a
+		ld a,(MLM_event_arg_buffer+2) ; Macro init. MSB
+		ld h,a
+		ld de,MLM_HEADER ; - Calculates the actual pointer of
+		add hl,de        ; - the offset from the MLM Header
+		ld a,(MLM_event_arg_buffer+0) ; Index
+
+		push iy
+			call MLMMACRO_start_macro
+		pop iy
+	pop de
+	ret
 
 ; invalid command, plays a noisy beep
 ; and softlocks the driver
