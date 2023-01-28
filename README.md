@@ -1,6 +1,6 @@
 # Mezz'Estate Neogeo Audio Driver
 
-Audio driver for the NeoGeo MVS and AES made in assembly.<br/>
+An audio driver for the NeoGeo MVS and AES written in assembly.<br/>
 Check [the wiki](https://github.com/stereomimi/Mezz-Estate-NeoGeo-Audio-Driver/wiki) for further information
 
 ## Compilation dependencies
