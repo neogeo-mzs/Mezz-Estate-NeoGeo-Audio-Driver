@@ -329,8 +329,9 @@ MLM_stop:
 	push de
 	push bc
 	push af
-		call FM_init
 		call SFXPS_set_taken_channels_free
+		call MLM_stop_used_pa_channels
+		call FM_init
 
 		; clear MLM WRAM
 		ld hl,MLM_wram_start
@@ -348,12 +349,36 @@ MLM_stop:
 
 		call ssg_stop
 		call FM_stop
-		;call PA_reset Resetting PAs messes with SFXPS
 		call pb_stop
 	pop af
 	pop bc
 	pop de
 	pop hl
+	ret
+
+; Doesn't backup HL, BC, DE, and AF
+MLM_stop_used_pa_channels:
+	ld hl,MLM_channels+(MLM_Channel.SIZE*(PA_CHANNEL_COUNT-1))+MLM_Channel.flags
+	ld de,MLM_Channel.SIZE
+	ld b,PA_CHANNEL_COUNT
+
+loop$:
+	; If the MLM channel is disabled, (thus unused
+	; by the music playback routines) don't stop the channel. 
+	bit MLM_CH_ENABLE_BIT,(hl)
+	jp z,skip_stop$
+
+	brk
+
+	; Else the PA channel was used, stop its function.
+	ld c,b ; - Move the channel from the loop range (1~6) to
+	dec c  ; - a zero based range used by the PA routines (0~5)
+	call PA_stop_sample
+
+skip_stop$:
+	or a,a    ; clear carry
+	sbc hl,de
+	djnz loop$
 	ret
 
 ; a: song

@@ -92,8 +92,8 @@ int main()
         }
         if (BIOS_P1CHANGE->B)
         {
-            MZS_UCOM_set_fade(-3);
-            //MZS_UCOM_stop_song();
+            //MZS_UCOM_set_fade(-3);
+            MZS_UCOM_stop_song();
         }
         if (BIOS_P1CHANGE->C)
         {
