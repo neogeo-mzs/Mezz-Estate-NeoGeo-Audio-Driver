@@ -244,6 +244,7 @@ SFXPS_play_sfx:
     push hl
     push de
     push ix
+        brk
         ; Find a suitable channel, if
         ; none is found return.
         call SFXPS_find_suitable_channel

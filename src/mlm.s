@@ -1167,7 +1167,7 @@ ch_counter set 0
 			; If channel is disabled, skip volume code
 			ld a,(MLM_channel_control+ch_counter)
 			or a,a
-			jp z,$+48 ; Skips the whole cycle, onto the next loop. Update this if any piece of code below is changed
+			jp z,$+51 ; Skips the whole cycle, onto the next loop. Update this if any piece of code below is changed
 
 			; Load MLM volume, subtract mvol and 
 			; scale the result down (0~255 -> 0~31)
