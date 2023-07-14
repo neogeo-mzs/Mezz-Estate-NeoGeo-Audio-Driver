@@ -62,7 +62,7 @@ debug: build
 
 neosdconv: build
 	rm $(BUILD_PATH)/*.bin
-	$(NEOSDCONV) -i $(BUILD_PATH) -o $(BUILD_PATH)/build.neo -n homebrew -y 2021 -m "Mezz'Estate"
+	$(NEOSDCONV) -i $(BUILD_PATH) -o $(BUILD_PATH)/build.neo -n homebrew -y 2023 -m "StereoMimi"
 	
 ifneq ($(strip $(NEOSD_ROM_PATH)),)
 	echo "Moving neo rom to SD card"

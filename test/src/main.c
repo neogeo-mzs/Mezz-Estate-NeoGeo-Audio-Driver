@@ -66,6 +66,7 @@ int main()
     int selected_song = 0;
     int smp_id = 0;
     int panning = 3; // 0 = None, 1 = Right, 2 = Left, 3 = Center
+    long frames = 0;
     
     while(1)
     {
@@ -85,14 +86,15 @@ int main()
 
         if (BIOS_P1CHANGE->A)
         {
-            MZS_UCOM_stop_song();
-            MZS_UCOM_set_mlm_vol(0);
-            MZS_UCOM_set_fade(16);
+            //MZS_UCOM_stop_song();
+            //MZS_UCOM_set_mlm_vol(0);
+            //MZS_UCOM_set_fade(16);
             MZS_UCOM_play_song(selected_song);
         }
         if (BIOS_P1CHANGE->B)
         {
-            MZS_UCOM_set_fade(-3);
+            //MZS_UCOM_set_fade(-3);
+            MZS_UCOM_stop_song();
         }
         if (BIOS_P1CHANGE->C)
         {
@@ -100,8 +102,11 @@ int main()
             MZS_UCOM_buffer_sfxps_cvol(panning<<5, 0x1F);
         }
         if (BIOS_P1CHANGE->D)
-            MZS_UCOM_play_sfxps_smp(smp_id);
-            
+            //MZS_UCOM_play_sfxps_smp(smp_id);
+            MZS_UCOM_RETRIG_SFXPS_SMP(smp_id);
+        
+        frames++;
+
         FIX_SetCursor(8, 7);
         FIX_PrintNibble(selected_song >> 4);
         FIX_PrintNibble(selected_song & 0x0F);

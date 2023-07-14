@@ -246,6 +246,41 @@ FMCNT_MAX_FNUM equ $07FF
 		pop af
 	endm
 
+	macro brk4
+		push af
+		ld a,$3C
+		ld (breakpoint),a
+		pop af
+	endm
+
+	macro brk5
+		push af
+		ld a,$3D
+		ld (breakpoint),a
+		pop af
+	endm
+
+	macro brk6
+		push af
+		ld a,$3E
+		ld (breakpoint),a
+		pop af
+	endm
+
+	macro brk7
+		push af
+		ld a,$3F
+		ld (breakpoint),a
+		pop af
+	endm
+
+	macro brk8
+		push af
+		ld a,$40
+		ld (breakpoint),a
+		pop af
+	endm
+
 	macro brk4c
 		push hl
 		push bc
@@ -272,6 +307,16 @@ FMCNT_MAX_FNUM equ $07FF
 			ld b,$3E
 			ld hl,breakpoint
 			ld (hl),b
+		pop bc
+		pop hl
+	endm
+
+	macro brk7c
+		push hl
+		push bc
+		ld c,$3F
+		ld hl,breakpoint
+		ld (hl),c
 		pop bc
 		pop hl
 	endm

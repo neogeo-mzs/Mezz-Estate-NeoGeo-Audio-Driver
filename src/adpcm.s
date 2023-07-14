@@ -2,8 +2,18 @@
 ;;                 ADPCM-A                 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Note: anytime an ADPCM channel is stopped, the flags MUST be dealt with or they will stay stuck.
 PA_stop:
 	push de
+		; Reset and mask all channel status flags
+		ld de,REG_P_FLAGS_W<<8 | %00111111
+		rst RST_YM_WRITEA
+
+		; Unmask all channel status flags
+		ld e,0
+		rst RST_YM_WRITEA
+
+		; Stop all channels
 		ld de,REG_PA_CTRL<<8 | $BF
 		rst RST_YM_WRITEB
 	pop de
@@ -67,12 +77,28 @@ PA_stop_sample:
 	push bc
 	push af
 	push de
+		; Maybe the status register flag gets cleared
+		; when resetting, masking and (especially) unmasking the status flags?
+		call SFXPS_update_playback_status
+		
+		; Get pointer to channel mask
 		ld hl,PA_channel_on_masks
-		ld b,0
-		add hl,bc
-		ld e,(hl)
+		ld d,0
+		add hl,de
+		ld a,(hl)
 
-		set 7,e   ; Set dump bit
+		; Reset and mask channel status flag
+		ld d,REG_P_FLAGS_W
+		ld e,a
+		rst RST_YM_WRITEA
+
+		; Unmask channel status flag
+		ld e,0
+		rst RST_YM_WRITEA
+
+		; Stop sample
+		or a,%10000000 ; Set dump bit
+		ld e,a
 		ld d,REG_PA_CTRL
 		rst RST_YM_WRITEB
 	pop de		
@@ -179,11 +205,26 @@ PA_play_sample:
 	push hl
 	push de
 	push af
+		; Maybe the status register flag gets cleared
+		; when resetting, masking and (especially) unmasking the status flags?
+		push de
+			call SFXPS_update_playback_status
+		pop de
+
 		; Get pointer to channel mask
 		ld hl,PA_channel_on_masks
 		ld d,0
 		add hl,de
 		ld a,(hl)
+ 
+		; Reset and mask channel status flag
+		ld d,REG_P_FLAGS_W
+		ld e,a
+		rst RST_YM_WRITEA
+
+		; Unmask channel status flag
+		ld e,0
+		rst RST_YM_WRITEA
 
 		; Stop sample if one's playing first
 		ld d,REG_PA_CTRL
@@ -191,18 +232,47 @@ PA_play_sample:
 		ld e,a
 		rst RST_YM_WRITEB
 
-		; Reset and mask channel status flag
-		;ld d,REG_P_FLAGS_W
-		and a,%01111111 ; Clear 7th bit
-		;ld e,a
-		;rst RST_YM_WRITEA
-
-		; Unmask channel status flag
-		;ld e,0
-		;rst RST_YM_WRITEA
-
 		; Play sample
 		ld d,REG_PA_CTRL
+		and a,%01111111 ; Clear dump bit
+		ld e,a
+		rst RST_YM_WRITEB
+	pop af
+	pop de
+	pop hl
+	ret
+
+; e: channel
+;   Plays ADPCM-A channel and resets flags correctly
+PA_retrigger_sample:
+	push hl
+	push de
+	push af
+		; Maybe the status register flag gets cleared
+		; when resetting, masking and (especially) unmasking the status flags?
+		push de
+			call SFXPS_update_playback_status
+		pop de
+
+		; Get pointer to channel mask
+		ld hl,PA_channel_on_masks
+		ld d,0
+		add hl,de
+		ld a,(hl)
+ 
+		; Reset and mask channel status flag
+		ld d,REG_P_FLAGS_W
+		ld e,a
+		rst RST_YM_WRITEA
+
+		; Unmask channel status flag
+		ld e,0
+		rst RST_YM_WRITEA
+
+		; Play sample, without stopping the channel
+		; first
+		ld d,REG_PA_CTRL
+		and a,%01111111 ; Clear dump bit
 		ld e,a
 		rst RST_YM_WRITEB
 	pop af
