@@ -36,18 +36,7 @@ SFXPS_init:
 SFXPS_update:
     push af
     push de
-        ; Read status register flag 
-		; and store it into WRAM
-		in a,(6)
-		and a,$3F ; Get ADPCM-A flags
-		ld e,a    ; backup status register flag in e
-        
-        ; SFXPS_channel_playback_status &= ~flags
-        xor a,$FF
-        ld d,a
-        ld a,(SFXPS_channel_playback_status)
-        and a,d
-        ld (SFXPS_channel_playback_status),a
+        call SFXPS_update_playback_status
 
 		; Reset and mask raised flags
 		ld d,REG_P_FLAGS_W
@@ -56,10 +45,79 @@ SFXPS_update:
 		; Unmask all flags
 		ld e,0
 		rst RST_YM_WRITEA
+
+        ; DEBUG: If a channel is being used for SFXPS make an SSG noise
+        ; SSG CHC note: A4, CHC Tone enabled
+        ;ld de,$38 | ($04 << 8)
+        ;rst RST_YM_WRITEA
+        ;ld de,$02 | ($05 << 8)
+        ;rst RST_YM_WRITEA
+        ;ld de,%111011 | ($07 << 8)
+        ;rst RST_YM_WRITEA
+
+        ;ld de,$00 | ($0A << 8) ; By default CHC has the volume set to 0
+
+        ;ld a,(SFXPS_channel_playback_status)
+        ;or a,a ; cp a,0
+        ;jr z,skip_debug$
+
+        ;ld e,$0F ; If no sample is playing, this gets skipped
+
+;skip_debug$:
+        ;rst RST_YM_WRITEA 
     pop de
     pop af
     ret
-    
+
+; [OUTPUT]
+;   e: ADPCM status register flags
+; DOES NOT BACKUP AF, DE
+SFXPS_update_playback_status:
+    ; Read status register flag 
+    ; and store it into WRAM
+    in a,(6)
+    and a,$3F ; Get ADPCM-A flags
+    ld e,a    ; backup status register flag in e
+
+    ; SFXPS_channel_playback_status &= ~flags
+    xor a,$FF
+    ld d,a
+    ld a,(SFXPS_channel_playback_status)
+    and a,d
+    ld (SFXPS_channel_playback_status),a
+
+    ; Clear the priority and sample id in WRAM
+    ; of the samples that stopped playing
+    push bc
+    push hl
+    push de
+        ld a,e ; load status register flag back in a
+        ld c,0 ; C always stays zero throughout this loop
+        ld b,SFXPS_CHANNEL_COUNT
+        ld hl,SFXPS_channel_priorities+SFXPS_CHANNEL_COUNT-1
+        ld de,SFXPS_channel_sample_ids+SFXPS_CHANNEL_COUNT-1
+
+loop$:
+        ; If the sample wasn't stopped this frame, skip
+        ; WRAM clear code
+        bit 5,a
+        jr z,continue_loop$
+
+        ld (hl),c
+        ex hl,de
+        ld (hl),c
+        ex hl,de
+
+continue_loop$:
+        sla a  ; Shift status register flag
+        dec hl ; Next channel priority
+        dec de ; Next channel sample id
+        djnz loop$
+    pop de
+    pop hl
+    pop bc
+    ret
+
 ; c: channel
 ;   An invalid SFXPS channel can be used,
 ;   the function will just do nothing
@@ -73,12 +131,23 @@ SFXPS_set_channel_as_taken:
         cp a,SFXPS_CHANNEL_COUNT
         jr nc,return$
         
+        ; Set the channel's taken status
         ld hl,PA_channel_on_masks
         ld b,0
         add hl,bc
         ld a,(SFXPS_channel_taken_status)
         or a,(hl)
         ld (SFXPS_channel_taken_status),a
+
+        ; Stop the ADPCM channel, then clear its
+        ; SFXPS playback flag
+        call PA_stop_sample
+        ld a,(hl)
+        xor a,$FF
+        ld b,a
+        ld a,(SFXPS_channel_playback_status)
+        and a,b 
+        ld (SFXPS_channel_playback_status),a
 return$:
     pop af
     pop hl
@@ -87,14 +156,38 @@ return$:
 
 SFXPS_set_taken_channels_free:
     push af
+    push de
+        ; Maybe the status register flag gets cleared
+		; when resetting, masking and (especially) unmasking the status flags?
+		call SFXPS_update_playback_status
+
+        ; Reset and mask newly untaken channels' status flags
+        ld a,(SFXPS_channel_taken_status)
+        ld d,REG_P_FLAGS_W
+        ld e,a
+        rst RST_YM_WRITEA
+
+        ; Unmask said channel status flags
+        ld e,0
+        rst RST_YM_WRITEA
+
+        ; Stop said channels
+        or a,%10000000 ; Set dump bit
+		ld e,a
+		ld d,REG_PA_CTRL
+		rst RST_YM_WRITEB
+
+        ; Clear their taken status
         xor a,a
         ld (SFXPS_channel_taken_status),a
+    pop de
     pop af
     ret
 
 
 ; [OUTPUT]
 ;   a: free channel ($FF if none is found)
+; Searches from PA6 to PA1
 ; CHANGES FLAGS!!!
 SFXPS_find_free_channel:
     push bc
@@ -111,10 +204,10 @@ SFXPS_find_free_channel:
 loop$:
         ; if the channel is free (bit 0 is clear)
         ; then return the channel
-        bit 0,a
+        bit 5,a
         jr z,free_channel_found$
 
-        srl a ; Shift bitflag to the right
+        sla a ; Shift bitflag to the left
         djnz loop$
 
         ; Else, return $FF
@@ -123,8 +216,8 @@ loop$:
     ret
 
 free_channel_found$:
-        ld a,SFXPS_CHANNEL_COUNT
-        sub a,b
+        ld a,b
+        dec a
     pop bc
     ret
 
@@ -136,6 +229,7 @@ free_channel_found$:
 ;   First searches for a free channel,
 ;   if none is available, it goes through
 ;   the busy channels and checks their priority.
+;   Searches from PA6 to PA1
 SFXPS_find_suitable_channel:
     ; If a free channel is found, return it
     call SFXPS_find_free_channel
@@ -149,13 +243,13 @@ SFXPS_find_suitable_channel:
     push hl
     push de
         ld b,SFXPS_CHANNEL_COUNT
-        ld hl,SFXPS_channel_priorities
+        ld hl,SFXPS_channel_priorities+SFXPS_CHANNEL_COUNT-1
         ld a,(SFXPS_channel_taken_status)
         ld e,a ; Keep a copy of the channel taken status in e
 loop$:
         ; If the channel is taken, skip this 
         ; iteration and check the next channel
-        bit 0,a
+        bit 5,a
         jr nz,loop_next$
 
         ; Else, the channel status is busy.
@@ -167,9 +261,9 @@ loop$:
         jr nc,busy_channel_found$
 
 loop_next$:
-        inc hl ; Index address of next SFXPS ch. priorities
+        dec hl ; Index address of next SFXPS ch. priorities
         ld a,e ; Get channel taken status back
-        srl a  ; Shift channel taken status bitflag
+        sla a  ; Shift channel taken status bitflag
         ld e,a ; Update channel taken status copy
         djnz loop$
 
@@ -182,8 +276,8 @@ loop_next$:
     ret
 
 busy_channel_found$:
-        ld a,SFXPS_CHANNEL_COUNT
-        sub a,b
+        ld a,b
+        dec a
     pop de
     pop hl
     pop bc
@@ -199,6 +293,7 @@ busy_channel_found$:
 ;   or that has just played, the specified sample, 
 ;   if none satisfy this condition, it returns
 ;   a channel based on its busy status and priority.
+;   Searches from PA6 to PA1
 SFXPS_find_retrig_channel:
     push hl
     push bc
@@ -206,19 +301,24 @@ SFXPS_find_retrig_channel:
         ; Go through all channels and find a busy 
         ; channel playing the specified sample
         ld a,(SFXPS_channel_taken_status)
-        ld e,a
-        ld a,b
-        ld b,PA_CHANNEL_COUNT
-        ld hl,SFXPS_channel_sample_ids
+        ld e,a ; Backup taken status in e
+        ld a,b ; Load sample id in a
+        ld c,b ; Backup sample id in c
+        ld b,SFXPS_CHANNEL_COUNT
+        ld hl,SFXPS_channel_sample_ids+SFXPS_CHANNEL_COUNT-1
 loop$:
         ; If channel is taken, check next channel
-        bit 0,e
+        bit 5,e
         jp nz,loop_next$
         cp a,(hl) ; if smp_id == sample_ids[ch] ...
         jp z,retriggerable_channel_found$ ; then...
 
 loop_next$:
-        inc hl
+        dec hl
+        ld a,e ; load taken status in a
+        sla a  ; shift taken status to make the next channel the 5th bit
+        ld e,a ; load taken status back in e
+        ld a,c ; Load sample id backup in a
         djnz loop$
     pop de
     pop bc
@@ -250,29 +350,27 @@ SFXPS_play_sfx:
         cp a,$FF
         jr z,return$
 
-        ; Else, there's a channel the 
-        ; sample can be played in.
-        ;   Store the sample id in WRAM
+        ; Store the sample id in WRAM
         ld hl,SFXPS_channel_sample_ids
         ld e,a
         ld d,0
         add hl,de
         ld (hl),b
 
-        ;   Set the SFXPS ch. playback status to busy
-        ;   (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
+        ; Set the SFXPS ch. playback status to busy
+        ; (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
         ld hl,PA_channel_on_masks
         add hl,de
         ld a,(SFXPS_channel_playback_status)
         or a,(hl)
         ld (SFXPS_channel_playback_status),a
 
-        ;   Store the new priority in WRAM
+        ; Store the new priority in WRAM
         ld hl,SFXPS_channel_priorities
         add hl,de
         ld (hl),c
 
-        ;   Index SFX ADPCM-A list
+        ; Index SFX ADPCM-A list
         ld h,0    ; \
         ld l,b    ; | ofs = new_smp_id
         add hl,hl ; | ofs *= 4
@@ -285,20 +383,20 @@ SFXPS_play_sfx:
             add hl,de
         pop de
 
-        ;   Set ADPCM-A sample addresses
+        ; Set ADPCM-A sample addresses
         push hl ; - ix = hl
         pop ix  ; /
         ld a,e ; Load channel in a
         call PA_set_sample_addr
 
-        ;   Set CVOL register
+        ; Set CVOL register
         ld a,REG_PA_CVOL
         add a,e
         ld d,a
         ld e,iyl
         rst RST_YM_WRITEB
 
-        ;   Play the sample (and deal with status flags)
+        ; Play the sample (and deal with status flags)
         sub a,REG_PA_CVOL ; Get channel back
         ld e,a
         call PA_play_sample
@@ -324,29 +422,27 @@ SFXPS_retrigger_sfx:
         cp a,$FF
         jr z,return$
 
-        ; Else, there's a channel the 
-        ; sample can be played in.
-        ;   Store the sample id in WRAM
+        ; Store the sample id in WRAM
         ld hl,SFXPS_channel_sample_ids
         ld e,a
         ld d,0
         add hl,de
         ld (hl),b
 
-        ;   Set the SFXPS ch. playback status to busy
-        ;   (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
+        ; Set the SFXPS ch. playback status to busy
+        ; (SFXPS_channel_playback_status |= PA_channel_on_masks[ch])
         ld hl,PA_channel_on_masks
         add hl,de
         ld a,(SFXPS_channel_playback_status)
         or a,(hl)
         ld (SFXPS_channel_playback_status),a
 
-        ;   Store the new priority in WRAM
+        ; Store the new priority in WRAM
         ld hl,SFXPS_channel_priorities
         add hl,de
         ld (hl),c
 
-        ;   Index SFX ADPCM-A list
+        ; Index SFX ADPCM-A list
         ld h,0    ; \
         ld l,b    ; | ofs = new_smp_id
         add hl,hl ; | ofs *= 4
@@ -359,23 +455,23 @@ SFXPS_retrigger_sfx:
             add hl,de
         pop de
 
-        ;   Set ADPCM-A sample addresses
+        ; Set ADPCM-A sample addresses
         push hl ; - ix = hl
         pop ix  ; /
         ld a,e ; Load channel in a
         call PA_set_sample_addr
 
-        ;   Set CVOL register
+        ; Set CVOL register
         ld a,REG_PA_CVOL
         add a,e
         ld d,a
         ld e,iyl
         rst RST_YM_WRITEB
 
-        ;   Play the sample (and deal with status flags)
+        ; Play the sample (and deal with status flags)
         sub a,REG_PA_CVOL ; Get channel back
         ld e,a
-        call PA_play_sample
+        call PA_retrigger_sample
         
 return$:
     pop ix
