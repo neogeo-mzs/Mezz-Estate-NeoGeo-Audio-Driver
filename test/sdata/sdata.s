@@ -64,9 +64,9 @@ MLM_odata_arp_macro1:
 
 MLM_odata_mlm_macro1:
 	db $05 ; Command (Set volume)
-	db 2-1 ; Macro length
+	db 8-1 ; Macro length
 	db 0   ; Loop point
-	db $FF, $00
+	db $00, $00, $00, $00, $00, $00, $00, $FF
 
 #code SDATA_BANK0,$8000,$8000
 MLM_song_pa1:
