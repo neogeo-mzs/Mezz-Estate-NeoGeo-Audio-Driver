@@ -66,6 +66,7 @@ MLMCOM_end_of_list:
 ; 	1. timing
 MLMCOM_note_off:
 	push hl
+		brk
 		ld a,c
 		call MLM_stop_note
 		ld hl,MLM_event_arg_buffer
