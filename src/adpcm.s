@@ -84,6 +84,7 @@ PA_stop_sample:
 
 		ld hl,PA_channel_on_masks
 		ld d,0
+		ld e,c
 		add hl,de
 		ld a,(hl)
 
