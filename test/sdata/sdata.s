@@ -64,6 +64,7 @@ MLM_odata_arp_macro1:
 
 MLM_odata_mlm_macro1:
 	db $05 ; Command (Set volume)
+	db 1   ; Delay (in ticks) before proceeding to the next value (0 = every tick, 1 = waits one additional tick, ...)
 	db 8-1 ; Macro length
 	db 0   ; Loop point
 	db $00, $00, $00, $00, $00, $00, $00, $FF

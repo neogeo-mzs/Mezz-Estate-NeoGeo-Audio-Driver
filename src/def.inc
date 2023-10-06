@@ -305,11 +305,13 @@ MLM_Channel.volume:           equ 9  ; u8
 MLM_Channel.return_ptr:       equ 10 ; void*
 MLM_Channel.SIZE              equ 16 ; Some code is optimized around this being a power of 2, chaning this will require code changes
 
-MLM_Macro.flags:   equ 0 ; u8
-MLM_Macro.command: equ 1 ; u8
-MLM_Macro.channel: equ 2 ; u8
-MLM_Macro.macro:   equ 3 ; ControlMacro (check macro.s)
-MLM_Macro.SIZE:    equ 16 ; Code is optimized around this being a power of 2, changing this will require code changes
+MLM_Macro.flags:         equ 0 ; u8
+MLM_Macro.command:       equ 1 ; u8
+MLM_Macro.channel:       equ 2 ; u8
+MLM_Macro.delay:         equ 3 ; u8 (How many ticks should be waited before proceeding to the next value)
+MLM_Macro.delay_counter: equ 4 ; u8 (Keeps track of said ticks)
+MLM_Macro.macro:         equ 5 ; ControlMacro (check macro.s)
+MLM_Macro.SIZE:          equ 16 ; Code is optimized around this being a power of 2, changing this will require code changes
 
 FM_Channel.lramspms:   equ 0  ; u8 (LRAA-PPP; Left & Right, Ams, Pms)
 FM_Channel.op_enable:  equ 1  ; u8 (4321----; op 4 enable; op 3 enable; op 2 enable; op 1 enable)
