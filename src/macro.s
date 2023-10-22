@@ -20,6 +20,26 @@ BMACRO_read:
 ; [INPUT]
 ; 	ix: pointer to macro
 ; [OUTPUT]
+;	de:  Current macro value
+; CHANGES FLAGS!!
+WMACRO_read:
+	push hl
+		; a = macro.data[macro.curr_pt]
+		ld l,(ix+ControlMacro.data)
+		ld h,(ix+ControlMacro.data+1)
+		ld e,(ix+ControlMacro.curr_pt)
+		ld d,0
+		add hl,de
+		add hl,de
+		ld e,(hl)
+		inc hl
+		ld d,(hl)
+	pop hl
+	ret
+
+; [INPUT]
+; 	ix: pointer to macro
+; [OUTPUT]
 ;	a:  Current macro value
 ; CHANGES FLAGS!!
 NMACRO_read:
