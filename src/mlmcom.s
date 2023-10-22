@@ -2,39 +2,48 @@
 ; they set the playback pointer, then they don't
 ; need to backup anything.
 MLM_command_vectors:
-	dw MLMCOM_end_of_list,          MLMCOM_note_off
-	dw MLMCOM_set_instrument,       MLMCOM_wait_ticks
-	dw MLMCOM_invalid,              MLMCOM_set_channel_volume
-	dw MLMCOM_set_channel_panning,  MLMCOM_set_master_volume
-	dw MLMCOM_set_base_time,        MLMCOM_jump_to_sub_el
-	dw MLMCOM_invalid,              MLMCOM_position_jump
-	dw MLMCOM_invalid,              MLMCOM_invalid
-	dw MLMCOM_invalid,              MLMCOM_invalid
+	; argument count 0
+	dw MLMCOM_end_of_list,          MLMCOM_return_from_sub_el
+	dup 14
+		dw MLMCOM_invalid ; Invalid commands
+	edup
 	dup 16
 		dw MLMCOM_wait_ticks_nibble
 	edup
-	dw MLMCOM_return_from_sub_el,   MLMCOM_invalid
-	dw MLMCOM_invalid,              MLMCOM_invalid
-	dup 4
-		dw MLMCOM_FM_TL_set
-	edup
-	dup 24
-		dw MLMCOM_invalid ; Invalid commands
-	edup
-	dw MLMCOM_macro_start,          MLMCOM_invalid
-	dup 62
+
+	; argument count 2
+	dw MLMCOM_jump_to_sub_el,       MLMCOM_position_jump
+	dup 14
 		dw MLMCOM_invalid ; Invalid commands
 	edup
 
+	; argument count 3
+	dw MLMCOM_macro_start
+	dup 15
+		dw MLMCOM_invalid ; Invalid commands
+	edup
+
+	; argument count 1
+	dw MLMCOM_note_off,             MLMCOM_set_instrument
+	dw MLMCOM_wait_ticks,           MLMCOM_set_channel_volume
+	dw MLMCOM_set_channel_panning,  MLMCOM_set_master_volume
+	dup 58
+		dw MLMCOM_invalid
+	edup
+
 MLM_command_argc:
-	db $00, $01, $01, $01, $00, $01, $01, $01
-	db $01, $02, $00, $02, $00, $00, $00, $00
-	ds 16, $00 ; Wait ticks nibble
-	db $00, $00, $00, $00
-	ds 4, $01 ; FM OP TL Set
-	ds 24, 0  ; Invalid commands
-	db $03, $00
-	ds 62, 0  ; Invalid commands
+	dup 32
+		db $00
+	edup
+	dup 16
+		db $02
+	edup
+	dup 16
+		db $03
+	edup
+	dup 64
+		db $01
+	edup
 
 ; c: channel
 ; iy: pointer to MLM_Channel

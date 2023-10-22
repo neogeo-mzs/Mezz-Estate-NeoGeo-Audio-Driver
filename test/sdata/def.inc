@@ -56,40 +56,40 @@ SSG_MIX_TONENOISE equ %00001001
 	endm
 
 	macro note_off time
-		db $01, \time
+		db $40, \time
 	endm
 
 	macro set_inst inst
-		db $02, \inst 
+		db $41, \inst 
 	endm
 
 	macro wait_time8 time 
-		db $03, \time
+		db $42, \time
 	endm
 
 	macro set_vol volume 
-		db $05, \volume 
+		db $43, \volume 
 	endm
 
 	macro set_pan panning,time
-		db $06, \panning | (\time & 0x3F)
+		db $44, \panning | (\time & 0x3F)
 	endm
 
 	macro set_pa_mvol mvol 
-		db $07, \mvol
+		db $45, \mvol
 	endm
 
 	macro set_btime base_time 
-		db $08, \base_time
+		db $46, \base_time
 	endm
 
 	macro subel_jump address
-		db $09
+		db $20
 		dw address
 	endm
 
 	macro jump address
-		db $0B
+		db $21
 		dw address
 	endm
 
@@ -98,14 +98,14 @@ SSG_MIX_TONENOISE equ %00001001
 	endm
 
 	macro subel_ret
-		db $20
+		db $01
 	endm
 
 	macro fm_tl_set operator,tl 
-		db $24 | operator,tl
+		db $48 | operator,tl
 	endm
 
 	macro mlm_macro_set index,init_data_addr
-		db $40, \index
+		db $30, \index
 		dw \init_data_addr
 	endm
