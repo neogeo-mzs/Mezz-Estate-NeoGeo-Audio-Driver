@@ -7,6 +7,12 @@ BCOM_prepare_switch:
     out  ($0C),a            ; Clear both buffers
     out  ($00),a
     ; Silence YM2610 here
+    call MLM_stop
+	call fm_stop
+	call PA_reset
+	call pb_stop
+	call ssg_stop
+
     ld   sp,$FFFC           ; Reset SP
     ld   hl,stayinram
     push hl
