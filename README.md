@@ -4,7 +4,7 @@ An audio driver for the NeoGeo MVS and AES written in assembly.<br/>
 Check [the wiki](https://github.com/stereomimi/Mezz-Estate-NeoGeo-Audio-Driver/wiki) for further information
 
 ## Compilation dependencies
-* This specific [ZASM fork](https://github.com/stereomimi/zasm) (You'll have to compile it yourself, there's no actual executables)
+* This specific [ZASM fork](https://github.com/neogeo-mzs/zasm) (You'll have to compile it yourself, there's no actual executables)
 * [RomWak](https://github.com/freem/romwak)
 * Python 3.9.7+ (Might work with other versions higher than 3.0.0, not tested)
 * [adpcma](https://github.com/freem/adpcma) (Just for converting the test's program's samples)
